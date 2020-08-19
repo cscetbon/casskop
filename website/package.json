@@ -6,16 +6,18 @@
     "start": "docusaurus start",
     "build": "docusaurus build",
     "swizzle": "docusaurus swizzle",
-    "deploy": "docusaurus deploy"
+    "deploy": "docusaurus deploy",
+    "snyk-protect": "snyk protect",
+    "prepare": "yarn run snyk-protect"
   },
   "dependencies": {
     "@docusaurus/core": "^2.0.0-alpha.43",
     "@docusaurus/preset-classic": "^2.0.0-alpha.43",
     "@docusaurus/theme-live-codeblock": "^2.0.0-alpha.43",
-
     "classnames": "^2.2.6",
     "react": "^16.8.4",
-    "react-dom": "^16.8.4"
+    "react-dom": "^16.8.4",
+    "snyk": "^1.379.2"
   },
   "browserslist": {
     "production": [
@@ -28,5 +30,6 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "snyk": true
 }
