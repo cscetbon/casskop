@@ -15,7 +15,6 @@ orbs:
       vm:
         machine:
           image: ubuntu-2004:202010-01
-        resource_class: large
     jobs:
       e2e-orb:
         parameters:
