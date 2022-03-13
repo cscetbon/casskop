@@ -15,8 +15,9 @@ jobs:
         with:
           token: ${{ secrets.GH_TOKEN }}
           charts_dir: helm/cassandra-operator
-      - name: Publish Helm Casskop charts
-        uses: stefanprodan/helm-gh-pages@master
-        with:
-          token: ${{ secrets.GH_TOKEN }}
-          charts_dir: multi-casskop/helm/multi-casskop
+          linting: off
+      # - name: Publish Helm Casskop charts
+      #   uses: stefanprodan/helm-gh-pages@master
+      #   with:
+      #     token: ${{ secrets.GH_TOKEN }}
+      #     charts_dir: multi-casskop/helm/multi-casskop
