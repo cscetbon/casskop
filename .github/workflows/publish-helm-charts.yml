@@ -13,6 +13,7 @@ jobs:
       - run: |
           set -x
           git --version
+          git fetch --all
           git fetch --tags
           git describe --tags --abbrev=0
 
