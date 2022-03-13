@@ -236,22 +236,6 @@ orbs:
                 - sonar-scanner-3.3.0.1492-linux
                 - /home/circleci/<< parameters.operatorDir >>/.sonar
 
-      # publish-helm:
-      #   <<: *params_operator
-      #   working_directory: /home/circleci/<< parameters.operatorDir >>
-      #   docker:
-      #     - image: google/cloud-sdk
-      #   steps:
-      #     - checkout:
-      #         path: /home/circleci/casskop
-      #     - run:
-      #         name: publish-helm
-      #         command: |
-      #           if [[ $(echo "$CIRCLE_BRANCH" | grep -c "pull") -gt 0 ]]; then
-      #             echo "This is a PR, we don't publish to helm repo."
-      #           else
-      #             GCP_SA_CREDS=${GCP_POC_RTC_SA_KEY} /home/circleci/casskop/tools/publish_helm_gcs.sh
-      #           fi
 jobs:
   deploy-website:
     working_directory: /home/circleci/casskop/website
@@ -390,12 +374,6 @@ workflows:
            - build-casskop
          <<: *ignore_fork_pr_filter
 
-      # - operator/publish-helm:
-      #     name: publish-helm-orange-incubator-casskop
-      #     requires:
-      #       - report-casskop
-      #     <<: *only_on_release_tag
-
       - deploy-website:
           name: deploy-website
           requires:
@@ -428,10 +406,3 @@ workflows:
           requires:
             - build-multicasskop
           <<: *canonical_repo_filter
-
-      # - operator/publish-helm:
-      #     name: publish-helm-orange-incubator-multicasskop
-      #     <<: *params_multicasskop
-      #     requires:
-      #       - report-multicasskop
-      #     <<: *only_on_release_tag
