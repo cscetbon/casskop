@@ -13,15 +13,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Configure Git
-        run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+      # - name: Configure Git
+      #   run: |
+      #     git config user.name "$GITHUB_ACTOR"
+      #     git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-      - name: Install Helm
-        uses: azure/setup-helm@v1
-        with:
-          version: v3.7.1
+      # - name: Install Helm
+      #   uses: azure/setup-helm@v1
+      #   with:
+      #     version: v3.7.1
 
       - name: Publish Helm Casskop charts
         uses: helm/chart-releaser-action@v1.3.0
@@ -30,8 +30,3 @@ jobs:
           charts_repo_url: https://${{github.repository_owner}}.github.io/casskop/helm
         env:
           CR_TOKEN: ${{ secrets.GH_TOKEN }}
-      # - name: Publish Helm Casskop charts
-      #   uses: stefanprodan/helm-gh-pages@master
-      #   with:
-      #     token: ${{ secrets.GH_TOKEN }}
-      #     charts_dir: multi-casskop/helm/multi-casskop
