@@ -26,7 +26,7 @@ jobs:
       - name: Publish Helm Casskop charts
         uses: helm/chart-releaser-action@v1.3.0
         with:
-          charts_dir: charts/helm/cassandra-operator
+          charts_dir: charts/cassandra-operator
           charts_repo_url: https://${{github.repository_owner}}.github.io/casskop/helm
         env:
           CR_TOKEN: ${{ secrets.GH_TOKEN }}
