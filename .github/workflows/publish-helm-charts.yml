@@ -11,11 +11,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Publish Helm Casskop charts
-        uses: stefanprodan/helm-gh-pages@master
+        uses: helm/chart-releaser-action@v1.3.0
         with:
           token: ${{ secrets.GH_TOKEN }}
           charts_dir: helm/cassandra-operator
-          linting: off
+          charts_repo_url: https://${{github.repository_owner}}.github.io/casskop/helm
       # - name: Publish Helm Casskop charts
       #   uses: stefanprodan/helm-gh-pages@master
       #   with:
