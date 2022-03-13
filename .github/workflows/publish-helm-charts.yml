@@ -1,0 +1,22 @@
+name: publish-charts
+on:
+  push:
+    branches:
+      - helm
+    # tags: '*'
+
+jobs:
+  publish-charts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Publish Helm Casskop charts
+        uses: stefanprodan/helm-gh-pages@master
+        with:
+          token: &gh-token ${{ secrets.GH_TOKEN }}
+          charts_dir: helm/cassandra-operator
+      - name: Publish Helm Casskop charts
+        uses: stefanprodan/helm-gh-pages@master
+        with:
+          token: *gh-token
+          charts_dir: multi-casskop/helm/multi-casskop

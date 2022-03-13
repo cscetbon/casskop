@@ -1,0 +1,106 @@
+on: push
+name: Casskop e2e
+
+env:
+  kuttl-version: 0.11.0
+
+jobs:
+
+  install-kuttl:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Cache Kuttl
+      id: cache-kuttl
+      uses: actions/cache@v2
+      with:
+        path: kuttl
+        key: ${{ runner.os }}-kuttl-${{ env.kuttl-version }}
+
+    - name: download-kuttl
+      if: steps.cache-kuttl.outputs.cache-hit != 'true'
+      uses: wei/wget@v1
+      with:
+        args: -c -O kuttl https://github.com/kudobuilder/kuttl/releases/download/v${{ env.kuttl-version }}/kubectl-kuttl_${{ env.kuttl-version }}_linux_i386
+
+  kuttl-casskop:
+    needs: install-kuttl
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+
+    - uses: rinx/setup-k3d@v0.0.4
+      with:
+        version: v4.4.8
+
+    # - name: Cache Kuttl
+    #   id: cache-kuttl
+    #   uses: actions/cache@v2
+    #   with:
+    #     path: kuttl
+    #     key: ${{ runner.os }}-kuttl-${{ env.kuttl-version }}
+
+    # - name: Run kuttl tests
+    #   run: |
+    #     chmod u+x kuttl
+    #     cd casskop
+    #     # Apply backup S3 secret
+    #     cat <<EOF >> backup-restore/00-createCluster.yaml
+    #     ---
+    #     apiVersion: v1
+    #     kind: Secret
+    #     metadata:
+    #       name: aws-backup-secrets
+    #     type: Opaque
+    #     stringData:
+    #       awsaccesskeyid: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    #       awssecretaccesskey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    #       awsregion: us-west-2
+    #     EOF
+
+    #     cat <<EOF >> backup-restore/00-assert.yaml
+    #     ---
+    #     apiVersion: v1
+    #     kind: Secret
+    #     metadata:
+    #       name: aws-backup-secrets
+    #     EOF
+
+    #     cat backup-restore/00-createCluster.yaml
+    #     cat backup-restore/00-assert.yaml
+
+    #     ../kuttl test --test backup-restore
+
+  # kuttl-cass-operator:
+  #   needs: install-kuttl
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - name: Check out repository
+  #     uses: actions/checkout@v2
+
+  #   - name: Set up Cloud SDK
+  #     uses: google-github-actions/setup-gcloud@master
+  #     with:
+  #       project_id: ${{ secrets.GCP_PROJECT_ID }}
+  #       service_account_key: ${{ secrets.GCP_SA_KEY }}
+  #       export_default_credentials: true
+
+  #   - name: Set kubeconfig
+  #     env:
+  #       CLUSTER_NAME: casskop-compat-cscetbon
+  #       ZONE: europe-west1-b
+  #     run: |
+  #       gcloud container clusters get-credentials $CLUSTER_NAME --zone $ZONE --project ${{ secrets.GCP_PROJECT_ID }}
+
+  #   - name: Cache Kuttl
+  #     id: cache-kuttl
+  #     uses: actions/cache@v2
+  #     with:
+  #       path: kuttl
+  #       key: ${{ runner.os }}-kuttl-${{ env.kuttl-version }}
+
+  #   - name: Run kuttl tests
+  #     run: |
+  #       chmod u+x kuttl
+  #       cd cass-operator
+  #       ../kuttl test
