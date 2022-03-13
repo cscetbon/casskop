@@ -15,6 +15,7 @@ jobs:
           git --version
           git fetch --all
           git fetch --tags
+          git log
           git describe --tags --abbrev=0
 
       - name: Configure Git
