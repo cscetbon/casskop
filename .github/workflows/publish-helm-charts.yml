@@ -10,6 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - run: |
+          set -x
+          git fetch --tags
+          git describe --tags --abbrev=0
+
 
       - name: Configure Git
         run: |
