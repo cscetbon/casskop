@@ -71,16 +71,16 @@ jobs:
         chmod u+x ../kuttl
         ../kuttl test --test backup-restore
 
-  kuttl-casskop:
-    needs: install-kuttl
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        kuttl-test-name: [sidecars]
-        # kuttl-test-name: [sidecars scaling operations multi-dcs]
-    steps:
-    - name: Check out repository
-      uses: actions/checkout@v2
+  # kuttl-casskop:
+  #   needs: install-kuttl
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       kuttl-test-name: [sidecars]
+  #       # kuttl-test-name: [sidecars scaling operations multi-dcs]
+  #   steps:
+  #   - name: Check out repository
+  #     uses: actions/checkout@v2
 
     # - uses: rinx/setup-k3d@v0.0.4
     #   with:
