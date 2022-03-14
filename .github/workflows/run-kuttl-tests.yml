@@ -41,17 +41,6 @@ jobs:
       with:
         version: v3.8.1
 
-    # - name: Deploy casskop
-    #   uses: deliverybot/helm@v1
-    #   with:
-    #     release: casskop
-    #     namespace: default
-    #     chart: charts/cassandra-operator
-    #     helm: helm3
-    #     values: |
-    #       image.tag: master
-        # image.tag: ${GITHUB_REF##*/}
-
     - name: Restore Kuttl
       id: cache-kuttl
       uses: actions/cache@v2
@@ -61,7 +50,9 @@ jobs:
 
     - name: Run kuttl tests
       run: |
+        set -x
         chmod u+x kuttl
         helm install casskop charts/cassandra-operator --set image.tag=master
+        # helm install casskop charts/cassandra-operator --set image.tag=${GITHUB_REF##*/}
         cd test/kuttl/
         ../../kuttl test ${{ matrix.kuttl-test-name }} --namespace default
