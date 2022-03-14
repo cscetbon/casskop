@@ -82,30 +82,30 @@ jobs:
     - name: Check out repository
       uses: actions/checkout@v2
 
-    - uses: rinx/setup-k3d@v0.0.4
-      with:
-        version: v4.4.8
+    # - uses: rinx/setup-k3d@v0.0.4
+    #   with:
+    #     version: v4.4.8
     
-    - name: Deploy casskop
-      uses: deliverybot/helm@v1
-      with:
-        release: casskop
-        namespace: default
-        chart: charts/cassandra-operator
-        helm: helm3
-        values: |
-          image.tag: master
-        # image.tag: ${GITHUB_REF##*/}
+    # - name: Deploy casskop
+    #   uses: deliverybot/helm@v1
+    #   with:
+    #     release: casskop
+    #     namespace: default
+    #     chart: charts/cassandra-operator
+    #     helm: helm3
+    #     values: |
+    #       image.tag: master
+    #     # image.tag: ${GITHUB_REF##*/}
 
-    - name: Restore Kuttl
-      id: cache-kuttl
-      uses: actions/cache@v2
-      with:
-        path: kuttl
-        key: ${{ runner.os }}-kuttl-${{ env.kuttl-version }}
+    # - name: Restore Kuttl
+    #   id: cache-kuttl
+    #   uses: actions/cache@v2
+    #   with:
+    #     path: kuttl
+    #     key: ${{ runner.os }}-kuttl-${{ env.kuttl-version }}
 
-    - name: Run kuttl tests
-      run: |
-        chmod u+x kuttl
-        cd test/kuttl/
-        ../../kuttl test ${{ matrix.kuttl-test-name }} --namespace default
+    # - name: Run kuttl tests
+    #   run: |
+    #     chmod u+x kuttl
+    #     cd test/kuttl/
+    #     ../../kuttl test ${{ matrix.kuttl-test-name }} --namespace default
