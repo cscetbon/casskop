@@ -37,6 +37,10 @@ jobs:
       with:
         version: v4.4.8
     
+    - uses: azure/setup-helm@v1
+      with:
+        version: v3.8.1
+
     - name: Deploy casskop
       uses: deliverybot/helm@v1
       with:
