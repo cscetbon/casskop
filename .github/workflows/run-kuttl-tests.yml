@@ -52,7 +52,8 @@ jobs:
       run: |
         set -x
         chmod u+x kuttl
+        PATH=$PWD:$PATH
         helm install casskop charts/cassandra-operator --set image.tag=master
         # helm install casskop charts/cassandra-operator --set image.tag=${GITHUB_REF##*/}
         cd test/kuttl/
-        ../../kuttl test ${{ matrix.kuttl-test-name }} --namespace default
+        kuttl test ${{ matrix.kuttl-test-name }} --namespace default
