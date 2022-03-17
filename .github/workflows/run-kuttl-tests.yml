@@ -1,5 +1,11 @@
-on: push
-name: Casskop e2e
+name: casskop-e2e
+
+on:
+  workflow_run:
+    workflows: [build-test-publish-docker-images]
+    branches: [helm]
+    types:
+      - completed
 
 env:
   kuttl-version: 0.11.0
@@ -8,17 +14,18 @@ jobs:
 
   install-kuttl:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Cache Kuttl
         id: cache-kuttl
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.7
         with:
           path: kuttl
           key: ${{ runner.os }}-kuttl-${{ env.kuttl-version }}
 
       - name: download-kuttl
         if: steps.cache-kuttl.outputs.cache-hit != 'true'
-        uses: wei/wget@v1
+        uses: wei/wget@v1.1.1
         with:
           args: -c -O kuttl https://github.com/kudobuilder/kuttl/releases/download/v${{ env.kuttl-version }}/kubectl-kuttl_${{ env.kuttl-version }}_linux_i386
 
@@ -43,7 +50,7 @@ jobs:
 
     - name: Restore Kuttl
       id: cache-kuttl
-      uses: actions/cache@v2
+      uses: actions/cache@v2.1.7
       with:
         path: kuttl
         key: ${{ runner.os }}-kuttl-${{ env.kuttl-version }}
@@ -54,6 +61,6 @@ jobs:
         chmod u+x kuttl
         PATH=$PWD:$PATH
         helm install casskop charts/casskop --set image.tag=master
-        # helm install casskop charts/casskop --set image.tag=${GITHUB_REF##*/}
+        # helm install casskop charts/casskop --set image.tag=${{ github.ref_name }}
         cd test/kuttl/
         kuttl test ${{ matrix.kuttl-test-name }} --namespace default

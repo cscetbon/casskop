@@ -1,4 +1,4 @@
-name: Build and publish Docker images
+name: build-test-publish-docker-images
 
 on:
   push:
@@ -11,7 +11,7 @@ env:
 
 jobs:
 
-  unit-test:
+  unit-tests:
     runs-on: ubuntu-latest
     container: orangeopensource/casskop-build:v1.13.0
     # needs: not-missing-manifests
@@ -20,8 +20,53 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Cache vendor modules
+        uses: actions/cache@v2.1.7
+        env:
+          cache-name: casskop-vendor
+        with:
+          path: |
+            vendor
+            /go/pkg
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.cache-name }}-
+            ${{ runner.os }}-
+
       - name: Run unit Tests
-        run: make unit-test-with-vendor
+        run: |
+          go mod vendor
+          make unit-test-with-vendor
+
+  dgoss-tests:
+    runs-on: ubuntu-latest
+    container: orangeopensource/casskop-build:v1.13.0
+    # needs: casskop
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Cache vendor modules
+        uses: actions/cache@v2.1.7
+        env:
+          cache-name: casskop-vendor
+        with:
+          path: |
+            vendor
+            /go/pkg
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.cache-name }}-
+            ${{ runner.os }}-
+
+      - name: Run Dgoss Tests
+        run: |
+          curl -L https://raw.githubusercontent.com/aelsabbahy/goss/master/extras/dgoss/dgoss -o /usr/local/bin/dgoss
+          curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.6/goss-linux-amd64 -o /usr/local/bin/goss
+          chmod +rx /usr/local/bin/dgoss /usr/local/bin/goss
+          GOSS_PATH=/usr/local/bin/goss GOSS_FILES_STRATEGY=cp make dgoss-bootstrap
+
 
   not-missing-manifests:
     runs-on: ubuntu-latest
@@ -37,7 +82,7 @@ jobs:
       - name: Cache vendor modules
         uses: actions/cache@v2.1.7
         env:
-          cache-name: cache-casskop-vendor
+          cache-name: casskop-vendor
         with:
           path: |
             vendor
