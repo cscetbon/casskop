@@ -11,54 +11,54 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  casskop:
-    runs-on: ubuntu-latest
-    permissions:
-      # contents: read
-      packages: write
+  # casskop:
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     # contents: read
+  #     packages: write
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v3
 
-      - name: Log in to the Container registry
-        uses: docker/login-action@v1.14.1
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GH_TOKEN_PACKAGES }}
+  #     - name: Log in to the Container registry
+  #       uses: docker/login-action@v1.14.1
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.repository_owner }}
+  #         password: ${{ secrets.GH_TOKEN_PACKAGES }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v2.10.0
-        with:
-          context: .
-          tags: cscetbon/casskop:v2.1.0
-          # push: true
+  #     - name: Build and push Docker image
+  #       uses: docker/build-push-action@v2.10.0
+  #       with:
+  #         context: .
+  #         tags: cscetbon/casskop:v2.1.0
+  #         # push: true
 
-  multi-casskop:
-    runs-on: ubuntu-latest
-    permissions:
-      # contents: read
-      packages: write
+  # multi-casskop:
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     # contents: read
+  #     packages: write
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v3
 
-      - name: Log in to the Container registry
-        uses: docker/login-action@v1.14.1
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GH_TOKEN_PACKAGES }}
+  #     - name: Log in to the Container registry
+  #       uses: docker/login-action@v1.14.1
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.repository_owner }}
+  #         password: ${{ secrets.GH_TOKEN_PACKAGES }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v2.10.0
-        with:
-          context: .
-          file: multi-casskop/Dockerfile
-          tags: cscetbon/multi-casskop:v2.1.0
-          # push: true
+  #     - name: Build and push Docker image
+  #       uses: docker/build-push-action@v2.10.0
+  #       with:
+  #         context: .
+  #         file: multi-casskop/Dockerfile
+  #         tags: cscetbon/multi-casskop:v2.1.0
+  #         # push: true
 
   generate-casskop:
     runs-on: ubuntu-latest
