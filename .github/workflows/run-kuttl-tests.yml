@@ -66,4 +66,4 @@ jobs:
         helm install casskop charts/casskop --set image.tag=master
         # helm install casskop charts/casskop --set image.tag=${{ github.ref_name }}
         cd test/kuttl/
-        kuttl test ${{ matrix.kuttl-test-name }} --namespace default
+        kuttl test --test ${{ matrix.kuttl-test-name }} --namespace default
