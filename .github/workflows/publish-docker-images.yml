@@ -56,6 +56,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v2.10.0
         with:
-          context: multi-casskop
+          context: .
+          file: multi-casskop/Dockerfile
           tags: cscetbon/multi-casskop:v2.1.0
           # push: true

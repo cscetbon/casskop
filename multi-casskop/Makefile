@@ -128,7 +128,7 @@ endif
 
 build-local: generate
 	@echo "Build Cassandra Operator for $(GOOS)"
-	go build -o build/_output/bin/multi-casskop-$(GOOS) -gcflags all=-trimpath=github.com/cscetbon -asmflags all=-trimpath=github.com/Orange-OpenSource github.com/Orange-OpenSource/casskop/multi-casskop/cmd/manager
+	go build -o build/_output/bin/multi-casskop-$(GOOS) -gcflags all=-trimpath=github.com/cscetbon -asmflags all=-trimpath=github.com/cscetbon github.com/cscetbon/casskop/multi-casskop/cmd/manager
 
 debug-telepresence:
 	export TELEPRESENCE_REGISTRY=$(TELEPRESENCE_REGISTRY) ; \
