@@ -104,7 +104,6 @@ update-crds:
 	done
 
 include shared.mk
-include kube.mk
 
 docker-generate-files: docker-generate-k8s docker-generate-crds
 
