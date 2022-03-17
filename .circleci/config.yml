@@ -316,93 +316,93 @@ jobs:
 workflows:
   version: 2
   ## CassKop operator workflow.
-  ci-casskop-operator:
-    jobs:
-      - operator/generate:
-          name: generate-casskop
-          <<: *everytime_filter
+  # ci-casskop-operator:
+  #   jobs:
+      # - operator/generate:
+      #     name: generate-casskop
+      #     <<: *everytime_filter
 
-      - operator/unit-test:
-          name: unit-test-casskop
-          requires:
-            - generate-casskop
-          <<: *everytime_filter
+  #     - operator/unit-test:
+  #         name: unit-test-casskop
+  #         requires:
+  #           - generate-casskop
+  #         <<: *everytime_filter
 
-      - operator/build:
-          name: build-casskop
-          requires:
-            - unit-test-casskop
-          <<: *everytime_filter
+  #     - operator/build:
+  #         name: build-casskop
+  #         requires:
+  #           - unit-test-casskop
+  #         <<: *everytime_filter
 
-      - operator/docker-dgoss-test:
-          name: docker-dgoss-test-casskop
-          requires:
-            - build-casskop
-          <<: *everytime_filter
+  #     - operator/docker-dgoss-test:
+  #         name: docker-dgoss-test-casskop
+  #         requires:
+  #           - build-casskop
+  #         <<: *everytime_filter
 
-      - operator/report:
-          name: report-casskop
-          requires:
-            - unit-test-casskop
-          <<: *canonical_repo_filter
+  #     - operator/report:
+  #         name: report-casskop
+  #         requires:
+  #           - unit-test-casskop
+  #         <<: *canonical_repo_filter
 
-      - k3d/e2e-orb:
-          name: kuttl-test operations
-          test_name: operations
-          requires:
-            - build-casskop
-          <<: *ignore_fork_pr_filter
+  #     - k3d/e2e-orb:
+  #         name: kuttl-test operations
+  #         test_name: operations
+  #         requires:
+  #           - build-casskop
+  #         <<: *ignore_fork_pr_filter
 
-      - k3d/e2e-orb:
-          name: kuttl-test sidecars
-          test_name: sidecars
-          requires:
-            - build-casskop
-          <<: *ignore_fork_pr_filter
+  #     - k3d/e2e-orb:
+  #         name: kuttl-test sidecars
+  #         test_name: sidecars
+  #         requires:
+  #           - build-casskop
+  #         <<: *ignore_fork_pr_filter
 
-      - k3d/e2e-orb:
-          name: kuttl-test multi-dcs
-          test_name: multi-dcs
-          requires:
-            - build-casskop
-          <<: *ignore_fork_pr_filter
+  #     - k3d/e2e-orb:
+  #         name: kuttl-test multi-dcs
+  #         test_name: multi-dcs
+  #         requires:
+  #           - build-casskop
+  #         <<: *ignore_fork_pr_filter
 
-      - k3d/e2e-orb:
-         name: kuttl-test scaling
-         test_name: scaling
-         requires:
-           - build-casskop
-         <<: *ignore_fork_pr_filter
+  #     - k3d/e2e-orb:
+  #        name: kuttl-test scaling
+  #        test_name: scaling
+  #        requires:
+  #          - build-casskop
+  #        <<: *ignore_fork_pr_filter
 
-      - deploy-website:
-          name: deploy-website
-          requires:
-            - report-casskop
+  #     - deploy-website:
+  #         name: deploy-website
+  #         requires:
+  #           - report-casskop
 
-  # MultiCassKop operator workflow.
-  ci-multicasskop-operator:
-    jobs:
-      - operator/generate:
-          name: generate-casskop
-          <<: *everytime_filter
+  # # MultiCassKop operator workflow.
+  # ci-multicasskop-operator:
+  #   jobs:
+  #     - operator/generate:
+  #         name: generate-casskop
+  #         <<: *everytime_filter
 
-      - operator/generate:
-          name: generate-multicasskop
-          <<: *params_multicasskop
-          requires:
-            - generate-casskop
-          <<: *everytime_filter
+  #     - operator/generate:
+  #         name: generate-multicasskop
+  #         <<: *params_multicasskop
+  #         requires:
+  #           - generate-casskop
+  #         <<: *everytime_filter
 
-      - operator/build:
-          name: build-multicasskop
-          <<: *params_multicasskop_build
-          requires:
-            - generate-multicasskop
-          <<: *everytime_filter
+  #     - operator/build:
+  #         name: build-multicasskop
+  #         <<: *params_multicasskop_build
+  #         requires:
+  #           - generate-multicasskop
+  #         <<: *everytime_filter
 
-      - operator/report:
-          name: report-multicasskop
-          <<: *params_multicasskop
-          requires:
-            - build-multicasskop
-          <<: *canonical_repo_filter
+  #     - operator/report:
+  #         name: report-multicasskop
+  #         <<: *params_multicasskop
+  #         requires:
+  #           - build-multicasskop
+  #         <<: *canonical_repo_filter
