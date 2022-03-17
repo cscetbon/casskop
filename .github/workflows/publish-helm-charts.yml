@@ -29,5 +29,6 @@ jobs:
           name: multi-casskop
           repository: ${{ github.repository }}
           tag: 0.1.0
+          registry: ghcr.io
           registry_username: ${{ github.repository_owner }}
           registry_password: ${{ secrets.GH_TOKEN_PACKAGES }}
