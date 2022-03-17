@@ -12,8 +12,8 @@ env:
 
 jobs:
   casskop:
+    runs-on: ubuntu-latest
     container: orangeopensource/casskop-build:v1.13.0
-    # runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
