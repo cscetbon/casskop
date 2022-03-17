@@ -1,9 +1,9 @@
 name: publish-charts
 on:
   push:
-    # branches:
-    #   - helm
-    tags: '*'
+    branches:
+      - helm
+    # tags: '*'
 
 jobs:
   publish-charts:
@@ -13,16 +13,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Configure Git
-        run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-
-      - name: Publish Helm Casskop charts
-        uses: helm/chart-releaser-action@v1.3.0
+      - name: Publish casskop chart
+        uses: appany/helm-oci-chart-releaser@v0.3.0
         with:
-          charts_dir: charts
-          charts_repo_url: https://${{github.repository_owner}}.github.io/casskop/helm
-          config: cr.yaml
-        env:
-          CR_TOKEN: ${{ secrets.GH_TOKEN }}
+          name: casskop
+          repository: ${{ github.repository }}
+          tag: 0.1.0
+          registry: ghcr.io
+          registry_username: ${{ github.repository_owner }}
+          registry_password: ${{ secrets.GH_TOKEN_PACKAGES }}
+
+      - name: Publish multi-casskop chart
+        uses: appany/helm-oci-chart-releaser@v0.3.0
+        with:
+          name: multi-casskop
+          repository: ${{ github.repository }}
+          tag: 0.1.0
+          registry_username: ${{ github.repository_owner }}
+          registry_password: ${{ secrets.GH_TOKEN_PACKAGES }}
