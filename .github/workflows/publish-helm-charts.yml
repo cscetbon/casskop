@@ -1,9 +1,7 @@
 name: publish-charts
 on:
   push:
-    branches:
-      - helm
-    # tags: '*'
+    tags: '*'
 
 jobs:
   publish-charts:
