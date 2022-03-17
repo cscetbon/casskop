@@ -26,9 +26,6 @@ KUBESQUASH_REGISTRY:=
 
 KUBECONFIG ?= ~/.kube/config
 
-HELM_VERSION    := $(shell cat helm/casskop/Chart.yaml| grep version | awk -F"version: " '{print $$2}')
-HELM_TARGET_DIR ?= docs/helm
-
 # Compute image to use during tests
 ifdef CIRCLE_BRANCH
   ifeq ($(CIRCLE_BRANCH),master)
@@ -75,11 +72,6 @@ clean:
 	@rm -rf $(OUT_BIN) || true
 	@rm -f apis/cassandracluster/v2/zz_generated.deepcopy.go || true
 
-helm-package:
-	@echo Packaging $(HELM_VERSION)
-	helm package helm/casskop
-	mv casskop-$(HELM_VERSION).tgz $(HELM_TARGET_DIR)
-	helm repo index $(HELM_TARGET_DIR)/
 
 FIRST_VERSION = .spec.versions[0]
 SPEC_PROPS = $(FIRST_VERSION).schema.openAPIV3Schema.properties.spec.properties
