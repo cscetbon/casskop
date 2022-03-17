@@ -5,12 +5,12 @@ sidebar_label: GKE Issues
 ---
 ### RBAC on Google Container Engine (GKE)
 
-When you try to create `ClusterRole` (`cassandra-operator`, etc.) on GKE Kubernetes cluster, you will probably run into permission errors:
+When you try to create `ClusterRole` (`casskop`, etc.) on GKE Kubernetes cluster, you will probably run into permission errors:
 
 ```
 <....>
 failed to initialize cluster resources: roles.rbac.authorization.k8s.io
-"cassandra-operator" is forbidden: attempt to grant extra privileges:
+"casskop" is forbidden: attempt to grant extra privileges:
 <....>
 ````
 

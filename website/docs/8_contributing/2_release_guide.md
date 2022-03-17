@@ -11,7 +11,7 @@ For ease, we have same version for casskop and multi-casskop
 - [ ] Update Changelog.md with informations for the new release
 - [ ] update version/version.go with the new release version
 - [ ] update multi-casskop/version/version.go with the new release version
-- [ ] update helm/cassandra-operator/Chart.yaml and values.yaml
+- [ ] update helm/casskop/Chart.yaml and values.yaml
 - [ ] update multi-casskop/helm/multi-casskop/Chart.yaml and values.yaml
 - [ ] generate casskop helm with `make helm-package`
 - [ ] add to git docs/helm, commit & push

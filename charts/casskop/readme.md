@@ -17,7 +17,7 @@ The following tables lists the configurable parameters of the Cassandra Operator
 
 | Parameter                        | Description                                      | Default                                   |
 |----------------------------------|--------------------------------------------------|-------------------------------------------|
-| `image.repository`               | Image                                            | `orangeopensource/casskop` |
+| `image.repository`               | Image                                            | `cscetbon/casskop` |
 | `image.tag`                      | Image tag                                        | `0.3.1-master`                            |
 | `image.pullPolicy`               | Image pull policy                                | `Always`                                  |
 | `image.imagePullSecrets.enabled` | Enable tue use of secret for docker image        | `false`                                   |
@@ -34,7 +34,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example,
 
 ```console
-$ helm install --name casskop incubator/cassandra-operator -f values.yaml
+$ helm install incubator/casskop -f values.yaml
 ```
 
 ### Installing the Chart
@@ -42,19 +42,19 @@ $ helm install --name casskop incubator/cassandra-operator -f values.yaml
 You can make a dry run of the chart before deploying :
 
 ```console 
-helm install --dry-run --debug.enabled incubator/cassandra-operator --set debug.enabled=true --name casskop
+helm install --dry-run --debug.enabled incubator/casskop --set debug.enabled=true
 ```
 
 To install the chart with the release name my-release:
 
 ```console
-$ helm install --name casskop incubator/cassandra-operator
+$ helm install incubator/casskop
 ```
 
 We can surcharge default parameters using `--set` flag :
 
 ```console
-$ helm install --replace --set image.tag=asyncronous --name casskop incubator/cassandra-operator
+$ helm install --replace --set image.tag=asyncronous incubator/casskop
 ```
 
 > the `-replace` flag allow you to reuses a charts release name
@@ -128,6 +128,6 @@ In that case you can get an error like :
 
 
 ```
-$ helm install --name casskop ./helm/cassandra-operator
+$ helm install ./helm/casskop
 Error: customresourcedefinitions.apiextensions.k8s.io "cassandraclusters.db.orange.com" already exists
 ```

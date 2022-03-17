@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "cassandra-operator.fullname" . }}
+  name: {{ template "casskop.fullname" . }}
   labels:
-    app: {{ template "cassandra-operator.name" . }}
+    app: {{ template "casskop.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}
     heritage: {{ .Release.Service }}
     operator: cassandra
@@ -12,12 +12,12 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      name: {{ template "cassandra-operator.name" . }}
+      name: {{ template "casskop.name" . }}
   template:
     metadata:
       labels:
-        name: {{ template "cassandra-operator.name" . }}
-        app: {{ template "cassandra-operator.name" . }}
+        name: {{ template "casskop.name" . }}
+        app: {{ template "casskop.name" . }}
         operator: cassandra
         release: {{ .Release.Name }}
     spec:
@@ -26,7 +26,7 @@ spec:
         - name: {{ .Values.image.imagePullSecrets.name }}
 {{- end }}
 {{- if .Values.rbacEnable }}
-      serviceAccountName: {{ template "cassandra-operator.name" . }}
+      serviceAccountName: {{ template "casskop.name" . }}
 {{- end }}
       securityContext:
         runAsUser: 1000
@@ -34,7 +34,7 @@ spec:
       shareProcessNamespace: true
 {{- end }}
       containers:
-      - name: {{ template "cassandra-operator.name" . }}
+      - name: {{ template "casskop.name" . }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: "{{ .Values.image.pullPolicy }}"
         command:
@@ -65,7 +65,7 @@ spec:
               fieldRef:
                 fieldPath: metadata.name
           - name: OPERATOR_NAME
-            value: "cassandra-operator"
+            value: "casskop"
 {{- if .Values.debug.enabled }}
           - name: LOG_LEVEL
             value: Debug

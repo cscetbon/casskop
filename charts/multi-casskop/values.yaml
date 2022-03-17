@@ -1,7 +1,7 @@
 ## Cassandra Operator Image
 ##
 image:
-  repository: orangeopensource/multi-casskop
+  repository: cscetbon/multi-casskop
   tag: v2.1.0-release
   pullPolicy: Always
   imagePullSecrets:

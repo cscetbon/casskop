@@ -114,7 +114,7 @@ debug
 .idea/
 .idea/runConfigurations/
 .vscode
-cassandra-operator.env
+casskop.env
 multi-casskop/multi-casskop.env
 telepresence.log
 build/_output

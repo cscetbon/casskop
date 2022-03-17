@@ -192,7 +192,7 @@ This method can be used to run the operator locally outside of the cluster. This
 Set the name of the operator in an environment variable
 
 ```
-$ export OPERATOR_NAME=cassandra-operator
+$ export OPERATOR_NAME=casskop
 ```
 
 Deploy the CRD
@@ -230,7 +230,7 @@ $ make push
 Install the Helm chart.
 
 ```
-$ helm install ./helm/cassandra-operator \
+$ helm install ./helm/casskop \
     --set-string image.repository=orangeopensource/casskop,image.tag=0.4.0-local-dev-helm \
     --name local-dev-helm
 ```
@@ -244,7 +244,7 @@ Lastly, verify that the operator is running.
 ```
 $ kubectl get pods
 NAME                                                READY   STATUS    RESTARTS   AGE
-local-dev-helm-cassandra-operator-8946b89dc-4cfs9   1/1     Running   0          7m45s
+local-dev-helm-casskop-8946b89dc-4cfs9   1/1     Running   0          7m45s
 ```
 ### Run unit-tests
 
@@ -373,9 +373,9 @@ cd $(git rev-parse --show-toplevel)
 kubectl  apply -f config/crd/bases/
 kubectl  create namespace cluster1
 kubectl  create namespace cluster2
-helm install casskop -n cluster1 orange-incubator/cassandra-operator --set debug.enabled=true
-helm install casskop -n cluster2 orange-incubator/cassandra-operator --set debug.enabled=true
-kubemcsa export --context=k3d-multi-casskop-qa cassandra-operator --as k8s-cluster2 -n cluster1 | k apply -n cluster1 -f -
+helm install casskop -n cluster1 orange-incubator/casskop --set debug.enabled=true
+helm install casskop -n cluster2 orange-incubator/casskop --set debug.enabled=true
+kubemcsa export --context=k3d-multi-casskop-qa casskop --as k8s-cluster2 -n cluster1 | k apply -n cluster1 -f -
 ```
 - Update generated secret to use `server: https://kubernetes.default.svc/` in its config (We won't need that method 
 anymore and will be able to create 2 different clusters when https://github.com/rancher/k3d/issues/101 is solved)

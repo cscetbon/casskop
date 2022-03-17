@@ -3,11 +3,11 @@ kind: Role
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
   labels:
-    app: {{ template "cassandra-operator.name" . }}
+    app: {{ template "casskop.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
-  name: {{ template "cassandra-operator.name" . }}
+  name: {{ template "casskop.name" . }}
 rules:
 - apiGroups:
   - db.orange.com
@@ -98,11 +98,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   labels:
-    app: {{ template "cassandra-operator.name" . }}
+    app: {{ template "casskop.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
-  name: {{ template "cassandra-operator.name" . }}-cluster-node
+  name: {{ template "casskop.name" . }}-cluster-node
 rules:
   - apiGroups: [""]
     resources: ["pods", "configmaps", "secrets" ]

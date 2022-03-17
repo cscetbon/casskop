@@ -374,14 +374,14 @@ kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/mas
 You can deploy CassKop from official helm/charts/incubator repository
 
 ```yaml
-$ helm install --name casskop incubator/cassandra-operator
+$ helm install --name casskop incubator/casskop
 ```
 
 Or You can also add the CassKop repository from Github 
 
 ```yaml
 helm repo add orange-incubator https://orange-kubernetes-charts-incubator.storage.googleapis.com
-helm install --name casskop orange-incubator/cassandra-operator
+helm install --name casskop orange-incubator/casskop
 ```
 
 > This deploy the Operator and it's CRD via a helm hook.
@@ -395,13 +395,13 @@ Error: customresourcedefinitions.apiextensions.k8s.io "cassandraclusters.db.oran
 In this case, add the `--no-hooks` helm cli flag to tell helm not to deploy the CRD hook:
 
 ```yaml
-$ helm install --name casskop orange-incubator/cassandra-operator --no-hooks
+$ helm install --name casskop orange-incubator/casskop --no-hooks
 ```
 
 Check operator's logs: 
 
 ```console
-$ k logs -l app=cassandra-operator --tail=10
+$ k logs -l app=casskop --tail=10
 ```
 
 ---
@@ -563,7 +563,7 @@ Instantally CassKop update it's status, and will manage 3 ScaleDown sequentially
         phase: Pending
         podLastOperation:
           Name: decommission
-          operatorName: casskop-cassandra-operator-56d48f9d47-cbf5x
+          operatorName: casskop-casskop-56d48f9d47-cbf5x
           pods:
           - cassandra-demo-dc1-rack1-1
           startTime: 2019-02-28T19:19:45Z
@@ -694,7 +694,7 @@ CassKop will update it's status while performing the operation
         podLastOperation:
           Name: rebuild
           endTime: 2019-02-28T20:19:25Z
-          operatorName: casskop-cassandra-operator-56d48f9d47-cbf5x
+          operatorName: casskop-casskop-56d48f9d47-cbf5x
           podsOK:
           - cassandra-demo-dc2-rack1-0
           startTime: 2019-02-28T20:19:11Z
@@ -823,7 +823,7 @@ We can see the diff in the statefulset objects:
 ```
 
 ```log
-k logs  -l app=cassandra-operator --tail=1000 | grep cassandra-configmap-v2
+k logs  -l app=casskop --tail=1000 | grep cassandra-configmap-v2
 ```
 
 

@@ -98,7 +98,7 @@ data "helm_repository" "casskop" {
 resource "helm_release" "casskop" {
   name             = "casskop"
   repository       = data.helm_repository.casskop.metadata[0].name
-  chart            = "cassandra-operator"
+  chart            = "casskop"
   namespace        = kubernetes_namespace.cassandra-demo.metadata[0].name
   disable_webhooks = false
   set {

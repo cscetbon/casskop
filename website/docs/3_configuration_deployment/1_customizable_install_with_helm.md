@@ -38,7 +38,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example,
 
 ```console
-helm install casskop incubator/cassandra-operator -f values.yaml
+helm install casskop incubator/casskop -f values.yaml
 ```
 
 ### Installing the Chart
@@ -129,5 +129,5 @@ to delete the CRDs BEFORE installing the new chart. If you don't want to install
 in [Helm 3 official documentation](https://helm.sh/docs/chart_best_practices/custom_resource_definitions/).
 
 ```bash
-helm install casskop orange-incubator/cassandra-operator --skip-crds
+helm install casskop orange-incubator/casskop --skip-crds
 ```

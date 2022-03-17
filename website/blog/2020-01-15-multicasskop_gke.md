@@ -97,7 +97,7 @@ Now we will check that everything is well deployed in the GKE master cluster :
 $ gcloud container clusters get-credentials cassandra-europe-west1-b-master --zone europe-west1-b --project ${PROJECT}
 $ kubectl get pods -n ${NAMESPACE}
 NAME                                          READY   STATUS    RESTARTS   AGE
-casskop-cassandra-operator-54c4cfcbcb-b4qxq   1/1     Running   0          4h9m
+casskop-casskop-54c4cfcbcb-b4qxq   1/1     Running   0          4h9m
 external-dns-6dd96c985-h76gh                  1/1     Running   0          4h16m
 ```
 
@@ -109,7 +109,7 @@ Now we will check that everything is well deployed in the GKE slave cluster :
 $ gcloud container clusters get-credentials cassandra-europe-west1-c-slave --zone europe-west1-c --project ${PROJECT}
 $ kubectl get pods -n ${NAMESPACE}
 NAME                                          READY   STATUS    RESTARTS   AGE
-casskop-cassandra-operator-54c4cfcbcb-sxjz7   1/1     Running   0          4m56s
+casskop-casskop-54c4cfcbcb-sxjz7   1/1     Running   0          4m56s
 external-dns-7f947c5b5b-mq7kg                 1/1     Running   0          5m46s
 ```
 
@@ -188,7 +188,7 @@ Switched to context "gke_<Project name>_europe-west1-b_cassandra-europe-west1-b-
 $ kubens # Switch context on correct namespace
 Context "gke_<Project name>_europe-west1-b_cassandra-europe-west1-b-master" modified.
 Active namespace is "<Namespace>".
-$ kubemcsa export --context=gke_poc-rtc_europe-west1-c_cassandra-europe-west1-c-slave --namespace ${NAMESPACE} cassandra-operator --as gke-slave-west1-c | kubectl apply -f -
+$ kubemcsa export --context=gke_poc-rtc_europe-west1-c_cassandra-europe-west1-c-slave --namespace ${NAMESPACE} casskop --as gke-slave-west1-c | kubectl apply -f -
 secret/gke-slave-west1-c created
 ```
 
@@ -243,7 +243,7 @@ Switched to context "gke_<Project name>_europe-west1-b_cassandra-europe-west1-b-
 $ kubectl get pods -n ${NAMESPACE}
 NAME                                          READY   STATUS    RESTARTS   AGE
 cassandra-demo-dc1-rack1-0                    1/1     Running   0          8m30s
-casskop-cassandra-operator-54c4cfcbcb-8qncr   1/1     Running   0          34m
+casskop-casskop-54c4cfcbcb-8qncr   1/1     Running   0          34m
 external-dns-6dd96c985-7jf6w                  1/1     Running   0          35m
 multi-casskop-67dc74dff7-z4642                1/1     Running   0          11m
 $ kubectx # Switch context on slave cluster
@@ -253,7 +253,7 @@ NAME                                          READY   STATUS    RESTARTS   AGE
 cassandra-demo-dc3-rack3-0                    1/1     Running   0          6m55s
 cassandra-demo-dc4-rack4-0                    1/1     Running   0          4m59s
 cassandra-demo-dc4-rack4-1                    1/1     Running   0          3m20s
-casskop-cassandra-operator-54c4cfcbcb-sxjz7   1/1     Running   0          71m
+casskop-casskop-54c4cfcbcb-sxjz7   1/1     Running   0          71m
 external-dns-7f947c5b5b-mq7kg                 1/1     Running   0          72m
 ```
 
