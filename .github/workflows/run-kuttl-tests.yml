@@ -1,11 +1,14 @@
 name: casskop-e2e
 
 on:
-  workflow_run:
-    workflows: [build-test-publish-docker-images]
-    branches: [helm]
-    types:
-      - completed
+  push:
+    branches: ['helm']
+
+  # workflow_run:
+  #   workflows: [build-test-publish-docker-images]
+  #   branches: [helm]
+  #   types:
+  #     - completed
 
 env:
   kuttl-version: 0.11.0
@@ -14,7 +17,7 @@ jobs:
 
   install-kuttl:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Cache Kuttl
         id: cache-kuttl
