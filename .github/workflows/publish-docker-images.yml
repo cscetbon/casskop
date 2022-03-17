@@ -102,7 +102,7 @@ jobs:
         run: |
           GO111MODULE=on go install github.com/mikefarah/yq/v4@latest
           make generate
-      
+
       - name: Ensure there are no missing changes
         run: |
           [ "$(git ls-files -m | grep -cE 'zz_generated|crds')" -eq 0 ]

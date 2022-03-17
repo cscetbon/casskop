@@ -266,7 +266,7 @@ kuttl-test-fix-arg:
 ifeq ($(KUTTL_ARGS),)
 	@echo "A test folder is required" && exit 1
 endif
-	helm install casskop helm/casskop --set image.tag=$(BRANCH)
+	helm install casskop charts/casskop --set image.tag=$(BRANCH)
 	cd test/kuttl; kuttl test --test $(KUTTL_ARGS) --namespace default
 
 dgoss-bootstrap:
