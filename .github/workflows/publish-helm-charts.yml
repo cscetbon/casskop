@@ -1,10 +1,12 @@
-name: publish-charts
+name: publish helm charts
 on:
   push:
-    tags: '*'
+    branches:
+      - helm
+    # tags: '*'
 
 jobs:
-  publish-charts:
+  publish-helm-charts:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
