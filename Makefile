@@ -26,8 +26,6 @@ KUBESQUASH_REGISTRY:=
 
 KUBECONFIG ?= ~/.kube/config
 
-
-
 HELM_VERSION    := $(shell cat helm/casskop/Chart.yaml| grep version | awk -F"version: " '{print $$2}')
 HELM_TARGET_DIR ?= docs/helm
 

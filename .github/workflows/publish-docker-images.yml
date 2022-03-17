@@ -2,7 +2,6 @@ name: Build and publish Docker images
 
 on:
   push:
-    # branches: ['release']
     branches: ['helm']
     # tags: '*'
 
@@ -11,56 +10,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  # casskop:
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     # contents: read
-  #     packages: write
-
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v3
-
-  #     - name: Log in to the Container registry
-  #       uses: docker/login-action@v1.14.1
-  #       with:
-  #         registry: ghcr.io
-  #         username: ${{ github.repository_owner }}
-  #         password: ${{ secrets.GH_TOKEN_PACKAGES }}
-
-  #     - name: Build and push Docker image
-  #       uses: docker/build-push-action@v2.10.0
-  #       with:
-  #         context: .
-  #         tags: cscetbon/casskop:v2.1.0
-  #         # push: true
-
-  # multi-casskop:
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     # contents: read
-  #     packages: write
-
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v3
-
-  #     - name: Log in to the Container registry
-  #       uses: docker/login-action@v1.14.1
-  #       with:
-  #         registry: ghcr.io
-  #         username: ${{ github.repository_owner }}
-  #         password: ${{ secrets.GH_TOKEN_PACKAGES }}
-
-  #     - name: Build and push Docker image
-  #       uses: docker/build-push-action@v2.10.0
-  #       with:
-  #         context: .
-  #         file: multi-casskop/Dockerfile
-  #         tags: cscetbon/multi-casskop:v2.1.0
-  #         # push: true
-
-  generate-casskop:
+  not-missing-manifests:
     runs-on: ubuntu-latest
     container: orangeopensource/casskop-build:v1.13.0
 
@@ -93,4 +43,56 @@ jobs:
         run: |
           GO111MODULE=on go install github.com/mikefarah/yq/v4@latest
           make generate
+      
+      - name: Ensure there are no missing changes
+        run: |
           [ "$(git ls-files -m | grep -cE 'zz_generated|crds')" -eq 0 ]
+
+  casskop:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    needs: not-missing-manifests
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v1.14.1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GH_TOKEN_PACKAGES }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2.10.0
+        with:
+          context: .
+          tags: cscetbon/casskop:{{ github.ref_name }}
+          # push: true
+
+  multi-casskop:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    needs: not-missing-manifests
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v1.14.1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GH_TOKEN_PACKAGES }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2.10.0
+        with:
+          context: .
+          file: multi-casskop/Dockerfile
+          tags: cscetbon/multi-casskop:{{ github.ref_name }}
+          # push: true
