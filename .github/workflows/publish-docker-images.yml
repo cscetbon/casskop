@@ -10,9 +10,23 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+
+  unit-test:
+    runs-on: ubuntu-latest
+    container: orangeopensource/casskop-build:v1.13.0
+    # needs: not-missing-manifests
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Run unit Tests
+        run: make unit-test-with-vendor
+
   not-missing-manifests:
     runs-on: ubuntu-latest
     container: orangeopensource/casskop-build:v1.13.0
+    if: ${{ false }}  # disable for now
 
     steps:
       - name: Checkout repository
