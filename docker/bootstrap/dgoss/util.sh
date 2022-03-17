@@ -85,7 +85,7 @@ function createCassandraBootstrapContainer {
     echo "== createCassandraBootstrapContainer"
     docker run \
            -u 999 \
-           --rm -ti \
+           --rm -i \
            -e CASSANDRA_SEEDS=$CASSANDRA_SEEDS \
            -e HOSTNAME=cassandra-seb-dc1-rack1-0 \
            -e POD_NAME=cassandra-demo-dc1-rack1-0 \
@@ -103,7 +103,7 @@ function createCassandraBootstrapContainerNoExtraLib {
     echo "== createCassandraBootstrapContainer"
     docker run \
            -u 999 \
-           --rm -ti \
+           --rm -i \
            -e CASSANDRA_SEEDS=$CASSANDRA_SEEDS \
            -e HOSTNAME=cassandra-seb-dc1-rack1-0 \
            -e POD_NAME=cassandra-demo-dc1-rack1-0 \
@@ -119,7 +119,7 @@ function createCassandraBootstrapContainerWithConfigMap {
     echo "== createCassandraBootstrapContainer"
     docker run \
           -u 999 \
-           --rm -ti \
+           --rm -i \
            -e CASSANDRA_SEEDS=$CASSANDRA_SEEDS \
            -e CASSANDRA_CLUSTER_NAME=cassandra-demo \
            -e HOSTNAME=cassandra-seb-dc1-rack1-0 \
