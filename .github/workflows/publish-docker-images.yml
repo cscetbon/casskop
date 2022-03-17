@@ -47,20 +47,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Cache vendor modules
-        uses: actions/cache@v2.1.7
-        env:
-          cache-name: casskop-vendor
-        with:
-          path: |
-            vendor
-            /go/pkg
-          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ env.cache-name }}-
-            ${{ runner.os }}-
-
       - name: Run Dgoss Tests
+        shell: script -e -c {0}
         run: |
           curl -L https://raw.githubusercontent.com/aelsabbahy/goss/master/extras/dgoss/dgoss -o /usr/local/bin/dgoss
           curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.6/goss-linux-amd64 -o /usr/local/bin/goss
