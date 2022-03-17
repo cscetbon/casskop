@@ -2,7 +2,7 @@
 ##
 image:
   repository: cscetbon/casskop
-  tag: v2.1.0-release
+  tag: v2.1.0
   pullPolicy: Always
   imagePullSecrets:
     enabled: false

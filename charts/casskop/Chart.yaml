@@ -1,11 +1,11 @@
 apiVersion: v1
 description: A Helm chart for CassKop - the Orange Cassandra Kubernetes operator
 name: casskop
-home: https://github.com/cscetbon/casskop
+home: &home https://github.com/cscetbon/casskop
 sources:
-  - https://github.com/cscetbon/casskop
-version: 2.1.0
-appVersion: 2.1.0-release
+  - *home
+version: &version v2.1.0
+appVersion: *version
 maintainers:
   - name: cscetbon
     email: cscetbon@gmail.com
