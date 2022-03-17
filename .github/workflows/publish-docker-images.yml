@@ -69,7 +69,7 @@ jobs:
         uses: docker/build-push-action@v2.10.0
         with:
           context: .
-          tags: cscetbon/casskop:{{ github.ref_name }}
+          tags: cscetbon/casskop:${{ github.ref_name }}
           # push: true
 
   multi-casskop:
@@ -94,5 +94,5 @@ jobs:
         with:
           context: .
           file: multi-casskop/Dockerfile
-          tags: cscetbon/multi-casskop:{{ github.ref_name }}
+          tags: cscetbon/multi-casskop:${{ github.ref_name }}
           # push: true
