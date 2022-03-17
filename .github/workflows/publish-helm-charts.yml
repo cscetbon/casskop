@@ -7,9 +7,8 @@ jobs:
   publish-helm-charts:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Publish casskop chart
         uses: appany/helm-oci-chart-releaser@v0.3.0
