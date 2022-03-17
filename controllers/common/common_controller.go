@@ -2,8 +2,8 @@ package common
 
 import (
 	"fmt"
-	api "github.com/Orange-OpenSource/casskop/api/v2"
-	"github.com/Orange-OpenSource/casskop/pkg/cassandrabackup"
+	api "github.com/cscetbon/casskop/api/v2"
+	"github.com/cscetbon/casskop/pkg/cassandrabackup"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"

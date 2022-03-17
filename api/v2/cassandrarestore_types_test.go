@@ -3,7 +3,7 @@ package v2
 import (
 	"testing"
 
-	"github.com/Orange-OpenSource/casskop/api/v2/common"
+	"github.com/cscetbon/casskop/api/v2/common"
 	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
 	"github.com/mitchellh/mapstructure"
 	"github.com/stretchr/testify/assert"

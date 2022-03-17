@@ -25,8 +25,8 @@ import (
 
 	"time"
 
-	api "github.com/Orange-OpenSource/casskop/api/v2"
-	"github.com/Orange-OpenSource/casskop/pkg/k8s"
+	api "github.com/cscetbon/casskop/api/v2"
+	"github.com/cscetbon/casskop/pkg/k8s"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

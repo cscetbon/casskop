@@ -18,7 +18,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/Orange-OpenSource/casskop/multi-casskop/controllers"
+	"github.com/cscetbon/casskop/multi-casskop/controllers"
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/sample-controller/pkg/signals"
 

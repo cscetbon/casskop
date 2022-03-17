@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	api "github.com/Orange-OpenSource/casskop/api/v2"
-	"github.com/Orange-OpenSource/casskop/pkg/cassandrabackup"
-	"github.com/Orange-OpenSource/casskop/controllers/common"
+	api "github.com/cscetbon/casskop/api/v2"
+	"github.com/cscetbon/casskop/pkg/cassandrabackup"
+	"github.com/cscetbon/casskop/controllers/common"
 	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"

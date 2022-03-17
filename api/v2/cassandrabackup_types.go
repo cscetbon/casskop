@@ -2,7 +2,7 @@ package v2
 
 import (
 	"encoding/json"
-	"github.com/Orange-OpenSource/casskop/pkg/util"
+	"github.com/cscetbon/casskop/pkg/util"
 	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
 	"strings"
 

@@ -9,7 +9,7 @@ spec:
   jobLabel: kube-prometheus-cassandra-k8s
   selector:
     matchLabels:
-      name: cassandra-operator
+      name: casskop
   namespaceSelector:
     any: true
   endpoints:

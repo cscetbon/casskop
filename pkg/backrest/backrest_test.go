@@ -3,8 +3,8 @@ package backrest
 import (
 	"testing"
 
-	"github.com/Orange-OpenSource/casskop/api/v2"
-	"github.com/Orange-OpenSource/casskop/pkg/cassandrabackup"
+	"github.com/cscetbon/casskop/api/v2"
+	"github.com/cscetbon/casskop/pkg/cassandrabackup"
 	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
 	"github.com/stretchr/testify/assert"
 )

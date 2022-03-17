@@ -22,7 +22,7 @@ limitations under the License.
 package v2
 
 import (
-	apiv2 "github.com/Orange-OpenSource/casskop/api/v2"
+	apiv2 "github.com/cscetbon/casskop/api/v2"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 

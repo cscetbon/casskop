@@ -17,14 +17,14 @@ package cassandracluster
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Orange-OpenSource/casskop/controllers/common"
+	"github.com/cscetbon/casskop/controllers/common"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"net/http"
 	"reflect"
 	"testing"
 
-	api "github.com/Orange-OpenSource/casskop/api/v2"
-	"github.com/Orange-OpenSource/casskop/pkg/k8s"
+	api "github.com/cscetbon/casskop/api/v2"
+	"github.com/cscetbon/casskop/pkg/k8s"
 	"github.com/jarcoal/httpmock"
 	"github.com/r3labs/diff"
 	"github.com/stretchr/testify/assert"

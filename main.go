@@ -33,11 +33,11 @@ import (
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
-	api "github.com/Orange-OpenSource/casskop/api/v2"
-	"github.com/Orange-OpenSource/casskop/controllers/cassandrabackup"
-	"github.com/Orange-OpenSource/casskop/controllers/cassandracluster"
-	"github.com/Orange-OpenSource/casskop/controllers/cassandrarestore"
-	"github.com/Orange-OpenSource/casskop/version"
+	api "github.com/cscetbon/casskop/api/v2"
+	"github.com/cscetbon/casskop/controllers/cassandrabackup"
+	"github.com/cscetbon/casskop/controllers/cassandracluster"
+	"github.com/cscetbon/casskop/controllers/cassandrarestore"
+	"github.com/cscetbon/casskop/version"
 	"github.com/operator-framework/operator-lib/leader"
 	"github.com/sirupsen/logrus"
 	"github.com/zput/zxcTool/ztLog/zt_formatter"

@@ -17,10 +17,10 @@ package cassandracluster
 import (
 	"context"
 	"fmt"
-	api "github.com/Orange-OpenSource/casskop/api/v2"
+	api "github.com/cscetbon/casskop/api/v2"
 	policyv1beta1 "k8s.io/api/policy/v1beta1"
 
-	"github.com/Orange-OpenSource/casskop/pkg/k8s"
+	"github.com/cscetbon/casskop/pkg/k8s"
 
 	"github.com/sirupsen/logrus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

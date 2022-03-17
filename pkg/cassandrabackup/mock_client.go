@@ -1,7 +1,7 @@
 package cassandrabackup
 
 import (
-	"github.com/Orange-OpenSource/casskop/api/v2/common"
+	"github.com/cscetbon/casskop/api/v2/common"
 	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
 	"github.com/jarcoal/httpmock"
 	"github.com/mitchellh/mapstructure"

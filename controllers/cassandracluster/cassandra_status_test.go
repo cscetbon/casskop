@@ -17,7 +17,7 @@ package cassandracluster
 import (
 	"context"
 	"fmt"
-	"github.com/Orange-OpenSource/casskop/controllers/common"
+	"github.com/cscetbon/casskop/controllers/common"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -35,7 +35,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	api "github.com/Orange-OpenSource/casskop/api/v2"
+	api "github.com/cscetbon/casskop/api/v2"
 	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
 )
