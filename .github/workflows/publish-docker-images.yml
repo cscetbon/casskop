@@ -13,7 +13,6 @@ env:
 jobs:
   casskop:
     runs-on: ubuntu-latest
-    container: orangeopensource/casskop-build:v1.13.0
     permissions:
       contents: read
       packages: write
@@ -34,4 +33,29 @@ jobs:
         with:
           context: .
           tags: cscetbon/casskop:v2.1.0
+          # push: true
+
+  multi-casskop:
+    runs-on: ubuntu-latest
+    # container: orangeopensource/casskop-build:v1.13.0
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v1.14.1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GH_TOKEN_PACKAGES }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2.10.0
+        with:
+          context: multi-casskop
+          tags: cscetbon/multi-casskop:v2.1.0
           # push: true
