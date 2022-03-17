@@ -102,7 +102,7 @@ update-crds:
 		yq -i e '$(FIRST_VERSION).storage = false' $$crd; \
 	done
 	for chart in $(ls charts); do \
-	  cp -v config/crd/bases/* charts/${chart}/crds/
+	  cp -v config/crd/bases/* charts/${chart}/crds/; \
 	done
 
 include shared.mk
