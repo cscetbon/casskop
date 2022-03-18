@@ -15,7 +15,7 @@ spec:
   resources:
     limits:
       memory: 512Mi
-      cpu: 500m
+      cpu: 200m
   topology:
     dc:
       - name: dc1
