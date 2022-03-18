@@ -11,76 +11,76 @@ env:
 
 jobs:
 
-  # not-missing-manifests:
-  #   runs-on: ubuntu-latest
-  #   container: orangeopensource/casskop-build:v1.13.0
+  not-missing-manifests:
+    runs-on: ubuntu-latest
+    container: orangeopensource/casskop-build:v1.13.0
 
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v3
-  #       with:
-  #         fetch-depth: 0
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-  #     - name: Cache vendor modules
-  #       uses: actions/cache@v2.1.7
-  #       env:
-  #         cache-name: casskop-vendor
-  #       with:
-  #         path: |
-  #           vendor
-  #           /go/pkg
-  #         key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('go.sum') }}
-  #         restore-keys: |
-  #           ${{ runner.os }}-${{ env.cache-name }}-
-  #           ${{ runner.os }}-
+      - name: Cache vendor modules
+        uses: actions/cache@v2.1.7
+        env:
+          cache-name: casskop-vendor
+        with:
+          path: |
+            vendor
+            /go/pkg
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.cache-name }}-
+            ${{ runner.os }}-
 
-  #     - name: Download dependencies
-  #       run: go mod download
+      - name: Download dependencies
+        run: go mod download
 
-  #     - name: Vendor dependencies
-  #       run: go mod vendor
+      - name: Vendor dependencies
+        run: go mod vendor
 
-  #     - name: Generate k8s & crds
-  #       run: |
-  #         GO111MODULE=on go install github.com/mikefarah/yq/v4@latest
-  #         make generate
+      - name: Generate k8s & crds
+        run: |
+          GO111MODULE=on go install github.com/mikefarah/yq/v4@latest
+          make generate
 
-  #     - name: Ensure there are no missing changes
-  #       run: |
-  #         [ "$(git ls-files -m | grep -cE 'zz_generated|crds')" -eq 0 ]
+      - name: Ensure there are no missing changes
+        run: |
+          [ "$(git ls-files -m | grep -cE 'zz_generated|crds')" -eq 0 ]
 
-  # unit-tests:
-  #   runs-on: ubuntu-latest
-  #   container: orangeopensource/casskop-build:v1.13.0
-  #   needs: not-missing-manifests
+  unit-tests:
+    runs-on: ubuntu-latest
+    container: orangeopensource/casskop-build:v1.13.0
+    needs: not-missing-manifests
 
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v3
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-  #     - name: Cache vendor modules
-  #       uses: actions/cache@v2.1.7
-  #       env:
-  #         cache-name: casskop-vendor
-  #       with:
-  #         path: |
-  #           vendor
-  #           /go/pkg
-  #         key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('go.sum') }}
-  #         restore-keys: |
-  #           ${{ runner.os }}-${{ env.cache-name }}-
-  #           ${{ runner.os }}-
+      - name: Cache vendor modules
+        uses: actions/cache@v2.1.7
+        env:
+          cache-name: casskop-vendor
+        with:
+          path: |
+            vendor
+            /go/pkg
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.cache-name }}-
+            ${{ runner.os }}-
 
-  #     - name: Run unit Tests
-  #       run: |
-  #         go mod vendor
-  #         make unit-test-with-vendor
+      - name: Run unit Tests
+        run: |
+          go mod vendor
+          make unit-test-with-vendor
 
   casskop:
     runs-on: ubuntu-latest
     permissions:
       packages: write
-    # needs: unit-tests
+    needs: unit-tests
 
     steps:
       - name: Checkout repository
@@ -103,43 +103,43 @@ jobs:
       - name: Make it fail
         run: exit 1
 
-  # dgoss-tests:
-  #   runs-on: ubuntu-latest
-  #   container: orangeopensource/casskop-build:v1.13.0
-  #   needs: casskop
+  dgoss-tests:
+    runs-on: ubuntu-latest
+    container: orangeopensource/casskop-build:v1.13.0
+    needs: casskop
 
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v3
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-  #     - name: Run Dgoss Tests
-  #       run: |
-  #         curl -L https://raw.githubusercontent.com/aelsabbahy/goss/master/extras/dgoss/dgoss -o /usr/local/bin/dgoss
-  #         curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.6/goss-linux-amd64 -o /usr/local/bin/goss
-  #         chmod +rx /usr/local/bin/dgoss /usr/local/bin/goss
-  #         GOSS_PATH=/usr/local/bin/goss GOSS_FILES_STRATEGY=cp make dgoss-bootstrap
+      - name: Run Dgoss Tests
+        run: |
+          curl -L https://raw.githubusercontent.com/aelsabbahy/goss/master/extras/dgoss/dgoss -o /usr/local/bin/dgoss
+          curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.6/goss-linux-amd64 -o /usr/local/bin/goss
+          chmod +rx /usr/local/bin/dgoss /usr/local/bin/goss
+          GOSS_PATH=/usr/local/bin/goss GOSS_FILES_STRATEGY=cp make dgoss-bootstrap
 
-  # multi-casskop:
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     packages: write
-  #   needs: unit-tests
+  multi-casskop:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    needs: unit-tests
 
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v3
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-  #     - name: Log in to the Container registry
-  #       uses: docker/login-action@v1.14.1
-  #       with:
-  #         registry: ghcr.io
-  #         username: ${{ github.repository_owner }}
-  #         password: ${{ secrets.GH_TOKEN_PACKAGES }}
+      - name: Log in to the Container registry
+        uses: docker/login-action@v1.14.1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-  #     - name: Build and push Docker image
-  #       uses: docker/build-push-action@v2.10.0
-  #       with:
-  #         context: .
-  #         file: multi-casskop/Dockerfile
-  #         tags: cscetbon/multi-casskop:${{ github.ref_name }}
-  #         push: true
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2.10.0
+        with:
+          context: .
+          file: multi-casskop/Dockerfile
+          tags: ghcr.io/cscetbon/multi-casskop:${{ github.ref_name }}
+          push: true
