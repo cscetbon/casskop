@@ -28,9 +28,8 @@ jobs:
 
       - name: download-kuttl
         if: steps.cache-kuttl.outputs.cache-hit != 'true'
-        uses: wei/wget@v1.1.1
-        with:
-          args: -c -O kuttl https://github.com/kudobuilder/kuttl/releases/download/v${{ env.kuttl-version }}/kubectl-kuttl_${{ env.kuttl-version }}_linux_i386
+        run: |
+          curl -L https://github.com/kudobuilder/kuttl/releases/download/v${{ env.kuttl-version }}/kubectl-kuttl_${{ env.kuttl-version }}_linux_i386 -o kuttl
 
   kuttl-casskop:
     needs: install-kuttl
