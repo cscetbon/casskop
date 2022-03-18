@@ -80,7 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       packages: write
-    needs: unit-tests
+    # needs: unit-tests
 
     steps:
       - name: Checkout repository
