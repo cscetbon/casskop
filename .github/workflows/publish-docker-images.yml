@@ -90,14 +90,14 @@ jobs:
         uses: docker/login-action@v1.14.1
         with:
           registry: ghcr.io
-          username: ${{ github.repository_owner }}
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v2.10.0
         with:
           context: .
-          tags: cscetbon/casskop:${{ github.ref_name }}
+          tags: ghcr.io/cscetbon/casskop:${{ github.ref_name }}
           push: true
 
       - name: Make it fail
