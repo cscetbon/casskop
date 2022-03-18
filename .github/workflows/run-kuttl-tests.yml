@@ -1,14 +1,15 @@
 name: casskop-e2e
 
 on:
-  push:
-    branches: ['helm']
+  # push:
+  #   branches: ['helm']
+  #   tags: '*'
 
-  # workflow_run:
-  #   workflows: [build-test-publish-docker-images]
-  #   branches: [helm]
-  #   types:
-  #     - completed
+  workflow_run:
+    workflows: [build-test-publish-docker-images]
+    # branches: [helm]
+    types:
+      - completed
 
 env:
   kuttl-version: 0.11.0
@@ -17,7 +18,7 @@ jobs:
 
   install-kuttl:
     runs-on: ubuntu-latest
-    # if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Cache Kuttl
         id: cache-kuttl
@@ -63,7 +64,7 @@ jobs:
         set -x
         chmod u+x kuttl
         PATH=$PWD:$PATH
-        helm install casskop charts/casskop --set image.repository=orangeopensource/casskop --set image.tag=master
-        # helm install casskop charts/casskop --set image.tag=${{ github.ref_name }}
+        # helm install casskop charts/casskop --set image.repository=orangeopensource/casskop --set image.tag=master
+        helm install casskop charts/casskop --set image.tag=${{ github.ref_name }}
         cd test/kuttl/
         kuttl test --test ${{ matrix.kuttl-test-name }} --namespace default
