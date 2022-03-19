@@ -100,9 +100,6 @@ jobs:
           tags: ghcr.io/cscetbon/casskop:${{ github.ref_name }}
           push: true
 
-      - name: Make it fail
-        run: exit 1
-
   dgoss-tests:
     runs-on: ubuntu-latest
     container: orangeopensource/casskop-build:v1.13.0
