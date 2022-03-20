@@ -102,7 +102,7 @@ jobs:
         uses: docker/build-push-action@v2.10.0
         with:
           context: .
-          file: docker/${{ matrix.image }}
+          file: docker/${{ matrix.image }}/Dockerfile
           tags: ghcr.io/cscetbon/${{ matrix.image }}:${{ github.ref_name }}
           push: true
 
