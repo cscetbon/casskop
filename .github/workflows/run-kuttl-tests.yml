@@ -6,8 +6,10 @@ on:
     workflows: ["Test & publish Docker images"]
     types:
       - complete
-  push:
+  pull_request:
     branches: ["*"]
+  push:
+    branches: [master]
 
 env:
   kuttl-version: 0.11.0
