@@ -1,0 +1,43 @@
+labels:
+  duplicate: close
+  wontfix: close
+  invalid: close
+  'merge when passing': merge
+  'squash when passing': merge
+  docs: merge
+  stale: 
+    action: close
+    delay: 7 days
+    comment: false
+  close:
+    delay: "3 days"
+    comment: "⚠️ This issue has been marked $LABEL and will be closed in $DELAY".
+
+merges:
+  # - action: tag
+
+comments:
+  - action: delete_comment
+    pattern: /^:.+?:$/i # matches emojis like :+1:
+  - action: label
+    pattern: /duplicate of/i
+    labels: 
+      - duplicate
+
+commits:
+  - action: label
+    pattern: BREAKING CHANGE
+    labels: 
+      - Major Version
+	- action: label
+	  pattern: /perf.+?:/
+	  labels: 
+       - Major Version
+	- action: label
+	  pattern: /feat.+?:/
+	  labels: 
+	    - Minor Version
+	- action: label
+	  pattern: /fix.+?:/
+	  labels: 
+	    - Patch Version
