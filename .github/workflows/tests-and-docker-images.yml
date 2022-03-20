@@ -14,7 +14,7 @@ jobs:
 
   not-missing-manifests:
     runs-on: ubuntu-latest
-    container: orangeopensource/casskop-build:v1.13.0
+    container: ghcr.io/cscetbon/casskop-build:v1.13.0
 
     steps:
       - name: Checkout repository
@@ -52,7 +52,7 @@ jobs:
 
   unit-tests:
     runs-on: ubuntu-latest
-    container: orangeopensource/casskop-build:v1.13.0
+    container: ghcr.io/cscetbon/casskop-build:v1.13.0
     needs: not-missing-manifests
 
     steps:

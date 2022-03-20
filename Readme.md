@@ -29,7 +29,7 @@ The documentation of the Casskop operator project is available at the [Casskop D
 
 ## Cassandra operator
 
-The Cassandra operator image is automatically built and stored on [Docker Hub](https://cloud.docker.com/u/orangeopensource/repository/docker/orangeopensource/casskop)
+The Casskop image is automatically built and stored on [Github Packages](https://github.com/cscetbon/casskop/pkgs/container/casskop)
 
 Casskop uses standard Cassandra image (tested up to Version 3.11)
 
@@ -48,7 +48,7 @@ We uses Github Action as our CI tool to build and test the operator.
 
 To accelerate build phases we have created a custom [build-image](docker/ci/Dockerfile) used by the CI pipeline:
 
-https://cloud.docker.com/u/orangeopensource/repository/docker/orangeopensource/casskop-build
+https://github.com/cscetbon/casskop/actions/workflows/ci-image.yml
 
 You can find more info in the [developer Section](documentation/development.md)
 

@@ -1,6 +1,11 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
+## 2.1.1
+
+* Helm by @cscetbon in https://github.com/cscetbon/casskop/pull/9
+* Remove circleci by @cscetbon in https://github.com/cscetbon/casskop/pull/10
+
 ## v2.1.0
 
 - PR [397](https://github.com/Orange-OpenSource/casskop/pull/397) - Fix activation of Jolokia Auth
@@ -297,7 +302,7 @@ Introduce Multi-Casskop, the Operator to manage a single Cassandra Cluster above
   keep current hostname in seedlist
 
 - PR [#151](https://github.com/Orange-OpenSource/casskop/pull/151) - Fix [Issue #150](https://github.com/Orange-OpenSource/casskop/issues/150) Makes JMX port remotely available (again)
-    - uses New bootstrap Image 0.1.3 : orangeopensource/cassandra-bootstrap:0.1.3
+    - uses New bootstrap Image 0.1.3 : ghcr.io/cscetbon/casskop-bootstrap:0.1.3
 
 
 ## 0.4.1

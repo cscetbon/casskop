@@ -12,8 +12,8 @@ spec:
       labels:
         cluster: casskop
     spec:
-      cassandraImage: orangeopensource/cassandra-image:3.11
-      bootstrapImage: orangeopensource/cassandra-bootstrap:0.1.4
+      cassandraImage: cassandra:3.11
+      bootstrapImage: ghcr.io/cscetbon/casskop-bootstrap:0.1.4
       configMapName: cassandra-configmap-v1
       service:
         annotations:

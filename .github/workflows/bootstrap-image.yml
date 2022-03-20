@@ -34,7 +34,7 @@ jobs:
 
   dgoss-tests:
     runs-on: ubuntu-latest
-    container: orangeopensource/casskop-build:v1.13.0
+    container: ghcr.io/cscetbon/casskop-build:v1.13.0
     needs: build-publish-image
 
     steps:
