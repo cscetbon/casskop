@@ -126,12 +126,6 @@ build-bootstrap-image:
 push-bootstrap-image:
 	$(MAKE) -C docker/bootstrap push
 
-build-cassandra-image:
-	$(MAKE) -C docker/cassandra build
-push-cassandra-image:
-	$(MAKE) -C docker/cassandra push
-
-
 pipeline:
 	docker run -ti --rm --privileged -v $(PWD):/go/src/github.com/Orange-OpenSource/casskop -w /go/src/github.com/Orange-OpenSource/casskop \
   --env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
