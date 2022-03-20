@@ -1,9 +1,9 @@
 name: Publish Helm charts
 on:
-  workflow_dispatch:
-  # push:
-  #   branches: [helm]
-  #   tags: '*'
+  workflow_dispatch
+  push:
+    branches: [helm]
+    tags: '*'
 
 jobs:
   publish-helm-charts:
