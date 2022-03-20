@@ -6,10 +6,8 @@ on:
     workflows: ["Test & publish Docker images"]
     types:
       - complete
-  pull_request:
-    branches: ["*"]
   push:
-    branches: [master]
+    branches: ["*"]
 
 env:
   kuttl-version: 0.11.0
@@ -18,7 +16,7 @@ jobs:
 
   install-kuttl:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Cache Kuttl
         id: cache-kuttl

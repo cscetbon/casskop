@@ -2,10 +2,8 @@ name: Test & publish Docker images
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches: ["*"]
   push:
-    branches: [master]
+    branches: ["*"]
     tags: ["*"]
 
 env:
