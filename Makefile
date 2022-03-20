@@ -141,12 +141,6 @@ pipeline-e2e:
 	docker run -ti --rm --privileged -v $(PWD):/source -w /source \
 	$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) bash
 
-circleci-process:
-	circleci config process .circleci/config.yml
-
-circleci-validate:
-	circleci config validate
-
 # Run a shell into the development docker image
 shell: docker-dev-build
 	docker run  --env GO111MODULE=on -ti --rm -v ~/.kube:/.kube:ro -v $(PWD):$(WORKDIR) --name $(SERVICE_NAME) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash

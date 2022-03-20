@@ -2,7 +2,7 @@ labels:
   duplicate: close
   wontfix: close
   invalid: close
-  looksgood: merge
+  'squash when passing': merge
   docs: merge
   stale: 
     action: close
