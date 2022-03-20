@@ -21,11 +21,11 @@ that :
 
 ## Installation
 
-For detailed installation instructions, see the [Casskop Documentation Page](https://orange-opensource.github.io/casskop/docs/2_setup/1_getting_started).
+For detailed installation instructions, see the [Casskop Documentation Page](https://cscetbon.github.io/casskop/docs/2_setup/1_getting_started).
 
 ## Documentation
 
-The documentation of the Casskop operator project is available at the [Casskop Documentation Page](https://orange-opensource.github.io/casskop/docs/1_concepts/1_introduction).
+The documentation of the Casskop operator project is available at the [Casskop Documentation Page](https://cscetbon.github.io/casskop/docs/1_concepts/1_introduction).
 
 ## Cassandra operator
 
