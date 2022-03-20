@@ -6,6 +6,8 @@ on:
     workflows: ["Test & publish Docker images"]
     types:
       - complete
+  push:
+    branches: ['helm']
 
 env:
   kuttl-version: 0.11.0
@@ -33,8 +35,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        kuttl-test-name: [sidecars]
-        # kuttl-test-name: [sidecars scaling operations multi-dcs]
+        # kuttl-test-name: [sidecars]
+        kuttl-test-name: [sidecars scaling operations multi-dcs]
     steps:
     - name: Check out repository
       uses: actions/checkout@v2
