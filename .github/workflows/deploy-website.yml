@@ -14,17 +14,7 @@ jobs:
         with:
           node-version: 14.13.1
           cache: yarn
-
-      - name: Cache yarn modules
-        uses: actions/cache@v2.1.7
-        env:
-          cache-name: yarn-modules
-        with:
-          path: ~/.cache/yarn
-          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('website/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ env.cache-name }}-
-            ${{ runner.os }}-
+          cache-dependency-path: website/yarn.lock
 
       - name: Build website
         working-directory: website
