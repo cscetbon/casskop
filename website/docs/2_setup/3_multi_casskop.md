@@ -68,7 +68,7 @@ Deployment with Helm. Multi-CassKop and CassKop shared the same github/helm repo
 
 
 ```bash
-helm install  multi-casskop orange-incubator/multi-casskop --set k8s.local=k8s-cluster1 --set k8s.remote={k8s-cluster2}
+helm install  multi-casskop oci://ghcr.io/cscetbon/multi-casskop --set k8s.local=k8s-cluster1 --set k8s.remote={k8s-cluster2}
 ```
 
 When starting Multi-CassKop, we need to give some parameters:

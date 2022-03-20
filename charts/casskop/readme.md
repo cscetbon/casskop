@@ -34,7 +34,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example,
 
 ```console
-$ helm install incubator/casskop -f values.yaml
+$ helm install oci://ghcr.io/cscetbon/casskop -f values.yaml
 ```
 
 ### Installing the Chart
@@ -42,19 +42,19 @@ $ helm install incubator/casskop -f values.yaml
 You can make a dry run of the chart before deploying :
 
 ```console 
-helm install --dry-run --debug.enabled incubator/casskop --set debug.enabled=true
+helm install --dry-run --debug.enabled oci://ghcr.io/cscetbon/casskop --set debug.enabled=true
 ```
 
 To install the chart with the release name my-release:
 
 ```console
-$ helm install incubator/casskop
+$ helm install oci://ghcr.io/cscetbon/casskop
 ```
 
 We can surcharge default parameters using `--set` flag :
 
 ```console
-$ helm install --replace --set image.tag=asyncronous incubator/casskop
+$ helm install --replace --set image.tag=asyncronous oci://ghcr.io/cscetbon/casskop
 ```
 
 > the `-replace` flag allow you to reuses a charts release name
@@ -128,6 +128,6 @@ In that case you can get an error like :
 
 
 ```
-$ helm install ./helm/casskop
+$ helm install ./charts/casskop
 Error: customresourcedefinitions.apiextensions.k8s.io "cassandraclusters.db.orange.com" already exists
 ```

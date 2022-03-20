@@ -40,7 +40,7 @@ Install a multi-casskop release :
 
 ```console
 $ helm repo add orange-incubator https://orange-kubernetes-charts-incubator.storage.googleapis.com
-$ helm install orange-incubator/multi-casskop
+$ helm install oci://ghcr.io/cscetbon/multi-casskop
 ```
 
 ### Listing deployed charts
@@ -111,12 +111,12 @@ In that case you can get an error like :
 
 
 ```
-$ helm install orange-incubator/multi-casskop
+$ helm install oci://ghcr.io/cscetbon/multi-casskop
 Error: customresourcedefinitions.apiextensions.k8s.io "multicasskop.db.orange.com" already exists
 ```
 
 In this case there si a parameter to say to not uses the hook to install the CRD :
 
 ```
-$ helm install orange-incubator/multi-casskop --no-hooks
+$ helm install oci://ghcr.io/cscetbon/multi-casskop --no-hooks
 ```
