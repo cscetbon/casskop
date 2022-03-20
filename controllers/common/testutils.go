@@ -2,7 +2,7 @@ package common
 
 import (
 	"fmt"
-	"github.com/Orange-OpenSource/casskop/api/v2"
+	"github.com/cscetbon/casskop/api/v2"
 	"github.com/ghodss/yaml"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"

@@ -1,11 +1,14 @@
 
-# CassKop - Cassandra Kubernetes operator Helm chart
+# Multi-CassKop - Multi site Cassandra Kubernetes operator Helm chart
 
-This Helm chart install CassKop the Orange's Cassandra Kubernetes operator to create/configure/manage Cassandra 
+This Helm chart install Multi-CassKop the Orange's multi site Cassandra Kubernetes operator to create/configure/manage Cassandra 
 clusters in a Kubernetes Namespace.
-It will uses a Custom Ressource Definition CRD: `cassandraclusters.db.orange.com`, 
-which implements a `CassandraCluster` kubernetes custom ressource definition.
 
+It will uses a Custom Ressource Definition CRD: `multicasscop.db.orange.com`, 
+which implements a `MultiCasskop` kubernetes custom ressource definition.
+
+This Operator main usage is to create `CassandraCluster` instances in several different Kubernetes cluster, so that you
+can have a single Cassandra cluster spread on several Kubernetes clusters.
 
 ## Introduction
 
@@ -17,7 +20,7 @@ The following tables lists the configurable parameters of the Cassandra Operator
 
 | Parameter                        | Description                                      | Default                                   |
 |----------------------------------|--------------------------------------------------|-------------------------------------------|
-| `image.repository`               | Image                                            | `orangeopensource/casskop` |
+| `image.repository`               | Image                                            | `cscetbon/casskop` |
 | `image.tag`                      | Image tag                                        | `0.3.1-master`                            |
 | `image.pullPolicy`               | Image pull policy                                | `Always`                                  |
 | `image.imagePullSecrets.enabled` | Enable tue use of secret for docker image        | `false`                                   |
@@ -25,40 +28,20 @@ The following tables lists the configurable parameters of the Cassandra Operator
 | `rbacEnable`                     | If true, create & use RBAC resources             | `true`                                    |
 | `resources`                      | Pod resource requests & limits                   | `{}`                                      |
 | `metricService`                  | deploy service for metrics                       | `false`                                   |
-| `debug.enabled`                  | activate DEBUG log level and enable shareProcessNamespace (allowing ephemeral container usage) | `false`                                   |
+| `debug.enabled`                  | activate DEBUG log level  and enable shareProcessNamespace (allowing ephemeral container usage)                        | `false`                                   |
 
 
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 
-Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example,
-
-```console
-$ helm install --name casskop incubator/cassandra-operator -f values.yaml
-```
-
 ### Installing the Chart
 
-You can make a dry run of the chart before deploying :
-
-```console 
-helm install --dry-run --debug.enabled incubator/cassandra-operator --set debug.enabled=true --name casskop
-```
-
-To install the chart with the release name my-release:
+Install a multi-casskop release :
 
 ```console
-$ helm install --name casskop incubator/cassandra-operator
+$ helm repo add orange-incubator https://orange-kubernetes-charts-incubator.storage.googleapis.com
+$ helm install oci://ghcr.io/cscetbon/multi-casskop
 ```
-
-We can surcharge default parameters using `--set` flag :
-
-```console
-$ helm install --replace --set image.tag=asyncronous --name casskop incubator/cassandra-operator
-```
-
-> the `-replace` flag allow you to reuses a charts release name
-
 
 ### Listing deployed charts
 
@@ -69,7 +52,7 @@ helm list
 ### Get Status for the helm deployment :
 
 ```
-helm status casskop
+helm status multi-casskop
 
 ```
 
@@ -87,7 +70,7 @@ The command removes all the Kubernetes components associated with the chart and 
 
 Manually delete the CRD:
 ```
-kubectl delete crd cassandraclusters.dfy.orange.com
+kubectl delete crd multicasskop.dfy.orange.com
 ```
 
 > **!!!!!!!!WARNING!!!!!!!!**
@@ -113,7 +96,7 @@ Note that because releases are preserved in this way, you can rollback a deleted
 
 To purge a release
 ```console
-$ helm delete --purge casskop
+$ helm delete --purge multi-casskop
 ```
 
 
@@ -121,13 +104,19 @@ $ helm delete --purge casskop
 
 ### Install of the CRD
 
-By default, the chart will install the Casskop CRD, but this installation is global for the whole
+By default, the chart will install via a helm hook the Casskop CRD, but this installation is global for the whole
 cluster, and you may deploy a chart with an existing CRD already deployed.
 
 In that case you can get an error like :
 
 
 ```
-$ helm install --name casskop ./helm/cassandra-operator
-Error: customresourcedefinitions.apiextensions.k8s.io "cassandraclusters.db.orange.com" already exists
+$ helm install oci://ghcr.io/cscetbon/multi-casskop
+Error: customresourcedefinitions.apiextensions.k8s.io "multicasskop.db.orange.com" already exists
+```
+
+In this case there si a parameter to say to not uses the hook to install the CRD :
+
+```
+$ helm install oci://ghcr.io/cscetbon/multi-casskop --no-hooks
 ```

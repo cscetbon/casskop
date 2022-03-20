@@ -1,0 +1,30 @@
+name: Publish Helm charts
+on:
+  push:
+    tags: ["*"]
+
+jobs:
+  publish-helm-charts:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    strategy:
+      matrix:
+        chart:
+          - casskop
+          - multi-casskop
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Publish ${{ matrix.chart }} chart
+        uses: appany/helm-oci-chart-releaser@v0.3.0
+        with:
+          name: ${{ matrix.chart }}
+          repository: ${{ github.repository_owner }}
+          tag: ${{ github.ref_name }}
+          registry: ghcr.io
+          registry_username: ${{ github.repository_owner }}
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+

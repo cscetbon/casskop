@@ -22,7 +22,7 @@ import (
 
 	"github.com/ghodss/yaml"
 
-	api "github.com/Orange-OpenSource/casskop/api/v2"
+	api "github.com/cscetbon/casskop/api/v2"
 	"github.com/stretchr/testify/assert"
 )
 

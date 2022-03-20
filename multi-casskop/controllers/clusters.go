@@ -17,8 +17,8 @@ package controllers
 import (
 	"admiralty.io/multicluster-controller/pkg/cluster"
 	"fmt"
-	apicc "github.com/Orange-OpenSource/casskop/api/v2"
-	apicmc "github.com/Orange-OpenSource/casskop/multi-casskop/api/v2"
+	apicc "github.com/cscetbon/casskop/api/v2"
+	apicmc "github.com/cscetbon/casskop/multi-casskop/api/v2"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

@@ -3,7 +3,7 @@ package controllers
 import (
 	"context"
 
-	ccv1 "github.com/Orange-OpenSource/casskop/api/v2"
+	ccv1 "github.com/cscetbon/casskop/api/v2"
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/sirupsen/logrus"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"

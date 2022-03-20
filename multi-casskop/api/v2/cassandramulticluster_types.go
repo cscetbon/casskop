@@ -1,7 +1,7 @@
 package v2
 
 import (
-	apicc "github.com/Orange-OpenSource/casskop/api/v2"
+	apicc "github.com/cscetbon/casskop/api/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

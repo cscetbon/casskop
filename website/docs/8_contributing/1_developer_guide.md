@@ -4,36 +4,6 @@ title: Developer guide
 sidebar_label: Developer guide
 ---
 
-## CircleCI build pipeline
-
-We use CircleCI to build and test the operator code on each commit.
-
-### CircleCI config validation hook
-
-To discover errors in the CircleCI earlier, we can uses the [CircleCI cli](https://circleci.com/docs/2.0/local-cli/)
-to validate the config file on pre-commit git hook.
-
-Fisrt you must install the cli, then to install the hook, runs:<
-
-```console
-cp tools/pre-commit .git/hooks/pre-commit
-```
-
-The Pipeline uses some envirenment variables that you need to set-up if you want your fork to build
-
-- DOCKER_REPO_BASE -- name of your docker base reposirory (ex: orangeopensource)
-- DOCKERHUB_PASSWORD
-- DOCKERHUB_USER- SONAR_PROJECT
-- SONAR_TOKEN
-
-If not set in CircleCI environment, according steps will be ignored.
-
-### CircleCI on PR
-
-When you submit a Pull Request, then CircleCI will trigger build pipeline.
-Since this is pushed from a fork, for security reason the pipeline won't have access to the environment secrets, 
-and not all steps could be executed.
-
 ## Operator SDK
 
 ### Prerequisites
@@ -67,7 +37,7 @@ $ make install
 Checkout the project.
 
 ```sh
-$ git clone https://github.com/Orange-OpenSource/casskop.git
+$ git clone https://github.com/cscetbon/casskop.git
 $ cd casskop
 ```
 
@@ -192,7 +162,7 @@ This method can be used to run the operator locally outside of the cluster. This
 Set the name of the operator in an environment variable
 
 ```
-$ export OPERATOR_NAME=cassandra-operator
+$ export OPERATOR_NAME=casskop
 ```
 
 Deploy the CRD
@@ -230,7 +200,7 @@ $ make push
 Install the Helm chart.
 
 ```
-$ helm install ./helm/cassandra-operator \
+$ helm install ./charts/casskop \
     --set-string image.repository=orangeopensource/casskop,image.tag=0.4.0-local-dev-helm \
     --name local-dev-helm
 ```
@@ -244,7 +214,7 @@ Lastly, verify that the operator is running.
 ```
 $ kubectl get pods
 NAME                                                READY   STATUS    RESTARTS   AGE
-local-dev-helm-cassandra-operator-8946b89dc-4cfs9   1/1     Running   0          7m45s
+local-dev-helm-casskop-8946b89dc-4cfs9   1/1     Running   0          7m45s
 ```
 ### Run unit-tests
 
@@ -373,9 +343,9 @@ cd $(git rev-parse --show-toplevel)
 kubectl  apply -f config/crd/bases/
 kubectl  create namespace cluster1
 kubectl  create namespace cluster2
-helm install casskop -n cluster1 orange-incubator/cassandra-operator --set debug.enabled=true
-helm install casskop -n cluster2 orange-incubator/cassandra-operator --set debug.enabled=true
-kubemcsa export --context=k3d-multi-casskop-qa cassandra-operator --as k8s-cluster2 -n cluster1 | k apply -n cluster1 -f -
+helm install casskop -n cluster1 oci://ghcr.io/cscetbon/casskop --set debug.enabled=true
+helm install casskop -n cluster2 oci://ghcr.io/cscetbon/casskop --set debug.enabled=true
+kubemcsa export --context=k3d-multi-casskop-qa casskop --as k8s-cluster2 -n cluster1 | k apply -n cluster1 -f -
 ```
 - Update generated secret to use `server: https://kubernetes.default.svc/` in its config (We won't need that method 
 anymore and will be able to create 2 different clusters when https://github.com/rancher/k3d/issues/101 is solved)
@@ -401,7 +371,7 @@ INFO[0008] DONE
 ```
 - Install multi-casskop using the image you just imported
 ```
-helm install multi-casskop orange-incubator/multi-casskop --set k8s.local=k3d-multi-casskop-qa \
+helm install multi-casskop oci://ghcr.io/cscetbon/multi-casskop --set k8s.local=k3d-multi-casskop-qa \
     --set k8s.remote={k8s-cluster2} --set image.tag=0.5.6-my-pr --set debug.enabled=true -n cluster1 \
     --set image.pullPolicy=IfNotPresent
 ```

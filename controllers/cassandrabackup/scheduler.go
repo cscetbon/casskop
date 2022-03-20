@@ -3,7 +3,7 @@ package cassandrabackup
 import (
 	"fmt"
 
-	api "github.com/Orange-OpenSource/casskop/api/v2"
+	api "github.com/cscetbon/casskop/api/v2"
 	cron "github.com/robfig/cron/v3"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/record"

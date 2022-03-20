@@ -1,4 +1,4 @@
-module github.com/Orange-OpenSource/casskop
+module github.com/cscetbon/casskop
 
 go 1.17
 

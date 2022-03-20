@@ -3,7 +3,7 @@ package cassandrarestore
 import (
 	"context"
 	"fmt"
-	"github.com/Orange-OpenSource/casskop/controllers/common"
+	"github.com/cscetbon/casskop/controllers/common"
 	"os"
 	"testing"
 
@@ -17,7 +17,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/record"
 
-	api "github.com/Orange-OpenSource/casskop/api/v2"
+	api "github.com/cscetbon/casskop/api/v2"
 	"github.com/ghodss/yaml"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

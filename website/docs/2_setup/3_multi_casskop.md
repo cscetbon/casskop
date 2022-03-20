@@ -37,12 +37,12 @@ In order to allow our Multi-CassKop controller to have access to k8s-cluster-2 f
 [Admiralty](https://admiralty.io/) to be able to export secret from k8s-cluster-2 to k8s-cluster1
 
 ```sh
-kubemcsa export --context=cluster2 --namespace cassandra-e2e cassandra-operator --as k8s-cluster2 | kubectl apply -f -
+kubemcsa export --context=cluster2 --namespace cassandra-e2e casskop --as k8s-cluster2 | kubectl apply -f -
 ```
 
 :::tips
 This will create in current k8s (k8s-cluster-1) the k8s secret associated to the
-**cassandra-operator** service account of namespace **cassandra-e2e** in k8s-cluster2.
+**casskop** service account of namespace **cassandra-e2e** in k8s-cluster2.
 /!\ The Secret will be created with the name **k8s-cluster2** and this name must be used when starting Multi-CassKop and
 in the MultiCassKop CRD definition see below
 :::
@@ -68,7 +68,7 @@ Deployment with Helm. Multi-CassKop and CassKop shared the same github/helm repo
 
 
 ```bash
-helm install  multi-casskop orange-incubator/multi-casskop --set k8s.local=k8s-cluster1 --set k8s.remote={k8s-cluster2}
+helm install  multi-casskop oci://ghcr.io/cscetbon/multi-casskop --set k8s.local=k8s-cluster1 --set k8s.remote={k8s-cluster2}
 ```
 
 When starting Multi-CassKop, we need to give some parameters:

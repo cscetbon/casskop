@@ -1,6 +1,6 @@
 domain: multicasskops.db.orange.com
 layout: go.kubebuilder.io/v2
-repo: github.com/Orange-OpenSource/casskop
+repo: github.com/cscetbon/casskop
 version: 3-alpha
 plugins:
   go.operator-sdk.io/v2-alpha: {}

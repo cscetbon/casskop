@@ -1,8 +1,8 @@
 ## Cassandra Operator Image
 ##
 image:
-  repository: orangeopensource/casskop
-  tag: v2.1.0-release
+  repository: ghcr.io/cscetbon/casskop
+  tag: v2.1.0
   pullPolicy: Always
   imagePullSecrets:
     enabled: false

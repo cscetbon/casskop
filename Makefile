@@ -26,11 +26,6 @@ KUBESQUASH_REGISTRY:=
 
 KUBECONFIG ?= ~/.kube/config
 
-
-
-HELM_VERSION    := $(shell cat helm/cassandra-operator/Chart.yaml| grep version | awk -F"version: " '{print $$2}')
-HELM_TARGET_DIR ?= docs/helm
-
 # Compute image to use during tests
 ifdef CIRCLE_BRANCH
   ifeq ($(CIRCLE_BRANCH),master)
@@ -77,11 +72,6 @@ clean:
 	@rm -rf $(OUT_BIN) || true
 	@rm -f apis/cassandracluster/v2/zz_generated.deepcopy.go || true
 
-helm-package:
-	@echo Packaging $(HELM_VERSION)
-	helm package helm/cassandra-operator
-	mv cassandra-operator-$(HELM_VERSION).tgz $(HELM_TARGET_DIR)
-	helm repo index $(HELM_TARGET_DIR)/
 
 FIRST_VERSION = .spec.versions[0]
 SPEC_PROPS = $(FIRST_VERSION).schema.openAPIV3Schema.properties.spec.properties
@@ -101,11 +91,11 @@ update-crds:
 		cp /tmp/$$crdname $$crd; \
 		yq -i e '$(FIRST_VERSION).storage = false' $$crd; \
 	done
-	cp -v config/crd/bases/* helm/*/crds/
-	cp -v config/crd/bases/* */helm/*/crds/
+	for chart in $(ls charts); do \
+	  cp -v config/crd/bases/* charts/${chart}/crds/; \
+	done
 
 include shared.mk
-include kube.mk
 
 docker-generate-files: docker-generate-k8s docker-generate-crds
 
@@ -169,13 +159,13 @@ debug-pod-logs:
 
 define debug_telepresence
 	export TELEPRESENCE_REGISTRY=$(TELEPRESENCE_REGISTRY) ; \
-	echo "execute : cat cassandra-operator.env" ; \
+	echo "execute : cat casskop.env" ; \
 	sudo mkdir -p /var/run/secrets/kubernetes.io ; \
 	sudo ln -s /tmp/known/var/run/secrets/kubernetes.io/serviceaccount /var/run/secrets/kubernetes.io/ || true ; \
-	tdep=$(shell kubectl get deployment -l app=cassandra-operator -o jsonpath='{.items[0].metadata.name}') ; \
-  	echo kubectl get deployment -l app=cassandra-operator -o jsonpath='{.items[0].metadata.name}' ; \
-	echo telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file cassandra-operator.env $1 $2 ; \
-  	telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file cassandra-operator.env $1 $2
+	tdep=$(shell kubectl get deployment -l app=casskop -o jsonpath='{.items[0].metadata.name}') ; \
+  	echo kubectl get deployment -l app=casskop -o jsonpath='{.items[0].metadata.name}' ; \
+	echo telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file casskop.env $1 $2 ; \
+  	telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file casskop.env $1 $2
 endef
 
 debug-telepresence:
@@ -276,7 +266,7 @@ kuttl-test-fix-arg:
 ifeq ($(KUTTL_ARGS),)
 	@echo "A test folder is required" && exit 1
 endif
-	helm install casskop helm/cassandra-operator --set image.tag=$(BRANCH)
+	helm install casskop charts/casskop --set image.tag=$(BRANCH)
 	cd test/kuttl; kuttl test --test $(KUTTL_ARGS) --namespace default
 
 dgoss-bootstrap:

@@ -6,7 +6,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"time"
 
-	api "github.com/Orange-OpenSource/casskop/api/v2"
+	api "github.com/cscetbon/casskop/api/v2"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"

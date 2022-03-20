@@ -5,10 +5,10 @@ import (
 	"reflect"
 	"testing"
 
-	api "github.com/Orange-OpenSource/casskop/api/v2"
+	api "github.com/cscetbon/casskop/api/v2"
 	appsv1 "k8s.io/api/apps/v1"
 
-	"github.com/Orange-OpenSource/casskop/pkg/k8s"
+	"github.com/cscetbon/casskop/pkg/k8s"
 	"github.com/stretchr/testify/assert"
 )
 

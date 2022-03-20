@@ -23,8 +23,8 @@ import (
 	"strings"
 	"time"
 
-	api "github.com/Orange-OpenSource/casskop/api/v2"
-	"github.com/Orange-OpenSource/casskop/pkg/k8s"
+	api "github.com/cscetbon/casskop/api/v2"
+	"github.com/cscetbon/casskop/pkg/k8s"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/r3labs/diff"
 	"github.com/sirupsen/logrus"

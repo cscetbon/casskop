@@ -11,7 +11,7 @@ Upgrading the operator consists in uninstalling the current version and installi
 ```
 helm uninstall casskop
 helm repo update
-helm install --name casskop casskop/cassandra-operator
+helm install --name casskop casskop/casskop
 ```
 
 ## Upgrading from v1 to v2

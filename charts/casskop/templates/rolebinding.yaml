@@ -3,17 +3,17 @@ kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   labels:
-    app: {{ template "cassandra-operator.name" . }}
+    app: {{ template "casskop.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
-  name: {{ template "cassandra-operator.name" . }}
+  name: {{ template "casskop.name" . }}
 subjects:
 - kind: ServiceAccount
-  name: {{ template "cassandra-operator.name" . }}
+  name: {{ template "casskop.name" . }}
 roleRef:
   kind: Role
-  name: {{ template "cassandra-operator.name" . }}
+  name: {{ template "casskop.name" . }}
   apiGroup: rbac.authorization.k8s.io
 {{- range .Values.clusterServiceAccountsName }}
 ---
@@ -21,7 +21,7 @@ kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   labels:
-    app: {{ template "cassandra-operator.name" $ }}
+    app: {{ template "casskop.name" $ }}
     chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
     heritage: {{ $.Release.Service }}
     release: {{ $.Release.Name }}
@@ -31,7 +31,7 @@ subjects:
     name: {{ . }}
 roleRef:
   kind: Role
-  name: {{ template "cassandra-operator.name" $ }}-cluster-node
+  name: {{ template "casskop.name" $ }}-cluster-node
   apiGroup: rbac.authorization.k8s.io
 {{- end }}
 {{- end }}

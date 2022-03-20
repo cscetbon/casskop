@@ -22,7 +22,7 @@ This works fine within a single Kubernetes cluster, and can allow for instance t
 
 But for having more resilience with our Cassandra cluster, we want to be able to spread it on several regions. For doing this with Kubernetes, we need that our Cassandra to spread spread on top of different Kubernetes clusters, deployed independently on different regions.
 
-We introduce [MultiCassKop](https://github.com/Orange-OpenSource/casskop/multi-casskop) a new operator that fits above CassKop. MultiCassKop is a new controler that will be in charge of creating `CassandraClusters` CRD objects in several different Kubernetes clusters and in a manner that all Cassandra nodes will be part of the same ring.
+We introduce [MultiCassKop](https://github.com/cscetbon/casskop/multi-casskop) a new operator that fits above CassKop. MultiCassKop is a new controler that will be in charge of creating `CassandraClusters` CRD objects in several different Kubernetes clusters and in a manner that all Cassandra nodes will be part of the same ring.
 
 MultiCassKop uses a new custom resource definition, `MultiCasskop` which allows to specify:
 - a base for the CassandraCluster object
@@ -62,11 +62,11 @@ In order to allow our Multi-CassKop controller to have access to k8s-cluster-2 f
 [Admiralty](https://admiralty.io/) to be able to export secret from k8s-cluster-2 to k8s-cluster1
 
 ```
-kubemcsa export --context=cluster2 --namespace cassandra-e2e cassandra-operator --as k8s-cluster2 | kubectl apply -f -
+kubemcsa export --context=cluster2 --namespace cassandra-e2e casskop --as k8s-cluster2 | kubectl apply -f -
 ```
 
 > This will create in current k8s cluster which must be k8s-cluster-1, the k8s secret associated to the
-> **cassandra-operator** service account of namespace **cassandra-e2e** in k8s-cluster2.
+> **casskop** service account of namespace **cassandra-e2e** in k8s-cluster2.
 > /!\ The Secret will be created with the name **k8s-cluster2** and this name must be used when starting Multi-CassKop and
 > in the MultiuCssKop CRD definition see below
 
@@ -94,7 +94,7 @@ $ helm repo update
 Connect to each kubernetes you want to deploy your Cassandra clusters to and install CassKop:
 
 ```console
-$ helm install casskop orange-incubator/cassandra-operator
+$ helm install casskop oci://ghcr.io/cscetbon/casskop
 ```
 
 ### Install External-DNS
@@ -113,7 +113,7 @@ Proceed with Multi-CassKop installation only when [Pre-requisites](#pre-requisit
 Deployment with Helm. Multi-CassKop and CassKop shared the same github/helm repo and semantic version.
 
 ```
-helm install multi-casskop orange-incubator/multi-casskop --set k8s.local=k8s-cluster1 --set k8s.remote={k8s-cluster2}
+helm install multi-casskop oci://ghcr.io/cscetbon/multi-casskop --set k8s.local=k8s-cluster1 --set k8s.remote={k8s-cluster2}
 ```
 
 > if you get an error complaining that the CRD already exists, then replay it with `--no-hooks`

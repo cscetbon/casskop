@@ -1,11 +1,11 @@
-module github.com/Orange-OpenSource/casskop/multi-casskop
+module github.com/cscetbon/casskop/multi-casskop
 
 go 1.17
 
 require (
 	admiralty.io/multicluster-controller v0.6.0
 	admiralty.io/multicluster-service-account v0.6.0
-	github.com/Orange-OpenSource/casskop v0.4.1
+	github.com/cscetbon/casskop v0.4.1
 	github.com/imdario/mergo v0.3.12
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/kylelemons/godebug v1.1.0
@@ -66,7 +66,7 @@ require (
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
-replace github.com/Orange-OpenSource/casskop => ../
+replace github.com/cscetbon/casskop => ../
 
 replace (
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required by OLM

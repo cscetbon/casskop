@@ -18,7 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Jeffail/gabs"
-	"github.com/Orange-OpenSource/casskop/controllers/common"
+	"github.com/cscetbon/casskop/controllers/common"
 	"github.com/ghodss/yaml"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -26,11 +26,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"testing"
 
-	api "github.com/Orange-OpenSource/casskop/api/v2"
+	api "github.com/cscetbon/casskop/api/v2"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/Orange-OpenSource/casskop/pkg/k8s"
+	"github.com/cscetbon/casskop/pkg/k8s"
 
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
