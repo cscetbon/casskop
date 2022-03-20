@@ -1,15 +1,11 @@
-name: casskop-e2e
+name: Casskop e2e tests
 
 on:
-  # push:
-  #   branches: ['helm']
-  #   tags: '*'
-
+  workflow_dispatch:
   workflow_run:
-    workflows: [build-test-publish-docker-images]
-    # branches: [helm]
+    workflows: ["Build test & publish Docker images"]
     types:
-      - completed
+      - complete
 
 env:
   kuttl-version: 0.11.0
