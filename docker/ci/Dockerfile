@@ -1,9 +1,8 @@
-#https://github.com/CircleCI-Public/circleci-dockerfiles/blob/master/golang/images/1.12.4/Dockerfile
 FROM golang:1.17
 
 # Make Apt non-interactive
-RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90circleci \
-  && echo 'DPkg::Options "--force-confnew";' >> /etc/apt/apt.conf.d/90circleci
+RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90ci \
+  && echo 'DPkg::Options "--force-confnew";' >> /etc/apt/apt.conf.d/90ci
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -27,7 +26,7 @@ RUN apt-get update \
   && apt-get install -y \
     git apt \
     locales sudo openssh-client ca-certificates tar gzip \
-    net-tools netcat unzip zip bzip2 gnupg curl wget
+    net-tools netcat unzip zip bzip2 gnupg curl wget jq
 
 # Set timezone to UTC by default
 RUN ln -sf /usr/share/zoneinfo/Etc/UTC /etc/localtime
@@ -36,18 +35,12 @@ RUN ln -sf /usr/share/zoneinfo/Etc/UTC /etc/localtime
 RUN locale-gen C.UTF-8 || true
 ENV LANG=C.UTF-8
 
-# Install jq
-RUN JQ_URL="https://circle-downloads.s3.amazonaws.com/circleci-images/cache/linux-amd64/jq-latest" \
-  && curl --silent --show-error --location --fail --retry 3 --output /usr/bin/jq $JQ_URL \
-  && chmod +x /usr/bin/jq \
-  && jq --version
-
 # Install Docker
 RUN curl -fsSL https://get.docker.com|bash
 
-RUN groupadd --gid 3434 circleci \
-  && useradd --uid 3434 --gid circleci --shell /bin/bash --create-home circleci \
-  && echo 'circleci ALL=NOPASSWD: ALL' >> /etc/sudoers.d/50-circleci \
+RUN groupadd --gid 3434 ci \
+  && useradd --uid 3434 --gid ci --shell /bin/bash --create-home ci \
+  && echo 'ci ALL=NOPASSWD: ALL' >> /etc/sudoers.d/50-ci \
   && echo 'Defaults    env_keep += "DEBIAN_FRONTEND"' >> /etc/sudoers.d/env_keep
 
 RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | INSTALL_DIRECTORY=/usr/local/bin sh
