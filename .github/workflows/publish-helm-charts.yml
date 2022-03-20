@@ -1,6 +1,6 @@
 name: Publish Helm charts
 on:
-  workflow_dispatch
+  workflow_dispatch:
   push:
     branches: [helm]
     tags: '*'
