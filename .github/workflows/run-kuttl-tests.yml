@@ -16,7 +16,7 @@ jobs:
 
   install-kuttl:
     runs-on: ubuntu-latest
-    # if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Cache Kuttl
         id: cache-kuttl
@@ -30,39 +30,39 @@ jobs:
         run: |
           curl -L https://github.com/kudobuilder/kuttl/releases/download/v${{ env.kuttl-version }}/kubectl-kuttl_${{ env.kuttl-version }}_linux_i386 -o kuttl
 
-  # kuttl-casskop:
-  #   needs: install-kuttl
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     max-parallel: 2
-  #     matrix:
-  #       kuttl-test-name: [operations, sidecars, scaling, multi-dcs]
-  #   steps:
-  #   - name: Check out repository
-  #     uses: actions/checkout@v2
+  kuttl-casskop:
+    needs: install-kuttl
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 2
+      matrix:
+        kuttl-test-name: [operations, sidecars, scaling, multi-dcs]
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
 
-  #   - uses: rinx/setup-k3d@v0.0.4
-  #     with:
-  #       version: v4.4.8
-  #       options: --image rancher/k3s:v1.20.15-k3s1
+    - uses: rinx/setup-k3d@v0.0.4
+      with:
+        version: v4.4.8
+        options: --image rancher/k3s:v1.20.15-k3s1
 
-  #   - uses: azure/setup-helm@v1
-  #     with:
-  #       version: v3.8.1
+    - uses: azure/setup-helm@v1
+      with:
+        version: v3.8.1
 
-  #   - name: Restore Kuttl
-  #     id: cache-kuttl
-  #     uses: actions/cache@v2.1.7
-  #     with:
-  #       path: kuttl
-  #       key: ${{ runner.os }}-kuttl-${{ env.kuttl-version }}
+    - name: Restore Kuttl
+      id: cache-kuttl
+      uses: actions/cache@v2.1.7
+      with:
+        path: kuttl
+        key: ${{ runner.os }}-kuttl-${{ env.kuttl-version }}
 
-  #   - name: Run kuttl tests
-  #     run: |
-  #       set -x
-  #       chmod u+x kuttl
-  #       PATH=$PWD:$PATH
-  #       # helm install casskop charts/casskop --set image.repository=orangeopensource/casskop --set image.tag=master
-  #       helm install casskop charts/casskop --set image.tag=${{ github.ref_name }}
-  #       cd test/kuttl/
-  #       kuttl test --test ${{ matrix.kuttl-test-name }} --namespace default
+    - name: Run kuttl tests
+      run: |
+        set -x
+        chmod u+x kuttl
+        PATH=$PWD:$PATH
+        # helm install casskop charts/casskop --set image.repository=orangeopensource/casskop --set image.tag=master
+        helm install casskop charts/casskop --set image.tag=${{ github.ref_name }}
+        cd test/kuttl/
+        kuttl test --test ${{ matrix.kuttl-test-name }} --namespace default
