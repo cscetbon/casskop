@@ -5,7 +5,7 @@ on:
   workflow_run:
     workflows: ["Test & publish Docker images"]
     types:
-      - complete
+      - completed
 
 env:
   kuttl-version: 0.11.0
