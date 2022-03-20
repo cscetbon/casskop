@@ -3,7 +3,7 @@ name: Casskop e2e tests
 on:
   workflow_dispatch:
   workflow_run:
-    workflows: ["Build test & publish Docker images"]
+    workflows: ["Test & publish Docker images"]
     types:
       - complete
 
