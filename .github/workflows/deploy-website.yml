@@ -1,0 +1,39 @@
+name: Deploy to GitHub Pages
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 14.13.1
+          cache: yarn
+
+      - name: Cache yarn modules
+        uses: actions/cache@v2.1.7
+        env:
+          cache-name: yarn-modules
+        with:
+          path: ~/.cache/yarn
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('website/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.cache-name }}-
+            ${{ runner.os }}-
+
+      - name: Build website
+        working-directory: website
+        run: |
+          yarn install --frozen-lockfile --non-interactive --cache-folder ~/.cache/yarn
+          yarn build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: website
