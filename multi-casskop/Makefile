@@ -27,7 +27,7 @@ KUBESQUASH_REGISTRY:=
 KUBECONFIG ?= ~/.kube/config
 
 MINIKUBE_CONFIG ?= ~/.minikube
-MINIKUBE_CONFIG_MOUNT ?= /home/circleci/.minikube
+MINIKUBE_CONFIG_MOUNT ?= /home/ci/.minikube
 
 HELM_VERSION    := $(shell cat helm/multi-casskop/Chart.yaml| grep version | awk -F"version: " '{print $$2}')
 HELM_TARGET_DIR ?= ../docs/helm

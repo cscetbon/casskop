@@ -31,8 +31,6 @@ The documentation of the Casskop operator project is available at the [Casskop D
 
 The Cassandra operator image is automatically built and stored on [Docker Hub](https://cloud.docker.com/u/orangeopensource/repository/docker/orangeopensource/casskop)
 
-[![CircleCI](https://circleci.com/gh/Orange-OpenSource/casskop.svg?style=svg&circle-token=480ca5c31a9e9ef9b893151dd2d7c15eaf0e94d0)](https://circleci.com/gh/Orange-OpenSource/casskop)
-
 Casskop uses standard Cassandra image (tested up to Version 3.11)
 
 ### Operator SDK
@@ -44,11 +42,11 @@ CassKop is build using operator SDK:
 
 ### Build pipelines
 
-We uses CircleCI as our CI tool to build and test the operator.
+We uses Github Action as our CI tool to build and test the operator.
 
 #### Build image
 
-To accelerate build phases we have created a custom [build-image](docker/circleci/Dockerfile) used by the CircleCI pipeline:
+To accelerate build phases we have created a custom [build-image](docker/ci/Dockerfile) used by the CI pipeline:
 
 https://cloud.docker.com/u/orangeopensource/repository/docker/orangeopensource/casskop-build
 

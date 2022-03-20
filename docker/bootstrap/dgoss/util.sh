@@ -142,7 +142,7 @@ function createSimpleConfigMapFile {
        -c "echo 'this is additional file' > /configmap/additional-file.yaml"
 }
 
-#the bind-mount does not seams to works in circleci, so I'll do a cp
+#the bind-mount does not seams to works in ci, so I'll do a cp
 function createPreRunConfigMapFile {
     echo "== createPreRunConfigMapFile"
     docker container create --name dummy -v ${CONFIGMAP_VOLUME}:/configmap hello-world

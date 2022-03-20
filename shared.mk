@@ -120,7 +120,7 @@ GO_LINT_CMD := golint `go list ./... | grep -v /vendor/`
 
 
 # environment dirs
-DEV_DIR := docker/circleci
+DEV_DIR := docker/ci
 APP_DIR := build/Dockerfile
 
 OPERATOR_SDK_VERSION=v1.13.0
