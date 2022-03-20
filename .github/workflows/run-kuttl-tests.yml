@@ -36,8 +36,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        kuttl-test-name: [sidecars]
-        # kuttl-test-name: [sidecars, scaling, operations, multi-dcs]
+        kuttl-test-name: [sidecars, scaling, operations, multi-dcs]
     steps:
     - name: Check out repository
       uses: actions/checkout@v2
