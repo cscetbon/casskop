@@ -3,8 +3,6 @@ name: Test & publish Docker images
 on:
   workflow_dispatch:
   push:
-    branches: ["*"]
-    tags: ["*"]
 
 env:
   REGISTRY: ghcr.io
