@@ -88,10 +88,6 @@ jobs:
     strategy:
       matrix:
         image: [casskop, multi-casskop]
-        file: [""]
-        include:
-          - image: multi-casskop
-            file: multi-casskop/Dockerfile
 
     steps:
       - name: Checkout repository
@@ -108,7 +104,7 @@ jobs:
         uses: docker/build-push-action@v2.10.0
         with:
           context: .
-          file: ${{ matrix.file }}
+          file: docker/${{ matrix.image }}
           tags: ghcr.io/cscetbon/${{ matrix.image }}:${{ github.ref_name }}
           push: true
 
