@@ -40,6 +40,8 @@ jobs:
     steps:
     - name: Check out repository
       uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.workflow_run.head_branch }}
 
     - uses: rinx/setup-k3d@v0.0.4
       with:
@@ -59,10 +61,8 @@ jobs:
 
     - name: Run kuttl tests
       run: |
-        set -x
         chmod u+x kuttl
         PATH=$PWD:$PATH
-        # helm install casskop charts/casskop --set image.repository=orangeopensource/casskop --set image.tag=master
         helm install casskop charts/casskop --set image.tag=${{ github.ref_name }}
         cd test/kuttl/
         kuttl test --test ${{ matrix.kuttl-test-name }} --namespace default
