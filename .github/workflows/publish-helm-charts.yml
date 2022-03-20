@@ -1,7 +1,7 @@
 name: Publish Helm charts
 on:
   push:
-    tags: '*'
+    tags: ["*"]
 
 jobs:
   publish-helm-charts:
