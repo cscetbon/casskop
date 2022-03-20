@@ -1,0 +1,35 @@
+name: CI image
+
+on:
+  workflow_dispatch:
+    inputs:
+      alias:
+        description: 'Docker image alias'
+        required: true
+
+jobs:
+
+  build-image:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v1.14.1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2.10.0
+        with:
+          file: docker/ci/Dockerfile
+          tags: |
+            ghcr.io/cscetbon/casskop-build:latest
+            ghcr.io/cscetbon/casskop-build:${{ github.event.inputs.alias }}
+          push: true
