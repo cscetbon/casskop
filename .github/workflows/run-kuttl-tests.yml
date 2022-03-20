@@ -34,6 +34,7 @@ jobs:
     needs: install-kuttl
     runs-on: ubuntu-latest
     strategy:
+      max-parallel: 1
       matrix:
         # kuttl-test-name: [sidecars]
         kuttl-test-name: [sidecars, scaling, operations, multi-dcs]
