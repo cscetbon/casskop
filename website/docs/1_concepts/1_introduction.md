@@ -19,7 +19,7 @@ Some of the high-level capabilities and objectives of Apache Cassandra include, 
 - Graceful C* cluster **scaling** (with cleanup and decommission prior to Kubernetes scale down)
 - Manage operations on pods through CassKop plugin (cleanup, rebuild, upgradesstable, removenode..)
 - Performing live Cassandra repairs through the use of [Cassandra reaper](http://cassandra-reaper.io/)
-- Multi-site management through [Multi-Casskop operator](https://github.com/Orange-OpenSource/casskop/tree/master/multi-casskop)
+- Multi-site management through [Multi-Casskop operator](https://github.com/cscetbon/casskop/tree/master/multi-casskop)
 - Live Backup/Restore of Cassandra's datas
 
 The Cassandra operator is based on the CoreOS
@@ -38,13 +38,13 @@ This adds security between namespaces with a better isolation, and less work for
 
 ## Presentation
 
-We have some slides for a [CassKop demo](https://orange-opensource.github.io/casskop/slides/index.html?slides=Slides-CassKop-demo.md#1)
+We have some slides for a [CassKop demo](https://cscetbon.github.io/casskop/slides/index.html?slides=Slides-CassKop-demo.md#1)
 
 You can also play with CassKop on [Katacoda](https://www.katacoda.com/orange)
 
 ## Motivation
 
-At [Orange](https://opensource.orange.com/fr/accueil/) we are building some [Kubernetes operator](https://github.com//Orange-OpenSource?utf8=%E2%9C%93&q=operator&type=&language=), that operate NiFi, Galera and Cassandra clusters (among other types) for our business cases.
+At [Orange](https://opensource.orange.com/fr/accueil/) we are building some [Kubernetes operator](https://github.com/cscetbon?utf8=%E2%9C%93&q=operator&type=&language=), that operate NiFi, Galera and Cassandra clusters (among other types) for our business cases.
 
 There are already some approaches to operating C* on Kubernetes, however, we did not find them appropriate for use in a highly dynamic environment, nor capable of meeting our needs.
 

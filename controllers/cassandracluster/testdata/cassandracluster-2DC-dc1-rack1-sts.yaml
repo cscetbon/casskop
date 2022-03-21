@@ -9,7 +9,7 @@ spec:
   template:
     spec:
       containers:
-        - image: ext-dockerio.artifactory.si.francetelecom.fr/orangeopensource/cassandra-image:3.11.9
+        - image: ext-dockerio.artifactory.si.francetelecom.fr/cassandra:3.11.9
           imagePullPolicy: Always
           name: cassandra
           ports:
@@ -51,7 +51,7 @@ spec:
             - sh
             - -c
             - cp -vr /etc/cassandra/* /bootstrap
-          image: ext-dockerio.artifactory.si.francetelecom.fr/orangeopensource/cassandra-image:3.11.9
+          image: ext-dockerio.artifactory.si.francetelecom.fr/cassandra:3.11.9
           imagePullPolicy: Always
           name: init-config
           resources:
@@ -103,7 +103,7 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: metadata.labels['cassandraclusters.db.orange.com.rack']
-          image: registry.gitlab.si.francetelecom.fr/dfyarchicloud/dfyarchicloud-registry/orangeopensource/cassandra-bootstrap:0.1.4
+          image: registry.gitlab.si.francetelecom.fr/dfyarchicloud/dfyarchicloud-registry/ghcr.io/cscetbon/casskop-bootstrap:0.1.4
           imagePullPolicy: Always
           name: bootstrap
           resources:

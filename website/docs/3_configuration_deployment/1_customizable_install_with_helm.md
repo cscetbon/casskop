@@ -19,7 +19,7 @@ The following tables lists the configurable parameters of the Cassandra Operator
 
 | Parameter                        | Description                                      | Default                                   |
 |----------------------------------|--------------------------------------------------|-------------------------------------------|
-| `image.repository`               | Image                                            | `orangeopensource/casskop`                |
+| `image.repository`               | Image                                            | `ghcr.io/cscetbon/casskop`                |
 | `image.tag`                      | Image tag                                        | `v2.0.1-release`                          |
 | `image.pullPolicy`               | Image pull policy                                | `Always`                                  |
 | `image.imagePullSecrets.enabled` | Enable the use of secret for docker image        | `false`                                   |

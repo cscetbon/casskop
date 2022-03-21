@@ -1,7 +1,7 @@
 module.exports = {
   title: 'CassKop',
   tagline: 'Open-Source, Apache Cassandra operator for Kubernetes',
-  url: 'https://orange-opensource.github.io',
+  url: 'https://cscetbon.github.io',
   baseUrl: '/casskop/',
   onBrokenLinks: 'throw',
   favicon: 'img/casskop.ico',
@@ -18,7 +18,7 @@ module.exports = {
         {to: 'docs/1_concepts/1_introduction', label: 'Docs', position: 'right'},
         {to: 'blog', label: 'Blog', position: 'right'},
         {
-          href: 'https://github.com/Orange-OpenSource/casskop',
+          href: 'https://github.com/cscetbon/casskop',
           label: 'GitHub',
           position: 'right',
         },
@@ -36,7 +36,7 @@ module.exports = {
             },
             {
               label: 'GitHub',
-              href: 'https://github.com/Orange-OpenSource/casskop',
+              href: 'https://github.com/cscetbon/casskop',
             },
           ],
         },
@@ -62,7 +62,7 @@ module.exports = {
             },
             {
               label: 'Feature request',
-              href: 'https://github.com/Orange-OpenSource/casskop/issues',
+              href: 'https://github.com/cscetbon/casskop/issues',
             },
           ],
         },
@@ -84,13 +84,13 @@ module.exports = {
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
           editUrl:
-            'https://github.com/Orange-OpenSource//casskop/edit/master/website/',
+            'https://github.com/cscetbon/casskop/edit/master/website/',
         },
         blog: {
           showReadingTime: true,
           // Please change this to your repo.
           editUrl:
-            'https://github.com/Orange-OpenSource//casskop/edit/master/website/blog',
+            'https://github.com/cscetbon/casskop/edit/master/website/blog',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),

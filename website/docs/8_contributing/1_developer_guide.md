@@ -201,7 +201,7 @@ Install the Helm chart.
 
 ```
 $ helm install ./charts/casskop \
-    --set-string image.repository=orangeopensource/casskop,image.tag=0.4.0-local-dev-helm \
+    --set-string image.repository=ghcr.io/cscetbon/casskop,image.tag=0.4.0-local-dev-helm \
     --name local-dev-helm
 ```
 
@@ -334,7 +334,7 @@ echo "Generate zzz-deepcopy objects"
 Generate zzz-deepcopy objects
 ...
 Successfully built bf57e90615bb
-Successfully tagged orangeopensource/multi-casskop:0.5.6-my-pr
+Successfully tagged ghcr.io/cscetbon/multi-casskop:0.5.6-my-pr
 ```
 - Create a k3 cluster with 2 namespaces and install casskop
 ```
@@ -357,7 +357,7 @@ pbpaste|base64 -w10000|pbcopy
 ```
 - load the docker image you built in the first step into your k3d cluster
 ```
-k3d image import orangeopensource/multi-casskop:0.5.6-my-pr -c multi-casskop-qa
+k3d image import ghcr.io/cscetbon/multi-casskop:0.5.6-my-pr -c multi-casskop-qa
 INFO[0000] Loading images into 'multi-casskop-qa'
 INFO[0000] Starting k3d-tools node...
 INFO[0000] Saving 1 image(s) from runtime...

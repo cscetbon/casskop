@@ -15,7 +15,7 @@ metadata:
     cluster: k8s.kaas
 spec:
   cassandraImage: cassandra:3.11
-  bootstrapImage: orangeopensource/cassandra-bootstrap:0.1.4
+  bootstrapImage: ghcr.io/cscetbon/casskop-bootstrap:0.1.4
   configMapName: cassandra-configmap-v1
   dataCapacity: "200Mi"
   dataStorageClass: "local-storage"
@@ -60,7 +60,7 @@ spec:
 |cassandraImage|string|Image + version to use for Cassandra|Yes|cassandra:3.11.6|
 |configBuilderImage|string|Image + version to use for configBuilder|No|datastax/cass-config-builder:1.0.4|
 |imagepullpolicy|[PullPolicy](https://godoc.org/k8s.io/api/core/v1#PullPolicy)|Define the pull policy for C* docker image|Yes|[PullAlways](https://godoc.org/k8s.io/api/core/v1#PullPolicy)|
-|bootstrapImage|string|Image used for bootstrapping cluster (use the form : base:version)|Yes|orangeopensource/cassandra-bootstrap:0.1.4|
+|bootstrapImage|string|Image used for bootstrapping cluster (use the form : base:version)|Yes|ghcr.io/cscetbon/casskop-bootstrap:0.1.4|
 |runAsUser|int64|Define the id of the user to run in the Cassandra image|Yes|999|
 |fsGroup|int64|FSGroup defines the GID owning volumes in the Cassandra image|No|1|
 |config|map|Configuration used by the config builder to generated cassandra.yaml and other configuration files|No||

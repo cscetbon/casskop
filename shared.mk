@@ -61,42 +61,14 @@ COMMIT=$(shell git rev-parse HEAD)
 # Docker image name for this project
 IMAGE_NAME := $(SERVICE_NAME)
 
-DOCKER_REPO_BASE ?= orangeopensource
-#we could want to separate registry for branches
-DOCKER_REPO_BASE_TEST ?= orangeopensource
-
-BUILD_IMAGE ?= orangeopensource/casskop-build
-
-# Repository url for this project
-#in gitlab CI_REGISTRY_IMAGE=repo/path/name:tag
-ifdef CI_REGISTRY_IMAGE
-	REPOSITORY := $(CI_REGISTRY_IMAGE)
-else
-	REPOSITORY := $(DOCKER_REPO_BASE)/$(IMAGE_NAME)
-endif
-
-# Branch is used for the docker image version
-ifdef CIRCLE_BRANCH
-	#removing / for fork which lead to docker error
-	BRANCH := $(subst /,-,$(CIRCLE_BRANCH))
-else
-  ifdef CIRCLE_TAG
-		BRANCH := $(CIRCLE_TAG)
-	else
-		BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
-	endif
-endif
-
 # Operator version is managed in go file
 # BaseVersion is for dev docker image tag
 BASEVERSION := $(shell awk -F\" '/Version =/ { print $$2}' version/version.go)
 # Version is for binary, docker image and helm
 
-VERSION := ${BRANCH}
+VERSION := ${GITHUB_REF##*/}
 
-ifeq ($(CIRCLE_BRANCH),master)
-	PUSHLATEST := true
-endif
+PUSHLATEST := true
 
 BUILD_CMD = docker build . -t $(REPOSITORY):$(VERSION) --build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy
 
