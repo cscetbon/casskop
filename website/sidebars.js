@@ -37,7 +37,6 @@ module.exports = {
                 "3_configuration_deployment/10_nodes_management",
                 "3_configuration_deployment/11_cassandra_cluster_status",
             ],
-            "Examples": [],
             "Operations" : [
                 "5_operations/0_implementation_architecture",
                 "5_operations/1_cluster_operations",
