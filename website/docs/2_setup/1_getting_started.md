@@ -68,7 +68,7 @@ kubectl apply -f config/samples/cassandra-configmap-v1.yaml
 Once the operator is deployed inside a Kubernetes cluster, a new API will be accessible, so
 you'll be able to create, update and delete cassandraclusters.
 
-In order to deploy a new cassandra cluster a [specification](https://github.com/Orange-OpenSource/casskop/blob/master/config/samples/cassandracluster.yaml) has to be created. As an example :
+In order to deploy a new cassandra cluster a [specification](https://github.com/cscetbon/casskop/blob/master/config/samples/cassandracluster.yaml) has to be created. As an example :
 
 ``` bash
 kubectl apply -f config/samples/cassandracluster.yaml
@@ -82,7 +82,7 @@ Prometheus operator.
 #### Deploy Prometheus
 
 You can deploy the CoreOs Prometheus operator on your cluster:
-You can find example [helm value.yaml](https://github.com/Orange-OpenSource/casskop/blob/master/config/samples/prometheus-values.yaml) to configure the Prometheus operator:
+You can find example [helm value.yaml](https://github.com/cscetbon/casskop/blob/master/config/samples/prometheus-values.yaml) to configure the Prometheus operator:
 
 ```console
 kubectl create namespace monitoring

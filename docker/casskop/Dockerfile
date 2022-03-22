@@ -23,6 +23,6 @@ COPY --from=build /casskop/casskop /usr/local/bin/casskop
 USER casskop
 
 LABEL org.opencontainers.image.description="Cassandra Operator"
-LABEL org.opencontainers.image.url="https://github.com/Orange-OpenSource/casskop"
+LABEL org.opencontainers.image.url="https://github.com/cscetbon/casskop"
 
 ENTRYPOINT ["/usr/local/bin/casskop"]

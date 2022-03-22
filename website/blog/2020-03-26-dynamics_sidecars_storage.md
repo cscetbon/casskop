@@ -10,8 +10,8 @@ tags: [casskop, cassandra, 0.5.2, sidecars, storage]
 
 
 In a previous post, I was talking about how [Setting up Cassandra Multi-Site on Google Kubernetes Engine with Casskop](/casskop/blog/2020/01/15/multicasskop_gke).
-Since then, two new versions [0.5.1](https://github.com/Orange-OpenSource/casskop/releases/tag/v0.5.1-release) and [0.5.2](https://github.com/Orange-OpenSource/casskop/releases/tag/v0.5.2-release) had been released.
-In another post, Cyril Scetbon focused on the [New Probes feature](https://medium.com/@cscetbon/new-probes-in-casskop-0-5-1-bfd1d6547967) which was added with the [PR #184Ø(https://github.com/Orange-OpenSource/casskop/pull/184), in this post I will focus on the dynamic sidecars and storage configurations added to the operator, which give more flexibility to users to configure their Cassandra cluster deployments.
+Since then, two new versions [0.5.1](https://github.com/cscetbon/casskop/releases/tag/v0.5.1-release) and [0.5.2](https://github.com/cscetbon/casskop/releases/tag/v0.5.2-release) had been released.
+In another post, Cyril Scetbon focused on the [New Probes feature](https://medium.com/@cscetbon/new-probes-in-casskop-0-5-1-bfd1d6547967) which was added with the [PR #184Ø(https://github.com/cscetbon/casskop/pull/184), in this post I will focus on the dynamic sidecars and storage configurations added to the operator, which give more flexibility to users to configure their Cassandra cluster deployments.
 
 ## Purposes
 
@@ -22,7 +22,7 @@ That is why we added to the **CassandraCluster** the possibility to define conta
 
 ## Dynamics sidecars configurations
 
-To keep the [container’s best practices](https://cloud.google.com/blog/products/gcp/7-best-practices-for-building-containers) and address our OPS needs, we added the ability to define a dynamic list of containers into a **CassandraCluster.Spec** resource definition: [cassandracluster_types.go#L803](https://github.com/Orange-OpenSource/casskop/blob/master/pkg/apis/db/v2/cassandracluster_types.go#L803).
+To keep the [container’s best practices](https://cloud.google.com/blog/products/gcp/7-best-practices-for-building-containers) and address our OPS needs, we added the ability to define a dynamic list of containers into a **CassandraCluster.Spec** resource definition: [cassandracluster_types.go#L803](https://github.com/cscetbon/casskop/blob/master/pkg/apis/db/v2/cassandracluster_types.go#L803).
 
 ```yaml 
 spec:
@@ -137,6 +137,6 @@ So if you want to add or remove some storages configurations, today you have to 
 It’s not a sake operation, and should be performed carefully, because you will loose a rack. Maybe in some releases we will manage it, but today we assume that this operation is an exceptional one.
 :::
 
-[CassKop](https://github.com/Orange-OpenSource/casskop) is open source so don’t hesitate to try it out, contribute by first trying to fix a discovered issue and let’s enhance it together!
+[CassKop](https://github.com/cscetbon/casskop) is open source so don’t hesitate to try it out, contribute by first trying to fix a discovered issue and let’s enhance it together!
 
-In a next post, I will speak about the IP management into Casskop, and the [cross IPs issue](https://github.com/Orange-OpenSource/casskop/issues/170), so stay connected !
+In a next post, I will speak about the IP management into Casskop, and the [cross IPs issue](https://github.com/cscetbon/casskop/issues/170), so stay connected !

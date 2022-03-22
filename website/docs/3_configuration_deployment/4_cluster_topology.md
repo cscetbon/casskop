@@ -81,7 +81,7 @@ placement constraints for each Cassandra rack we define.
 >topology-aware dynamic provisioning feature proposed in future version of K8S (more information here :
 >https://kubernetes.io/blog/2018/10/11/topology-aware-volume-provisioning-in-kubernetes/
 
-See an example of configuration with topology : [cassandracluster-demo-gke.yaml](https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/config/samples/cassandracluster-demo.yaml)
+See an example of configuration with topology : [cassandracluster-demo-gke.yaml](https://raw.githubusercontent.com/cscetbon/casskop/master/config/samples/cassandracluster-demo.yaml)
 
 ## Configuring pod scheduling
 
@@ -362,7 +362,7 @@ v1.EnvVar{
 ```
 
 In order to allow configuring Cassandra with the DC and Rack information, we use a specific [Cassandra
-Image](https://github.com/Orange-OpenSource/cassandra-image/), which has a startup script that will retrieve
+Image](https://github.com/cscetbon/cassandra-image/), which has a startup script that will retrieve
 these environment variables, and configure the Cassandra `cassandra-rackdc.properties` file with the values for dc and
 rack.
 

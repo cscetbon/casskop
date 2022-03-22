@@ -48,7 +48,7 @@ The bootstrap Container :
   * ..
 
 We provide the bootstrap image, but you can change it using `Spec.bootstrapImage` but you need to comply with the
-required actions, see [Bootstrap](https://github.com/Orange-OpenSource/casskop/tree/master/docker/bootstrap).
+required actions, see [Bootstrap](https://github.com/cscetbon/casskop/tree/master/docker/bootstrap).
 
 ## Nodes per rack
 
@@ -190,7 +190,7 @@ configmap "cassandra-configmap-v1" created
 ```
 
 Now you can add the `configMapName: cassandra-configmap-v1` to the Spec section of your CassandraCluster definition
-[example](https://github.com/Orange-OpenSource/casskop/tree/master/config/samples/cassandracluster.yaml)
+[example](https://github.com/cscetbon/casskop/tree/master/config/samples/cassandracluster.yaml)
 
 If you edit the ConfigMap it won't be detected neither by CassKop nor by the statefulsets/pods (unless you reboot the
 pods).

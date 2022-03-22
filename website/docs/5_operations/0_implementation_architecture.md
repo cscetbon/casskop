@@ -9,7 +9,7 @@ CassKop will create a dedicated statefulset and service for each couple `dc-rack
 `topology`section. This is done to ensure we'll always have the same amounts of cassandra nodes in each rack for a
 specified DC.
 
-![architecture](http://www.plantuml.com/plantuml/proxy?src=https://raw.github.com/Orange-OpenSource/casskop/master/documentation/uml/architecture.puml)
+![architecture](http://www.plantuml.com/plantuml/proxy?src=https://raw.github.com/cscetbon/casskop/master/documentation/uml/architecture.puml)
 
 ## Sequences
 
@@ -61,7 +61,7 @@ spec:
               location.myorg.com/street : street3
 ```
 
-A complete example can be found [here](https://github.com/Orange-OpenSource/casskop/config/samples/cassandracluster-pic.yaml)
+A complete example can be found [here](https://github.com/cscetbon/casskop/config/samples/cassandracluster-pic.yaml)
 
 Kubernetes objects created by CassKop are named according to :
 
