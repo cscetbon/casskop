@@ -1,0 +1,17 @@
+name: golangci-lint
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+
+  golangci:
+    name: lint
+    container: golangci/golangci-lint:v1.45.0
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v2
+      - run: golangci-lint run
