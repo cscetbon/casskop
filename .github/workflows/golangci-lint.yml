@@ -11,8 +11,10 @@ jobs:
   golangci:
     name: lint
     runs-on: ubuntu-latest
-    container: golangci/golangci-lint:v1.45.0
     continue-on-error: true
     steps:
       - uses: actions/checkout@v2
-      - run: golangci-lint run
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.45.0
