@@ -1,5 +1,4 @@
 ---
-id: 3_multi_casskop
 title: Multi-CassKop
 sidebar_label: Multi-CassKop
 ---

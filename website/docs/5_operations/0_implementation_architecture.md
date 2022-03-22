@@ -1,5 +1,4 @@
 ---
-id: 0_implementation_architecture
 title: Implementation architecture
 sidebar_label: Implementation architecture
 ---

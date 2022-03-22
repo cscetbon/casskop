@@ -100,7 +100,7 @@ function Home() {
                 'button button--outline button--secondary button--lg',
                 styles.getStarted,
               )}
-              to={useBaseUrl('docs/1_concepts/1_introduction')}>
+              to={useBaseUrl('docs/concepts/introduction')}>
               Get Started
             </Link>
           </div>
@@ -122,66 +122,5 @@ function Home() {
     </Layout>
   );
 }
-
-/*
-function Home() {
-  const context = useDocusaurusContext();
-  const {siteConfig: {customFields = {}} = {}} = context;
-
-  return (
-      <Layout permalink="/" description={customFields.description}>
-          <div className={styles.hero}>
-              <div className={styles.heroInner}>
-                  <h1 className={styles.heroProjectTagline}>
-                      <img
-                          alt="Casskop"
-                          className={styles.heroLogo}
-                          src={useBaseUrl('img/casskop_alone.png')}
-                      />
-                      Open-Source, Apache <span className={styles.heroProjectKeywords}>Cassandra</span>{' '}
-                      operator for <span className={styles.heroProjectKeywords}>Kubernetes</span>{' '}
-                  </h1>
-                  <div className={styles.indexCtas}>
-                      <Link
-                          className={styles.indexCtasGetStartedButton}
-                          to={useBaseUrl('docs/2_setup/1_getting_started')}>
-                          Get Started
-                      </Link>
-                      <span className={styles.indexCtasGitHubButtonWrapper}>
-            <iframe
-                className={styles.indexCtasGitHubButton}
-                src="https://ghbtns.com/github-btn.html?user=Orange-OpenSource&amp;repo=casskop&amp;type=star&amp;count=true&amp;size=large"
-                width={160}
-                height={30}
-                title="GitHub Stars"
-            />
-          </span>
-                  </div>
-              </div>
-          </div>
-          <div className={classnames(styles.announcement, styles.announcementDark)}>
-              <div className={styles.announcementInner}>
-                  The <span className={styles.heroProjectKeywords}>CassKop</span> Cassandra Kubernetes operator makes it <span className={styles.heroProjectKeywords}>easy</span> to run Apache Cassandra on Kubernetes.
-                  Apache Cassandra is a popular, free, open-source, distributed wide column store, <span className={styles.heroProjectKeywords}>NoSQL database</span> management system.
-                  The operator allows to <span className={styles.heroProjectKeywords}>easily create and manage racks and data centers</span> aware Cassandra clusters.
-              </div>
-          </div>
-          <div className={styles.section}>
-              {features && features.length && (
-                  <section className={styles.features}>
-                      <div className="container">
-                          <div className="row">
-                              {features.map((props, idx) => (
-                                  <Feature key={idx} {...props} />
-                              ))}
-                          </div>
-                      </div>
-                  </section>
-              )}
-          </div>
-      </Layout>
-  );
-}
-*/
 
 export default Home;

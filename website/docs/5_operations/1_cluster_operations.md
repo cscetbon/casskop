@@ -1,5 +1,4 @@
 ---
-id: 1_cluster_operations
 title: Cluster Operations
 sidebar_label: Cluster Operations
 ---
@@ -284,7 +283,7 @@ UN  172.18.104.8   153.08 KiB  32           38.8%             62adf02d-8c55-4d95
 
 ### UpdateConfigMap
 
-You can find in the [cassandra-configuration](/casskop/docs/3_configuration_deployment/2_cassandra_configuration#configuration-override-using-configmap) section how you can use
+You can find in the [cassandra-configuration](/casskop/docs/configuration_deployment/cassandra_configuration#configuration-override-using-configmap) section how you can use
 the `spec.configMap` parameter.
 
 :::important
@@ -520,7 +519,7 @@ If we change the `CassandraCluster.spec.resources`, then CassKop will start to m
 cluster (for each racks sequentially) to change the version of the Cassandra Docker Image on all nodes.
 
 :::tip See section
-[Resource limits and requets](/casskop/docs/3_configuration_deployment/2_cassandra_cluster#resource-limits-and-requests)
+[Resource limits and requets](/casskop/docs/configuration_deployment/cassandra_cluster#resource-limits-and-requests)
 :::
 
 For example, to increase Memory/CPU requests and/or limits:
@@ -604,7 +603,7 @@ Upon completion, the status may look like :
 The Scaling of the Cluster is managed through the nodesPerRacks parameters and through the number of Dcs and Racks
 defined in the Topology section.
 
-See section [NodesPerRacks](/casskop/docs/3_configuration_deployment/2_cassandra_configuration#nodes-per-rack)
+See section [NodesPerRacks](/casskop/docs/configuration_deployment/cassandra_configuration#nodes-per-rack)
 
 :::note
 if the ScaleUp (or the ScaleDown) may change the SeedList and if `spec.autoUpdateSeedList` is set to `true`
@@ -754,7 +753,7 @@ This can be manually triggered by setting appropriate labels on each Pods.
 CassKop can automate this if `spec.autoPilot` is true by setting the labels on each Pods of the cluster with a ToDo
 state and then find thoses pods to sequentially execute thoses actions.
 
-See podOperation [Cleanup](/casskop/docs/5_operations/2_pods_operations#operationcleanup)!!
+See podOperation [Cleanup](/casskop/docs/operations/pods_operations#operationcleanup)!!
 
 ### UpdateScaleDown
 
@@ -1062,7 +1061,7 @@ by definition all pods are identical and we couldn't execute specific actions on
 
 For that CassKop provide the ability to execute a `pre_run.sh` script that can be change using the CRD ConfigMap.
 
-To see how to use the configmap see [Overriding Configuration using configMap](/casskop/docs/3_configuration_deployment/2_cassandra_configuration#configuration-override-using-configmap)
+To see how to use the configmap see [Overriding Configuration using configMap](/casskop/docs/configuration_deployment/cassandra_configuration#configuration-override-using-configmap)
 
 for example If we want to replace the node cassandra-test-dc1-rack2-1, we first need to retrieve it's IP address from
 nodetool status for example :

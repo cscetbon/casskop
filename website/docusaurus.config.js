@@ -15,7 +15,7 @@ module.exports = {
         src: 'img/casskop_alone.png',
       },
       items: [
-        {to: 'docs/1_concepts/1_introduction', label: 'Docs', position: 'right'},
+        {to: 'docs/concepts/introduction', label: 'Docs', position: 'right'},
         {to: 'blog', label: 'Blog', position: 'right'},
         {
           href: 'https://github.com/cscetbon/casskop',
@@ -32,7 +32,7 @@ module.exports = {
           items: [
             {
               label: 'Documentation',
-              to: 'docs/1_concepts/1_introduction',
+              to: 'docs/concepts/introduction',
             },
             {
               label: 'GitHub',

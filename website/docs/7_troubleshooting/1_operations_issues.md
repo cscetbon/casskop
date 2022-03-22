@@ -1,5 +1,4 @@
 ---
-id: 1_operations_issues
 title: Operations Issues
 sidebar_label: Operations Issues
 ---

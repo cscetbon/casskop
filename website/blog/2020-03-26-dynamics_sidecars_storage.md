@@ -77,7 +77,7 @@ All sidecars added with this configuration will have, at the container init, som
 
 ## Storage configuration
 
-In the previous version, the only option about storage was the [data volume configuration](/casskop/docs/3_configuration_deployment/3_storage) allowing you to define :
+In the previous version, the only option about storage was the [data volume configuration](/casskop/docs/configuration_deployment/storage) allowing you to define :
 
 - `dataCapacity`: Defines the size of the persistent volume claim, for example, "1000Gi".
 - `dataStorageClass`: Defines the type of storage to use (or use default one). We recommend to use local-storage for better performances but it can be any storage with high ssd throughput.

@@ -1,5 +1,4 @@
 ---
-id: 5_upgrade_v1_to_v2
 title: Upgrade v1 to v2
 sidebar_label: Upgrade v1 to v2
 ---

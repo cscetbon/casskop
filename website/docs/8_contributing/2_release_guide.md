@@ -1,5 +1,4 @@
 ---
-id: 2_release_guide
 title: Release guide
 sidebar_label: Release guide
 ---

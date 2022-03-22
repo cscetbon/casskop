@@ -1,5 +1,4 @@
 ---
-id: 2_gke_issues
 title: GKE Issues
 sidebar_label: GKE Issues
 ---

@@ -1,5 +1,4 @@
 ---
-id: 1_customizable_install_with_helm
 title: Customizable install with Helm
 sidebar_label: Customizable install with Helm
 ---

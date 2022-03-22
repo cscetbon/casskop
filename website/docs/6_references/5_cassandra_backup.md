@@ -1,5 +1,4 @@
 ---
-id: 5_cassandra_backup
 title: Cassandra backup
 sidebar_label: Cassandra backup
 ---

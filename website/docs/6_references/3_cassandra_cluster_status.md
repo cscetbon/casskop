@@ -1,12 +1,11 @@
 ---
-id: 3_cassandra_cluster_status
 title: Cassandra cluster Status
 sidebar_label: Cassandra cluster Status
 ---
 
 ## CassandraClusterStatus
 
-[Check documentation for more informations](/casskop/docs/3_configuration_deployment/11_cassandra_cluster_status)
+[Check documentation for more informations](/casskop/docs/configuration_deployment/cassandra_cluster_status)
 
 |Field|Type|Description|Required|Default|
 |-----|----|-----------|--------|--------|

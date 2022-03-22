@@ -1,5 +1,4 @@
 ---
-id: 2_minikube
 title: MiniKube
 sidebar_label: MiniKube
 ---
