@@ -1,5 +1,4 @@
 ---
-id: 3_storage
 title: Storage
 sidebar_label: Storage
 ---

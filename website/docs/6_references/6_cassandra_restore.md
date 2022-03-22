@@ -1,5 +1,4 @@
 ---
-id: 6_cassandra_restore
 title: Cassandra restore
 sidebar_label: Cassandra restore
 ---
@@ -29,7 +28,7 @@ spec:
 
 |Field|Type|Description|Required|Default|
 |-----|----|-----------|--------|--------|
-|cassandraBackup|string|Name of the [CassandraBackup](/casskop/docs/6_references/5_cassandra_backup) to restore|Yes|-|
+|cassandraBackup|string|Name of the [CassandraBackup](/casskop/docs/references/cassandra_backup) to restore|Yes|-|
 |cassandraCluster|string|Name of the CassandraCluster the restore belongs to|Yes|-|
 |cassandraDirectory|string|Directory of Cassandra where data folder resides. Defaults to /var/lib/cassandra|No|-|
 |datacenter|string|Cassandra DC name to restore to, a restore will truncate tables but restore only to this datacenter if specified|No|-|

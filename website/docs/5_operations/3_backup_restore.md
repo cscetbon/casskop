@@ -1,5 +1,4 @@
 ---
-id: 3_5_backup_restore
 title: Backup and restore
 sidebar_label: Backup and restore
 ---
@@ -10,7 +9,7 @@ In order to provide Backup/Restore abilities we use InstaCluster's [cassandra-si
 ## Backup
 
 It is possible to backup keyspaces or tables from a cluster managed by Casskop. To start or schedule a backup, you 
-create an object of type [CassandraBackup](/casskop/docs/6_references/5_cassandra_backup):
+create an object of type [CassandraBackup](/casskop/docs/references/cassandra_backup):
 
 ```yaml
 apiVersion: db.orange.com/v2
@@ -60,8 +59,8 @@ When this object gets updated, and the change is located in the spec section, Ca
 
 ## Restore
 
-Following the same logic, a [CassandraRestore](/casskop/docs/6_references/6_cassandra_restore) object must be created to trigger a restore, and it must refer to an
-existing [CassandraBackup](/casskop/docs/6_references/5_cassandra_backup) object in K8S:
+Following the same logic, a [CassandraRestore](/casskop/docs/references/cassandra_restore) object must be created to trigger a restore, and it must refer to an
+existing [CassandraBackup](/casskop/docs/references/cassandra_backup) object in K8S:
 
 ```yaml
 apiVersion: db.orange.com/v2

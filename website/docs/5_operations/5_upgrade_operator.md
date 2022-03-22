@@ -1,5 +1,4 @@
 ---
-id: 4_upgrade_operator
 title: Upgrade Operator
 sidebar_label: Upgrade Operator
 ---
@@ -16,4 +15,4 @@ helm install --name casskop casskop/casskop
 
 ## Upgrading from v1 to v2
 
-Please refer to [the specific v1 to v2 section](/casskop/docs/2_setup/5_upgrade_v1_to_v2) for the step by step protocol.
+Please refer to [the specific v1 to v2 section](/casskop/docs/setup/upgrade_v1_to_v2) for the step by step protocol.

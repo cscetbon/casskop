@@ -1,5 +1,4 @@
 ---
-id: 2_install_plugin
 title: Install Plugin
 sidebar_label: Install Plugin
 ---

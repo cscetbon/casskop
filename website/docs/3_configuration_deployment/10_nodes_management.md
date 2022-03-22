@@ -1,5 +1,4 @@
 ---
-id: 10_nodes_management
 title: Nodes Management
 sidebar_label: Nodes Management
 ---

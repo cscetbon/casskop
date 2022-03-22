@@ -1,5 +1,4 @@
 ---
-id: 3_reporting_bugs
 title: Reporting bugs
 sidebar_label: Reporting bugs
 ---

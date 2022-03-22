@@ -1,5 +1,4 @@
 ---
-id: 4_credits
 title: Credits
 sidebar_label: Credits
 ---

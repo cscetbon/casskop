@@ -1,5 +1,4 @@
 ---
-id: 1_developer_guide
 title: Developer guide
 sidebar_label: Developer guide
 ---
@@ -310,7 +309,7 @@ TELEPRESENCE_REGISTRY=you-private-registry/datawire  make debug-telepresence-wit
 
 Now we just need to configure the IDE :
 
-![](/img/8_contributing/ide_debug_configutation.png)
+![](/img/8_contributing/ide_debug_configuration.png)
 
 and let's the magic happened
 

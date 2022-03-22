@@ -1,5 +1,4 @@
 ---
-id: multicasskop_gke
 title: Multi-Casskop on Google Kubernetes Engine
 author: Alexandre Guitton
 author_title: Alexandre Guitton

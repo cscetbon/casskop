@@ -1,5 +1,4 @@
 ---
-id: 2_pods_operations
 title: Pods Operations
 sidebar_label: Pods Operations
 ---
@@ -86,7 +85,7 @@ kubectl label pod cassandra-demo-dc2-rack1-0 operation-argument=dc1 --overwrite
 
 ## OperationDecommission
 
-see [UpdateScaleDown](/casskop/docs/5_operations/1_cluster_operations#updatescaledown)
+see [UpdateScaleDown](/casskop/docs/operations/cluster_operations#updatescaledown)
 
 ## RollingRestart
 

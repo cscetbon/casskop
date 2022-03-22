@@ -1,5 +1,4 @@
 ---
-id: 4_cluster_topology
 title: Cluster topology - Cassandra rack aware deployments
 sidebar_label: Cluster topology
 ---
@@ -39,7 +38,7 @@ Cassandra will run on Kubernetes nodes, which may already have some labels repre
 
 Example :
 
-![](/img/3_configuration_deployment/topology-custom-example.png)
+![](/img/3_configuration_deployment/topology-gke-example.png)
 
 Example of labels for node001 in our dc:
 

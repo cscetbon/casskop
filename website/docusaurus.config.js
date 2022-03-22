@@ -15,7 +15,7 @@ module.exports = {
         src: 'img/casskop_alone.png',
       },
       items: [
-        {to: 'docs/1_concepts/1_introduction', label: 'Docs', position: 'right'},
+        {to: 'docs/concepts/introduction', label: 'Docs', position: 'right'},
         {to: 'blog', label: 'Blog', position: 'right'},
         {
           href: 'https://github.com/cscetbon/casskop',
@@ -32,7 +32,7 @@ module.exports = {
           items: [
             {
               label: 'Documentation',
-              to: 'docs/1_concepts/1_introduction',
+              to: 'docs/concepts/introduction',
             },
             {
               label: 'GitHub',
@@ -72,8 +72,9 @@ module.exports = {
 
     // Search option
     algolia: {
-      apiKey: 'b623b706636e1055eb80efe0e61979e0',
-      indexName: 'orange-opensource',
+      appId: 'HI64OQWYI7',
+      apiKey: '2258073f029a5734c5574fe9fbe367a7',
+      indexName: 'casskop',
     },
   },
   presets: [

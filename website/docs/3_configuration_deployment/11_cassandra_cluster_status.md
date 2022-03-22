@@ -1,5 +1,4 @@
 ---
-id: 11_cassandra_cluster_status
 title: CassandraCluster Status
 sidebar_label: CassandraCluster Status
 ---

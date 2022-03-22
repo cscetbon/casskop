@@ -1,5 +1,4 @@
 ---
-id: 2_cassandra_configuration
 title: Cassandra Configuration
 sidebar_label: Cassandra Configuration
 ---
@@ -82,8 +81,8 @@ example to scale up the nodesPerRacks in DC2 :
 
 > The number of Cassandra nodes will be the multiplication of the number of racks * the nodesPerRacks value.
 
-If we changes on of these properties then CassKop will trigger either a [ScaleUp](/casskop/docs/5_operations/1_cluster_operations#scaleup)
-or a [ScaleDown](/casskop/docs/5_operations/1_cluster_operations#scaledown) operation.
+If we changes on of these properties then CassKop will trigger either a [ScaleUp](/casskop/docs/operations/cluster_operations#scaleup)
+or a [ScaleDown](/casskop/docs/operations/cluster_operations#scaledown) operation.
 
 
 ## Configuration embedded in CassandraCluster
@@ -200,7 +199,7 @@ will trigger a rollingRestart of the whole cluster applying the new configuratio
 
 :::important
 each time you specify a new configMap CassKop will start a `rollingUpdate` of all nodes
-in the cluster. more info on [UpdateConfigMap](/casskop/docs/5_operations/1_cluster_operations#updateconfigmap)
+in the cluster. more info on [UpdateConfigMap](/casskop/docs/operations/cluster_operations#updateconfigmap)
 :::
 
 :::important

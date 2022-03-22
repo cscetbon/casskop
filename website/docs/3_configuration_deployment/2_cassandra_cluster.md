@@ -1,5 +1,4 @@
 ---
-id: 2_cassandra_cluster
 title: Cassandra Cluster
 sidebar_label: Cassandra Cluster
 ---
@@ -101,4 +100,4 @@ Depending on the values specified, Kubernetes will define 3 levels for QoS : (Be
   requested and if there is no more BestEffort Pods to terminated
 - Guaranteed: request=limits. It is the recommended configuration for cassandra pods.
 
-When updating the crd resources, this will trigger an [UpdateResources](/casskop/docs/5_operations/1_cluster_operations#updateresources) action.
+When updating the crd resources, this will trigger an [UpdateResources](/casskop/docs/operations/cluster_operations#updateresources) action.

@@ -1,5 +1,4 @@
 ---
-id: 9_advanced_configuration
 title: Advanced Configuration
 sidebar_label: Advanced Configuration
 ---

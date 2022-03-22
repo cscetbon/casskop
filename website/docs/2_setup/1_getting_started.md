@@ -1,5 +1,4 @@
 ---
-id: 1_getting_started
 title: Getting Started
 sidebar_label: Getting Started
 ---
@@ -46,9 +45,9 @@ Then install the chart using Helm 3:
 helm install casskop oci://ghcr.io/cscetbon/casskop
 ```
 
-You can find more information in the [Customizable install with helm](/casskop/docs/3_configuration_deployment/1_customizable_install_with_helm).
+You can find more information in the [Customizable install with helm](/casskop/docs/configuration_deployment/customizable_install_with_helm).
 
-If you have problem you can see [Troubleshooting](/casskop/docs/7_troubleshooting/1_operations_issues) section
+If you have problem you can see [Troubleshooting](/casskop/docs/troubleshooting/operations_issues) section
 
 ### Deploy a Cassandra cluster
 
@@ -56,7 +55,7 @@ If you have problem you can see [Troubleshooting](/casskop/docs/7_troubleshootin
 
 Before we can deploy our cluster, we need to create a configmap.
 This configmap will enable us to customize Cassandra's behaviour.
-More details on this can be found [here](/casskop/docs/3_configuration_deployment/2_cassandra_configuration#configuration-override-using-configmap)
+More details on this can be found [here](/casskop/docs/configuration_deployment/cassandra_configuration#configuration-override-using-configmap)
 
 But for our example we will use the simple example:
 

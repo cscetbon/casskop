@@ -1,5 +1,4 @@
 ---
-id: 5_sidecars
 title: Sidecars
 sidebar_label: Sidecars
 ---
