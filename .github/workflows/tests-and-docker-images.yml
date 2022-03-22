@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   pull_request:
   push:
-    branch:
+    branches:
       - master
     paths-ignore:
       - 'website/**'
@@ -24,8 +24,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       - name: Cache vendor modules
         uses: actions/cache@v2.1.7
