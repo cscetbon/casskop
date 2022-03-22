@@ -3,6 +3,8 @@ name: Test & publish Docker images
 on:
   workflow_dispatch:
   push:
+    paths-ignore:
+      - 'website/**'
 
 env:
   REGISTRY: ghcr.io
