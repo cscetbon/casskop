@@ -83,7 +83,7 @@ the Names in `k8s.remote` must match the names of the secret exported with the [
 
 You can deploy a MultiCassKop CRD instance.
 
-You can create the Cluster with the following example [multi-casskop/config/samples/multi-casskop.yaml](https://github.com/Orange-OpenSource/casskop/tree/master/multi-casskop/config/samples/multi-casskop.yaml) file :
+You can create the Cluster with the following example [multi-casskop/config/samples/multi-casskop.yaml](https://github.com/cscetbon/casskop/tree/master/multi-casskop/config/samples/multi-casskop.yaml) file :
 
 ```
 kubectl apply -f multi-casskop/config/samples/multi-casskop.yaml

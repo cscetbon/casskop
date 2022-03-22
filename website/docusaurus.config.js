@@ -5,7 +5,7 @@ module.exports = {
   baseUrl: '/casskop/',
   onBrokenLinks: 'throw',
   favicon: 'img/casskop.ico',
-  organizationName: 'Orange-OpenSource', // Usually your GitHub org/user name.
+  organizationName: 'cscetbon', // Usually your GitHub org/user name.
   projectName: 'casskop', // Usually your repo name.
   themeConfig: {
     navbar: {

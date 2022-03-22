@@ -68,7 +68,7 @@ cassandra     at org.apache.cassandra.service.CassandraDaemon.activate(Cassandra
 cassandra     at org.apache.cassandra.service.CassandraDaemon.main(CassandraDaemon.java:732) [apache-cassandra-3.11.4.jar:3.11.4]
 ```
 
-Following the [issue #170](https://github.com/Orange-OpenSource/casskop/issues/170), at least using Kubernetes and [Project Calico](https://docs.projectcalico.org/v3.9/getting-started/kubernetes/), we may fall into this issue,
+Following the [issue #170](https://github.com/cscetbon/casskop/issues/170), at least using Kubernetes and [Project Calico](https://docs.projectcalico.org/v3.9/getting-started/kubernetes/), we may fall into this issue,
 for example using a fixed [ip pool](https://docs.projectcalico.org/v3.9/reference/resources/ippool) size.
 
 To manage this case we introduced the `restartCountBeforePodDeletion` CassandraCluster spec field which takes an `int32` as value.

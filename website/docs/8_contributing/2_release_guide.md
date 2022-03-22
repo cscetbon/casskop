@@ -15,7 +15,7 @@ For ease, we have same version for casskop and multi-casskop
 - [ ] generate casskop helm with `make helm-package`
 - [ ] add to git docs/helm, commit & push
 - [ ] once the PR is merged to master, create the release with content of changelog for this version
-    - https://github.com/Orange-OpenSource/casskop/releases
+    - https://github.com/cscetbon/casskop/releases
 
 ## With Helm
 

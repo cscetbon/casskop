@@ -127,7 +127,7 @@ push-bootstrap-image:
 	$(MAKE) -C docker/bootstrap push
 
 pipeline:
-	docker run -ti --rm --privileged -v $(PWD):/go/src/github.com/Orange-OpenSource/casskop -w /go/src/github.com/Orange-OpenSource/casskop \
+	docker run -ti --rm --privileged -v $(PWD):/go/src/github.com/cscetbon/casskop -w /go/src/github.com/cscetbon/casskop \
   --env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
 	$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) bash
 

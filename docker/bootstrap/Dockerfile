@@ -36,10 +36,10 @@ LABEL \
     org.label-schema.docker.dockerfile="/Dockerfile" \
     org.label-schema.license="Apache License 2.0" \
     org.label-schema.name="Cassandra container optimized for Kubernetes" \
-    org.label-schema.url="https://github.com/Orange-OpenSource/" \
+    org.label-schema.url="https://github.com/cscetbon/" \
     org.label-schema.vcs-ref=$VCS_REF \
     org.label-schema.vcs-type="Git" \
-    org.label-schema.vcs-url="https://github.com/Orange-OpenSource/CassKop" \
+    org.label-schema.vcs-url="https://github.com/cscetbon/CassKop" \
     org.label-schema.description="Cassandra Bootstrap Docker Image to be used with the CassKop Operator." \
     org.label-schema.summary="Cassandra is a NoSQL database providing scalability and hight availability without compromising performance." \
     org.label-schema.version="${CASSANDRA_VERSION}" \
