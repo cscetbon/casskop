@@ -178,13 +178,6 @@ unit-test-with-vendor:
 	cat test-report.out
 	$(UNIT_TEST_COVERAGE)
 
-define run-operator-cmd
-	docker run  --env GO111MODULE=on -ti --rm -v $(PWD):$(WORKDIR) -u $(UID):$(GID) --name $(SERVICE_NAME) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/sh -c $1
-endef
-
-docker-go-lint:
-	$(call run-operator-cmd,$(GO_LINT_CMD))
-
 # golint is not fully supported by modules yet - https://github.com/golang/lint/issues/409
 go-lint:
 	$(GO_LINT_CMD)
