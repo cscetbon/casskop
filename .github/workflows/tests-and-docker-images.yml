@@ -2,13 +2,16 @@ name: Test & publish Docker images
 
 on:
   workflow_dispatch:
+  pull_request:
   push:
+    branch:
+      - master
     paths-ignore:
       - 'website/**'
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE: ${{ github.head_ref || github.ref_name }}
   KUTTL_VERSION: 0.11.0
 
 
@@ -105,7 +108,7 @@ jobs:
         with:
           context: .
           file: docker/${{ matrix.image }}/Dockerfile
-          tags: ghcr.io/cscetbon/${{ matrix.image }}:${{ github.ref_name }}
+          tags: ghcr.io/cscetbon/${{ matrix.image }}:${{ env.IMAGE }}
           push: true
 
   install-kuttl:
@@ -158,6 +161,6 @@ jobs:
       run: |
         chmod u+x kuttl
         PATH=$PWD:$PATH
-        helm install casskop charts/casskop --set image.tag=${{ github.ref_name }}
+        helm install casskop charts/casskop --set image.tag=${{ env.IMAGE }}
         cd test/kuttl/
         kuttl test --test ${{ matrix.kuttl-test-name }} --namespace default
