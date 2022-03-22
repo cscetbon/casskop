@@ -1,0 +1,20 @@
+name: golangci-lint
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+
+  golangci:
+    name: lint
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v2
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.45.0
