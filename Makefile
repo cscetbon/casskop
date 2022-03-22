@@ -178,11 +178,6 @@ unit-test-with-vendor:
 	cat test-report.out
 	$(UNIT_TEST_COVERAGE)
 
-# golint is not fully supported by modules yet - https://github.com/golang/lint/issues/409
-go-lint:
-	$(GO_LINT_CMD)
-
-
 # Test if the dependencies we need to run this Makefile are installed
 deps-development:
 ifndef DOCKER
