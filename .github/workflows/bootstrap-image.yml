@@ -7,6 +7,9 @@ on:
         description: 'Docker image alias'
         required: true
 
+env:
+  IMAGE: ghcr.io/cscetbon/casskop-bootstrap:${{ github.event.inputs.alias }}
+
 jobs:
 
   build-publish-image:
@@ -30,16 +33,6 @@ jobs:
         with:
           context: docker/bootstrap
           tags: ghcr.io/cscetbon/casskop-bootstrap:${{ github.event.inputs.alias }}
-          push: true
-
-  dgoss-tests:
-    runs-on: ubuntu-latest
-    container: ghcr.io/cscetbon/casskop-build:v1.13.0
-    needs: build-publish-image
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
 
       - name: Run Dgoss Tests
         run: |
@@ -47,4 +40,11 @@ jobs:
           curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.6/goss-linux-amd64 -o /usr/local/bin/goss
           chmod +rx /usr/local/bin/dgoss /usr/local/bin/goss
           export GOSS_PATH=/usr/local/bin/goss GOSS_FILES_STRATEGY=cp
-          IMAGE_TO_TEST=ghcr.io/cscetbon/casskop-bootstrap:${{ github.event.inputs.alias }} ./docker/bootstrap/dgoss/runChecks.sh
+          IMAGE_TO_TEST=${{ env.IMAGE }} ./docker/bootstrap/dgoss/runChecks.sh
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2.10.0
+        with:
+          context: docker/bootstrap
+          tags: ${{ env.IMAGE }}
+          push: true
