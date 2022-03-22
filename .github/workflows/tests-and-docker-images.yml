@@ -17,75 +17,75 @@ env:
 
 jobs:
 
-  not-missing-manifests:
-    runs-on: ubuntu-latest
-    container: ghcr.io/cscetbon/casskop-build:v1.13.0
+  # not-missing-manifests:
+  #   runs-on: ubuntu-latest
+  #   container: ghcr.io/cscetbon/casskop-build:v1.13.0
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v3
 
-      - name: Cache vendor modules
-        uses: actions/cache@v2.1.7
-        env:
-          cache-name: casskop-vendor
-        with:
-          path: |
-            vendor
-            /go/pkg
-          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ env.cache-name }}-
-            ${{ runner.os }}-
+  #     - name: Cache vendor modules
+  #       uses: actions/cache@v2.1.7
+  #       env:
+  #         cache-name: casskop-vendor
+  #       with:
+  #         path: |
+  #           vendor
+  #           /go/pkg
+  #         key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('go.sum') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-${{ env.cache-name }}-
+  #           ${{ runner.os }}-
 
-      - name: Download dependencies
-        run: go mod download
+  #     - name: Download dependencies
+  #       run: go mod download
 
-      - name: Vendor dependencies
-        run: go mod vendor
+  #     - name: Vendor dependencies
+  #       run: go mod vendor
 
-      - name: Generate k8s & crds
-        run: |
-          GO111MODULE=on go install github.com/mikefarah/yq/v4@latest
-          make generate
+  #     - name: Generate k8s & crds
+  #       run: |
+  #         GO111MODULE=on go install github.com/mikefarah/yq/v4@latest
+  #         make generate
 
-      - name: Ensure there are no missing changes
-        run: |
-          [ "$(git ls-files -m | grep -cE 'zz_generated|crds')" -eq 0 ]
+  #     - name: Ensure there are no missing changes
+  #       run: |
+  #         [ "$(git ls-files -m | grep -cE 'zz_generated|crds')" -eq 0 ]
 
-  unit-tests:
-    runs-on: ubuntu-latest
-    container: ghcr.io/cscetbon/casskop-build:v1.13.0
-    needs: not-missing-manifests
+  # unit-tests:
+  #   runs-on: ubuntu-latest
+  #   container: ghcr.io/cscetbon/casskop-build:v1.13.0
+  #   needs: not-missing-manifests
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v3
 
-      - name: Cache vendor modules
-        uses: actions/cache@v2.1.7
-        env:
-          cache-name: casskop-vendor
-        with:
-          path: |
-            vendor
-            /go/pkg
-          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ env.cache-name }}-
-            ${{ runner.os }}-
+  #     - name: Cache vendor modules
+  #       uses: actions/cache@v2.1.7
+  #       env:
+  #         cache-name: casskop-vendor
+  #       with:
+  #         path: |
+  #           vendor
+  #           /go/pkg
+  #         key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('go.sum') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-${{ env.cache-name }}-
+  #           ${{ runner.os }}-
 
-      - name: Run unit Tests
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-        run: |
-          go mod vendor
-          make unit-test-with-vendor
+  #     - name: Run unit Tests
+  #       if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+  #       run: |
+  #         go mod vendor
+  #         make unit-test-with-vendor
 
   docker-images:
     runs-on: ubuntu-latest
     permissions:
       packages: write
-    needs: unit-tests
+    # needs: unit-tests
     strategy:
       matrix:
         image: [casskop, multi-casskop]
