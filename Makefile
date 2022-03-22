@@ -106,35 +106,6 @@ ifdef PUSHLATEST
 	docker tag $(REPOSITORY):$(VERSION) $(REPOSITORY):latest
 endif
 
-# Build the docker development environment
-build-ci-image: deps-development
-	docker build --cache-from $(BUILD_IMAGE):latest \
-	  --build-arg OPERATOR_SDK_VERSION=$(OPERATOR_SDK_VERSION) \
-		-t $(BUILD_IMAGE):latest \
-		-t $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) \
-		-f $(DEV_DIR)/Dockerfile \
-		.
-
-push-ci-image: deps-development
-	docker push $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION)
-ifdef PUSHLATEST
-	docker push $(BUILD_IMAGE):latest
-endif
-
-build-bootstrap-image:
-	$(MAKE) -C docker/bootstrap build
-push-bootstrap-image:
-	$(MAKE) -C docker/bootstrap push
-
-pipeline:
-	docker run -ti --rm --privileged -v $(PWD):/go/src/github.com/cscetbon/casskop -w /go/src/github.com/cscetbon/casskop \
-  --env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
-	$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) bash
-
-pipeline-e2e:
-	docker run -ti --rm --privileged -v $(PWD):/source -w /source \
-	$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) bash
-
 # Run a shell into the development docker image
 shell: docker-dev-build
 	docker run  --env GO111MODULE=on -ti --rm -v ~/.kube:/.kube:ro -v $(PWD):$(WORKDIR) --name $(SERVICE_NAME) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash
