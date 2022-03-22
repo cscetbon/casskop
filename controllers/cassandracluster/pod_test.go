@@ -16,39 +16,20 @@ package cassandracluster
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"reflect"
 	"testing"
 
-	"k8s.io/api/core/v1"
+	"github.com/stretchr/testify/assert"
+
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	//"k8s.io/Client-go/kubernetes"
-
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	kubetesting "k8s.io/client-go/testing"
 )
-
-var (
-	podsGroup = schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
-)
-
-func newPodUpdateAction(ns string, pod *v1.Pod) kubetesting.UpdateActionImpl {
-	return kubetesting.NewUpdateAction(podsGroup, ns, pod)
-}
-
-func newPodGetAction(ns, name string) kubetesting.GetActionImpl {
-	return kubetesting.NewGetAction(podsGroup, ns, name)
-}
-
-func newPodCreateAction(ns string, pod *v1.Pod) kubetesting.CreateActionImpl {
-	return kubetesting.NewCreateAction(podsGroup, ns, pod)
-}
 
 func assertPodIsNotRunning(t *testing.T, err error) {
-	if !reflect.DeepEqual(err, fmt.Errorf("Pod is not running")) {
-		t.Errorf("Pod found is supposed to not be running")
+	if err.Error() != "pod is not running" {
+		t.Errorf("pod found is supposed to not be running")
 	}
 }
+
 func TestGetLastOrFirstPod(t *testing.T) {
 	mkPod := func(id int, running bool) *v1.Pod {
 		podStatus := v1.PodFailed
@@ -84,7 +65,7 @@ func TestGetLastOrFirstPod(t *testing.T) {
 
 	pod, err = GetLastOrFirstPod(podlist, first)
 	if pod.Status.Phase != v1.PodRunning || pod.DeletionTimestamp != nil {
-		err = fmt.Errorf("Pod is not running")
+		err = fmt.Errorf("pod is not running")
 	}
 	assertPodIsNotRunning(t, err)
 
@@ -94,7 +75,7 @@ func TestGetLastOrFirstPod(t *testing.T) {
 
 	pod, err = GetLastOrFirstPod(podlist, first)
 	if pod.Status.Phase != v1.PodRunning || pod.DeletionTimestamp != nil {
-		err = fmt.Errorf("Pod is not running")
+		err = fmt.Errorf("pod is not running")
 	}
 	assertPodIsNotRunning(t, err)
 }

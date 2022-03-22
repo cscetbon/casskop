@@ -2,9 +2,11 @@ package cassandrarestore
 
 import (
 	"context"
-	"emperror.dev/errors"
 	"fmt"
-	"github.com/cscetbon/casskop/api/v2"
+	"time"
+
+	"emperror.dev/errors"
+	v2 "github.com/cscetbon/casskop/api/v2"
 	"github.com/cscetbon/casskop/controllers/common"
 	"github.com/cscetbon/casskop/pkg/backrest"
 	"github.com/cscetbon/casskop/pkg/errorfactory"
@@ -12,23 +14,21 @@ import (
 	"github.com/cscetbon/casskop/pkg/util"
 	"github.com/go-logr/logr"
 	"github.com/sirupsen/logrus"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
-	"sigs.k8s.io/controller-runtime"
+	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"time"
 )
 
 // CassandraClusterReconciler reconciles a CassandraCluster object
 type CassandraRestoreReconciler struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	cc       *v2.CassandraCluster
 	Recorder record.EventRecorder
 	Client   client.Client
 	Scheme   *runtime.Scheme
@@ -62,7 +62,7 @@ func (r CassandraRestoreReconciler) Reconcile(request reconcile.Request) (reconc
 	}
 
 	// Check the referenced Cluster exists.
-	cassandraCluster := &v2.CassandraCluster{}
+	var cassandraCluster *v2.CassandraCluster
 	if cassandraCluster, err = k8s.LookupCassandraCluster(r.Client, cassandraRestore.Spec.CassandraCluster,
 		cassandraRestore.Namespace); err != nil {
 		// This shouldn't trigger anymore, but leaving it here as a safety belt
@@ -79,7 +79,7 @@ func (r CassandraRestoreReconciler) Reconcile(request reconcile.Request) (reconc
 	}
 
 	// Check the referenced Backup exists.
-	cassandraBackup := &v2.CassandraBackup{}
+	var cassandraBackup *v2.CassandraBackup
 	if cassandraBackup, err = k8s.LookupCassandraBackup(r.Client, cassandraRestore.Spec.CassandraBackup,
 		cassandraRestore.Namespace); err != nil {
 		r.Recorder.Event(
@@ -295,17 +295,6 @@ func (r *CassandraRestoreReconciler) checkRestoreOperationState(restore *v2.Cass
 	return errorfactory.New(errorfactory.CassandraBackupOperationRunning{},
 		errors.New("cassandra backup sidecar restore operation still running"),
 		fmt.Sprintf("restore operation id : %s", restoreId))
-}
-
-func (r *CassandraRestoreReconciler) updateAndFetchLatest(ctx context.Context,
-	restore *v2.CassandraRestore) (*v2.CassandraRestore, error) {
-	typeMeta := restore.TypeMeta
-	err := r.Client.Update(ctx, restore)
-	if err != nil {
-		return nil, err
-	}
-	restore.TypeMeta = typeMeta
-	return restore, nil
 }
 
 func (r *CassandraRestoreReconciler) listPods(namespace string, selector map[string]string) (*v1.PodList, error) {

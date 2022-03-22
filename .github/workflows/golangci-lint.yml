@@ -11,10 +11,26 @@ jobs:
   golangci:
     name: lint
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v2
+      - name: Add configuration file
+        run: |
+          cat <<EOF > .golangci.yml
+          linters-settings:
+            gosimple:
+              checks:
+                - all
+                - '-S1023'
+          issues:
+            exclude-rules:
+              - path: .+_test.go
+                text: "package sigs.k8s.io/controller-runtime/pkg/client/fake is deprecated: please use pkg/envtest"
+              - path: .+(_test|mock_client).go
+                text: "is not checked"
+          EOF
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
           version: v1.45.0
+          args: --issues-exit-code=0
+

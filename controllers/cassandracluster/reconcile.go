@@ -246,7 +246,7 @@ func lookForFilter(path []string, filters [][]string, filtersFound *map[string]b
 // for instance ('DC', '-DC.Rack') means a DC change without a DC.Rack change
 // changes of property NodesPerRacks are skipped
 func hasChange(changelog diff.Changelog, changeType string, paths ...string) bool {
-	regexPath := regexp.MustCompile("^\\-([^\\+]*)$")
+	regexPath := regexp.MustCompile(`^\-([^\+]*)$`)
 	if len(changelog) == 0 {
 		return false
 	}
@@ -448,7 +448,7 @@ func (rcc *CassandraClusterReconciler) ReconcileRack(cc *api.CassandraCluster,
 			rackName := cc.GetRackName(dc, rack)
 			dcRackName := cc.GetDCRackName(dcName, rackName)
 			if dcRackName == "" {
-				return fmt.Errorf("Name used for DC and/or Rack are not good")
+				return fmt.Errorf("name used for DC and/or Rack are not good")
 			}
 
 			//If we have added a dc/rack to the CRD, we add it to the Status
@@ -652,8 +652,6 @@ func UpdateCassandraClusterStatusPhase(cc *api.CassandraCluster, status *api.Cas
 		status.Phase = api.ClusterPhaseRunning.Name
 		ClusterPhaseMetric.set(api.ClusterPhaseRunning, cc.Name)
 	}
-
-	return
 }
 
 //EnsureSeedListIsUpdatedWhenRequired sets cassandraLastAction to UpdateSeedList=To-do
@@ -768,7 +766,7 @@ func (rcc *CassandraClusterReconciler) ListCassandraClusterPods(cc *api.Cassandr
 			rackName := cc.GetRackName(dc, rack)
 			dcRackName := cc.GetDCRackName(dcName, rackName)
 			if dcRackName == "" {
-				return nil, fmt.Errorf("Name used for DC and/or Rack are not good")
+				return nil, fmt.Errorf("name used for DC and/or Rack are not good")
 			}
 
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName}).Debug("List available pods")
@@ -804,7 +802,7 @@ func updateCassandraNodesStatusForPod(hostIDMap map[string]string, pod *v1.Pod, 
 
 	// Update Pod, HostId, Ip couple cached into status
 	hostId, keyFound := hostIDMap[pod.Status.PodIP]
-	if keyFound == true && cassandraPodIsReady(pod) {
+	if keyFound && cassandraPodIsReady(pod) {
 		status.CassandraNodesStatus[pod.Name] = api.CassandraNodeStatus{HostId: hostId, NodeIp: pod.Status.PodIP}
 	}
 }
@@ -819,7 +817,7 @@ func checkPodCrossIpUseCaseForPod(hostIDMap map[string]string, pod *v1.Pod, stat
 
 	// If the hostId associated to the pod in the status is not the same one
 	// that the one associated into cassandra for the same IP, so we are in IP cross cases.
-	if keyFound == true && statusHostId != hostId {
+	if keyFound && statusHostId != hostId {
 		logrus.WithFields(logrus.Fields{"pod": pod.Name}).
 			Info(fmt.Sprintf("Pod %s, have a cross Ip situation. The pod have ip : %s, with hostId : %s, "+
 				"but this ip is already associated to the hostId : %s. We force delete of the pod", pod.Name, pod.Status.PodIP, statusHostId, hostId))

@@ -3,12 +3,13 @@ package cassandrabackup
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/cscetbon/casskop/controllers/common"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/record"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"testing"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake" //nolint:staticcheck
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -172,7 +173,7 @@ func TestCassandraBackupIncorrectAwsCreds(t *testing.T) {
 
 	resp := validateBackupSecret(secret, &cassandraBackup, reqLogger)
 	assert.Contains(resp.Error(),
-		"There is no awsregion property while you have set both awssecretaccesskey and awsaccesskeyid")
+		"there is no awsregion property while you have set both awssecretaccesskey and awsaccesskeyid")
 
 	secret.Data["awsregion"] = []byte("a region")
 	resp = validateBackupSecret(secret, &cassandraBackup, reqLogger)

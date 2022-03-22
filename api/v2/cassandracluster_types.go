@@ -3,11 +3,12 @@ package v2
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"strings"
+
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"regexp"
-	"strings"
 )
 
 const (
@@ -314,7 +315,6 @@ func (cc *CassandraCluster) InitCassandraRackStatus(status *CassandraClusterStat
 func (cc *CassandraCluster) InitSeedList() []string {
 
 	var dcName, rackName string
-	var nbRack = 0
 	var indice int32
 	var seedList []string
 
@@ -323,7 +323,6 @@ func (cc *CassandraCluster) InitSeedList() []string {
 	if dcsize < 1 {
 		dcName = DefaultCassandraDC
 		rackName = DefaultCassandraRack
-		nbRack++
 		for indice = 0; indice < cc.Spec.NodesPerRacks && indice < 3; indice++ {
 			cc.addNewSeed(&seedList, dcName, rackName, indice)
 		}
@@ -336,7 +335,6 @@ func (cc *CassandraCluster) InitSeedList() []string {
 
 		if racksize < 1 {
 			rackName = DefaultCassandraRack
-			nbRack++
 			for indice = 0; indice < cc.Spec.NodesPerRacks && indice < 3; indice++ {
 				cc.addNewSeed(&seedList, dcName, rackName, indice)
 			}
@@ -345,7 +343,6 @@ func (cc *CassandraCluster) InitSeedList() []string {
 		for rack := 0; rack < racksize; rack++ {
 			rackName = cc.GetRackName(dc, rack)
 			dcRackName := cc.GetDCRackName(dcName, rackName)
-			nbRack++
 			nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
 
 			switch racksize {
@@ -632,15 +629,6 @@ func (cc *CassandraCluster) FindDCWithNodesTo0() (bool, string, int) {
 	return false, "", 0
 }
 
-//knownDCs returns list of datacenters
-func (cc *CassandraCluster) knownDCs(dcName string) []string {
-	var dcList []string
-	for _, dc := range cc.Spec.Topology.DC {
-		dcList = append(dcList, dc.Name)
-	}
-	return dcList
-}
-
 //IsValidDC returns true if dcName is known
 func (cc *CassandraCluster) IsValidDC(dcName string) bool {
 	for _, dc := range cc.Spec.Topology.DC {
@@ -912,8 +900,8 @@ type BackRestSidecar struct {
 	// ImagePullPolicy define the pull policy for backrest sidecar docker image
 	ImagePullPolicy v1.PullPolicy `json:"imagePullPolicy,omitempty"`
 	// Kubernetes object : https://godoc.org/k8s.io/api/core/v1#ResourceRequirements
-	Resources *v1.ResourceRequirements `json:"resources,omitempty"`
-	VolumeMounts []v1.VolumeMount `json:"volumeMount,omitempty"`
+	Resources    *v1.ResourceRequirements `json:"resources,omitempty"`
+	VolumeMounts []v1.VolumeMount         `json:"volumeMount,omitempty"`
 }
 
 //CassandraRackStatus defines states of Cassandra for 1 rack (1 statefulset)

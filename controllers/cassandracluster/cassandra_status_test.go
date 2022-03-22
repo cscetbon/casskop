@@ -17,6 +17,7 @@ package cassandracluster
 import (
 	"context"
 	"fmt"
+
 	"github.com/cscetbon/casskop/controllers/common"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -40,7 +41,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var clusterName = "cassandra-demo"
 var namespace = "ns"
 
 var cc2Dcs = `

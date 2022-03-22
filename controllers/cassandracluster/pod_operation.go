@@ -28,6 +28,8 @@ import (
 	api "github.com/cscetbon/casskop/api/v2"
 	"github.com/cscetbon/casskop/pkg/k8s"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -51,26 +53,26 @@ type op struct {
 type operationMode string
 
 const (
-	NORMAL operationMode = "NORMAL"
-	LEAVING = "LEAVING"
+	NORMAL         = "NORMAL"
+	LEAVING        = "LEAVING"
 	DECOMMISSIONED = "DECOMMISSIONED"
-	UNKNOWN = "UNKNOWN"
+	UNKNOWN        = "UNKNOWN"
 )
 
 var podOperationMap = map[string]op{
-	api.OperationCleanup:         {(*CassandraClusterReconciler).runCleanup,
+	api.OperationCleanup: {(*CassandraClusterReconciler).runCleanup,
 		(*JolokiaClient).hasCleanupCompactions, nil},
-	api.OperationRebuild:         {(*CassandraClusterReconciler).runRebuild,
+	api.OperationRebuild: {(*CassandraClusterReconciler).runRebuild,
 		(*JolokiaClient).hasStreamingSessions, nil},
 	api.OperationUpgradeSSTables: {(*CassandraClusterReconciler).runUpgradeSSTables,
 		(*JolokiaClient).hasUpgradeSSTablesCompactions, nil},
-	api.OperationRemove:          {(*CassandraClusterReconciler).runRemove,
-		(*JolokiaClient).hasLeavingNodes,(*CassandraClusterReconciler).postRunRemove}}
+	api.OperationRemove: {(*CassandraClusterReconciler).runRemove,
+		(*JolokiaClient).hasLeavingNodes, (*CassandraClusterReconciler).postRunRemove}}
 
-const breakResyncLoop    = true
+const breakResyncLoop = true
 const continueResyncLoop = false
-const monitorSleepDelay  = 10 * time.Second
-const deletedPvcTimeout  = 30 * time.Second
+const monitorSleepDelay = 10 * time.Second
+const deletedPvcTimeout = 30 * time.Second
 
 var chanRunningOp = make(chan finalizedOp, 100)
 
@@ -83,6 +85,10 @@ func randomPodOperationKey() string {
 		r--
 	}
 	return "" // will never happen but make the compiler happy ¯\_(ツ)_/¯
+}
+
+func title(s string) string {
+	return cases.Title(language.Und).String(s)
 }
 
 //handlePodOperation will ensure that all Pod Operations which needed to be performed are done accordingly.
@@ -116,7 +122,7 @@ func (rcc *CassandraClusterReconciler) handlePodOperation(cc *api.CassandraClust
 	}
 
 	hostName := k8s.PodHostname(*firstPod)
-	jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc, cc.Spec.ImageJolokiaSecret, cc.Namespace)
+	jolokiaClient, _ := NewJolokiaClient(hostName, JolokiaPort, rcc, cc.Spec.ImageJolokiaSecret, cc.Namespace)
 
 	hasJoiningNodes, err := jolokiaClient.hasJoiningNodes()
 	if err != nil {
@@ -193,7 +199,7 @@ func (rcc *CassandraClusterReconciler) initOperation(cc *api.CassandraCluster, s
 
 		if podLastOperation.Name == operationName && podLastOperation.Status == api.StatusOngoing && len(podLastOperation.Pods) < 1 {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-				"operation": strings.Title(operationName)}).Debug("Set podLastOperation to Done as there is no more Pod to work on")
+				"operation": title(operationName)}).Debug("Set podLastOperation to Done as there is no more Pod to work on")
 			podLastOperation.Status = api.StatusDone
 			podLastOperation.EndTime = &now
 
@@ -205,7 +211,7 @@ func (rcc *CassandraClusterReconciler) initOperation(cc *api.CassandraCluster, s
 
 	if podLastOperation.Status != api.StatusOngoing {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-			"operation": strings.Title(operationName)}).Debug("Reset podLastOperation attributes")
+			"operation": title(operationName)}).Debug("Reset podLastOperation attributes")
 		podLastOperation.Name = operationName
 		podLastOperation.Status = api.StatusOngoing
 		podLastOperation.StartTime = &now
@@ -233,7 +239,7 @@ func (rcc *CassandraClusterReconciler) initOperation(cc *api.CassandraCluster, s
 func (rcc *CassandraClusterReconciler) startOperation(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	pod v1.Pod, dcRackName, operationName string) error {
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
-		"operation": strings.Title(operationName)}).Info("Start operation")
+		"operation": title(operationName)}).Info("Start operation")
 	labels := map[string]string{"operation-status": api.StatusOngoing,
 		"operation-start": k8s.LabelTime(), "operation-end": ""}
 
@@ -252,7 +258,7 @@ func (rcc *CassandraClusterReconciler) startOperation(cc *api.CassandraCluster, 
 	rcc.updateCassandraStatus(cc, status)
 
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-		"pod": pod.Name, "operation": strings.Title(operationName),
+		"pod": pod.Name, "operation": title(operationName),
 		"podLastOperation.OperatorName": podLastOperation.OperatorName,
 		"podLastOperation.Pods":         podLastOperation.Pods}).Debug("Display information about pods")
 	return nil
@@ -290,7 +296,7 @@ func (rcc *CassandraClusterReconciler) finalizeOperations(cc *api.CassandraClust
 	for chanOp := 0; chanOp < len(chanRunningOp); chanOp++ {
 		op := <-chanRunningOp
 		rcc.finalizeOperation(op.err, cc, op.dcRackName, op.pod, &rcc.cc.Status,
-			strings.Title(op.operationName))
+			title(op.operationName))
 	}
 }
 
@@ -340,7 +346,7 @@ func (rcc *CassandraClusterReconciler) ensureDecommission(cc *api.CassandraClust
 			if apierrors.IsNotFound(err) {
 				return rcc.deletePodPVC(cc, dcName, rackName, status, lastPod, statefulsetIsReady)
 			}
-			return breakResyncLoop, fmt.Errorf("Failed to get pod %s: %v", podLastOperation.Pods[0], err)
+			return breakResyncLoop, fmt.Errorf("failed to get pod %s: %v", podLastOperation.Pods[0], err)
 		}
 
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
@@ -350,13 +356,13 @@ func (rcc *CassandraClusterReconciler) ensureDecommission(cc *api.CassandraClust
 	case api.StatusOngoing:
 
 		if podLastOperation.Pods == nil || podLastOperation.Pods[0] == "" {
-			return breakResyncLoop, fmt.Errorf("Status is Ongoing, we should have a PodLastOperation Pods item")
+			return breakResyncLoop, fmt.Errorf("status is Ongoing, we should have a PodLastOperation Pods item")
 		}
 
 		lastPod, err := rcc.GetPod(cc.Namespace, podLastOperation.Pods[0])
 		if err != nil {
 			return breakResyncLoop, fmt.Errorf(
-				"Failed to get last pod '%s': %v", podLastOperation.Pods[0], err)
+				"failed to get last pod '%s': %v", podLastOperation.Pods[0], err)
 		}
 
 		hostName := k8s.PodHostname(*lastPod)
@@ -386,7 +392,7 @@ func (rcc *CassandraClusterReconciler) ensureDecommission(cc *api.CassandraClust
 			if t.Add(api.DefaultDelayWaitForDecommission * time.Second).After(now) {
 				logrus.WithFields(logrus.Fields{
 					"cluster": cc.Name, "rack": dcRackName, "pod": lastPod.Name,
-					"operationMode": operationMode,
+					"operationMode":                   operationMode,
 					"DefaultDelayWaitForDecommission": api.DefaultDelayWaitForDecommission,
 				}).Info("Decommission was applied less than {DefaultDelayWaitForDecommission} seconds, waiting")
 			} else {
@@ -416,7 +422,7 @@ func (rcc *CassandraClusterReconciler) ensureDecommission(cc *api.CassandraClust
 	//Set LastAction to Continue in case more decommissions are needed
 	case api.StatusDone:
 		if podLastOperation.PodsOK == nil || podLastOperation.PodsOK[0] == "" {
-			return breakResyncLoop, fmt.Errorf("For Status Done we should have a PodLastOperation.PodsOK item")
+			return breakResyncLoop, fmt.Errorf("for Status Done we should have a PodLastOperation.PodsOK item")
 		}
 		status.CassandraRackStatus[dcRackName].CassandraLastAction.Status = api.StatusContinue
 		return breakResyncLoop, nil
@@ -441,7 +447,7 @@ func (rcc *CassandraClusterReconciler) ensureDecommissionToDo(cc *api.CassandraC
 	// We Get LastPod From StatefulSet
 	lastPod, err := rcc.GetLastPod(cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
 	if err != nil {
-		return breakResyncLoop, fmt.Errorf("Failed to get last cassandra's pods: %v", err)
+		return breakResyncLoop, fmt.Errorf("failed to get last cassandra's pods: %v", err)
 	}
 	//If Pod is unschedulable, we bypass decommission (cassandra is not running)
 	if lastPod.Status.Phase == v1.PodPending &&
@@ -457,7 +463,7 @@ func (rcc *CassandraClusterReconciler) ensureDecommissionToDo(cc *api.CassandraC
 		return continueResyncLoop, nil
 	}
 	if lastPod.Status.Phase != v1.PodRunning || lastPod.DeletionTimestamp != nil {
-		return breakResyncLoop, fmt.Errorf("Pod is not running")
+		return breakResyncLoop, fmt.Errorf("pod is not running")
 	}
 	logrusFields := logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": lastPod.Name}
 	logrus.WithFields(logrusFields).Info("ScaleDown detected, we launch decommission")
@@ -564,7 +570,7 @@ func (rcc *CassandraClusterReconciler) podsSlice(cc *api.CassandraCluster, statu
 		podLastOperation.OperatorName != "" && podLastOperation.OperatorName != operatorName {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 			"podLastOperation.OperatorName": podLastOperation.OperatorName, "operatorName": operatorName,
-			"operation": strings.Title(operationName)}).Info("Operator's name is different, we enable checking routines")
+			"operation": title(operationName)}).Info("Operator's name is different, we enable checking routines")
 		podLastOperation.OperatorName = operatorName
 
 		for _, podName := range podLastOperation.Pods {
@@ -647,7 +653,7 @@ func (rcc *CassandraClusterReconciler) finalizeOperation(err error, cc *api.Cass
 
 	ccRefreshed := cc.DeepCopy()
 
-	rcc.updatePodLastOperation(cc.Name, dcRackName, pod.Name, strings.Title(operationName), status, err)
+	rcc.updatePodLastOperation(cc.Name, dcRackName, pod.Name, title(operationName), status, err)
 
 	for {
 		if err = rcc.UpdatePodLabel(&pod, labels); err != nil {
@@ -687,7 +693,7 @@ func (rcc *CassandraClusterReconciler) monitorOperation(hostName string, cc *api
 					"pod": pod.Name, "host": hostName, "operation": operationName, "err": err}).Error("Got an error from Jolokia")
 				operationIsRunning = true
 			}
-			if operationIsRunning != true {
+			if !operationIsRunning {
 				break
 			}
 		}
@@ -704,7 +710,7 @@ func (rcc *CassandraClusterReconciler) monitorOperation(hostName string, cc *api
 func (rcc *CassandraClusterReconciler) runUpgradeSSTables(hostName string, cc *api.CassandraCluster, dcRackName string,
 	pod v1.Pod) error {
 	var err error
-	operation := strings.Title(api.OperationUpgradeSSTables)
+	operation := title(api.OperationUpgradeSSTables)
 
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 		"hostName": hostName, "operation": operation}).Info("Operation start")
@@ -721,15 +727,14 @@ func (rcc *CassandraClusterReconciler) runRebuild(hostName string, cc *api.Cassa
 	var err error
 	var keyspaces []string
 	var rebuildFrom, labelSet = pod.GetLabels()["operation-argument"]
-	operation := strings.Title(api.OperationRebuild)
+	operation := title(api.OperationRebuild)
 
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 		"hostName": hostName, "operation": operation}).Info("Operation start")
 
-	jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
-		cc.Spec.ImageJolokiaSecret, cc.Namespace)
+	jolokiaClient, _ := NewJolokiaClient(hostName, JolokiaPort, rcc, cc.Spec.ImageJolokiaSecret, cc.Namespace)
 
-	if labelSet != true {
+	if !labelSet {
 		err = errors.New("operation-argument is needed to get the datacenter name to rebuild from")
 	} else if keyspaces, err = jolokiaClient.NonLocalKeyspacesInDC(rebuildFrom); err == nil && len(keyspaces) == 0 {
 		err = fmt.Errorf("%s  has no keyspace to replicate data from", rebuildFrom)
@@ -750,13 +755,13 @@ func (rcc *CassandraClusterReconciler) runRebuild(hostName string, cc *api.Cassa
 }
 
 func (rcc *CassandraClusterReconciler) runRemove(hostName string, cc *api.CassandraCluster, dcRackName string, pod v1.Pod) error {
-	operation := strings.Title(api.OperationRemove)
+	operation := title(api.OperationRemove)
 
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 		"hostName": hostName, "operation": operation}).Info("Operation start")
 
 	var label, labelSet = pod.GetLabels()["operation-argument"]
-	if labelSet != true {
+	if !labelSet {
 		return errors.New("operation-argument is needed to get the pod name to remove from the cluster")
 	}
 
@@ -768,7 +773,7 @@ func (rcc *CassandraClusterReconciler) runRemove(hostName string, cc *api.Cassan
 	}
 
 	if podToRemove == "" && podIPToRemove == "" {
-		return fmt.Errorf("Expected format is `[Name][_IP]` with at least one value but none was found")
+		return fmt.Errorf("expected format is `[Name][_IP]` with at least one value but none was found")
 	}
 	// Name can be omitted in case the pod has already been deleted but then IP must be provided
 	// When an IP is provided it will be used by the removeNode operation
@@ -786,11 +791,11 @@ func (rcc *CassandraClusterReconciler) runRemove(hostName string, cc *api.Cassan
 		lostPod, err = rcc.GetPod(cc.Namespace, podToRemove)
 		if err != nil {
 			if !apierrors.IsNotFound(err) {
-				return fmt.Errorf("Failed to get pod '%s': %v", podToRemove, err)
+				return fmt.Errorf("failed to get pod '%s': %v", podToRemove, err)
 			}
 			// If we can't find it, it means it has already been deleted somehow. That's okay as long as we got its IP
 			if podIPToRemove == "" {
-				return fmt.Errorf("Pod %s not found. You need to provide its old IP to remove it from the cluster", podToRemove)
+				return fmt.Errorf("pod %s not found. You need to provide its old IP to remove it from the cluster", podToRemove)
 			}
 		}
 	}
@@ -799,7 +804,7 @@ func (rcc *CassandraClusterReconciler) runRemove(hostName string, cc *api.Cassan
 	if podIPToRemove == "" {
 		podIPToRemove = lostPod.Status.PodIP
 		if podIPToRemove == "" {
-			return fmt.Errorf("Can't find an IP assigned to pod %s. You need to provide its old IP to remove it from the cluster", podToRemove)
+			return fmt.Errorf("can't find an IP assigned to pod %s. You need to provide its old IP to remove it from the cluster", podToRemove)
 		}
 	}
 
@@ -809,8 +814,8 @@ func (rcc *CassandraClusterReconciler) runRemove(hostName string, cc *api.Cassan
 		var hostIDMap map[string]string
 		// Get hostID from internal map and pass it to removeNode function
 		if hostIDMap, err = jolokiaClient.hostIDMap(); err == nil {
-			if hostID, keyFound := hostIDMap[podIPToRemove]; keyFound != true {
-				err = fmt.Errorf("Host with IP '%s' not found in hostIdMap", podIPToRemove)
+			if hostID, keyFound := hostIDMap[podIPToRemove]; !keyFound {
+				err = fmt.Errorf("host with IP '%s' not found in hostIdMap", podIPToRemove)
 			} else {
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 					"nodeToRemove": podToRemove, "operation": operation}).Info("Jolokia Remove node operation")
@@ -844,7 +849,7 @@ func (rcc *CassandraClusterReconciler) postRunRemove(cc *api.CassandraCluster, d
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name}).Info("Post operation start")
 
 	var label, labelSet = pod.GetLabels()["operation-argument"]
-	if labelSet != true {
+	if !labelSet {
 		return errors.New("operation-argument is needed to get the pod name to remove from the cluster")
 	}
 	podToRemove := strings.Split(label, "_")[0]
@@ -880,7 +885,7 @@ func (rcc *CassandraClusterReconciler) postRunRemove(cc *api.CassandraCluster, d
 	lostPod, err := rcc.GetPod(cc.Namespace, podToRemove)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
-			return fmt.Errorf("Failed to get pod '%s': %v", podToRemove, err)
+			return fmt.Errorf("failed to get pod '%s': %v", podToRemove, err)
 		}
 	}
 	err = rcc.ForceDeletePod(lostPod)
@@ -897,7 +902,7 @@ func (rcc *CassandraClusterReconciler) postRunRemove(cc *api.CassandraCluster, d
 
 func (rcc *CassandraClusterReconciler) runCleanup(hostName string, cc *api.CassandraCluster, dcRackName string, pod v1.Pod) error {
 	var err error
-	operation := strings.Title(api.OperationCleanup)
+	operation := title(api.OperationCleanup)
 
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 		"hostName": hostName, "operation": operation}).Info("Operation start")

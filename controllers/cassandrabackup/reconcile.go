@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/cscetbon/casskop/controllers/common"
 	"github.com/go-logr/logr"
-	"time"
 
 	api "github.com/cscetbon/casskop/api/v2"
 	"github.com/cscetbon/casskop/pkg/backrest"
@@ -23,12 +24,12 @@ import (
 )
 
 const (
-	annotationLastApplied   string = "cassandrabackups.db.orange.com/last-applied-configuration"
-	backupAlreadyRun               = "Reconcilliation stopped as backup already run"
-	backupAlreadyScheduled         = "Reconcilliation stopped as backup already scheduled and there are no new changes"
-	undoScheduleChange             = "Resetting the schedule to what it was previously. Everything else will be updated"
-	retryFailedUndoSchedule        = "Issue when resetting schedule, we'll give it another try"
-	secretError                    = "Your secret is not valid"
+	annotationLastApplied   = "cassandrabackups.db.orange.com/last-applied-configuration"
+	backupAlreadyRun        = "Reconcilliation stopped as backup already run"
+	backupAlreadyScheduled  = "Reconcilliation stopped as backup already scheduled and there are no new changes"
+	undoScheduleChange      = "Resetting the schedule to what it was previously. Everything else will be updated"
+	retryFailedUndoSchedule = "Issue when resetting schedule, we'll give it another try"
+	secretError             = "Your secret is not valid"
 )
 
 // CassandraBackupReconciler reconciles a CassandraBackup object
@@ -252,7 +253,7 @@ func (r *CassandraBackupReconciler) backupData(cassandraBackup *api.CassandraBac
 	backupClient.updateStatus(api.BackRestStatus{}, reqLogger)
 
 	if len(pods.Items) == 0 {
-		reqLogger.Error(err, fmt.Sprintf("Error while starting backup operation, no pods found"))
+		reqLogger.Error(err, "Error while starting backup operation, no pods found")
 		r.Recorder.Event(backupClient.backup,
 			corev1.EventTypeWarning,
 			"BackupNotInitiated",

@@ -167,7 +167,7 @@ func (rcc *CassandraClusterReconciler) hasUnschedulablePod(namespace string, dcN
 	for _, pod := range podsList.Items {
 		if pod.Status.Phase != v1.PodRunning && pod.Status.Conditions != nil {
 			for _, cs := range pod.Status.ContainerStatuses {
-				if cs.Ready == false && cs.State.Waiting != nil && cs.State.Waiting.Reason == "ImagePullBackOff" {
+				if !cs.Ready && cs.State.Waiting != nil && cs.State.Waiting.Reason == "ImagePullBackOff" {
 					//TODO: delete Pod in this case so that it can be scheduled again if image in spec and image in
 					// pod have changd
 					return true
