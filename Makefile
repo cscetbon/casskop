@@ -86,7 +86,7 @@ update-crds:
 	for crd in config/crd/bases/*.yaml; do \
 		crdname=$$(basename $$crd); \
 		end=$$(expr $$(grep -n ^status $$crd|cut -f1 -d:) - 1); \
-		git show v1.1.5-release:$$(echo deploy/crds/$$crdname |sed 's/.yaml/_crd.yaml/') $$crd > /tmp/$$crdname; \
+		cat $$(echo v1-crds/$$crdname|sed 's/.yaml/_crd.yaml/') > /tmp/$$crdname; \
 		sed -e '1,/versions/d' -e "1,$${end}s/^..//" $$crd >> /tmp/$$crdname; \
 		cp /tmp/$$crdname $$crd; \
 		yq -i e '$(FIRST_VERSION).storage = false' $$crd; \
