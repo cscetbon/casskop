@@ -1,5 +1,5 @@
 ---
-id: dynamics_sidecars_storage
+slug: dynamics_sidecars_storage
 title: Casskop 0.5.1 - Dynamic sidecars and storage configuration feature
 author: Alexandre Guitton
 author_title: Alexandre Guitton
