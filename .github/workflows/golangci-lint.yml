@@ -10,6 +10,7 @@ jobs:
 
   golangci:
     name: lint
+    runs-on: ubuntu-latest
     container: golangci/golangci-lint:v1.45.0
     continue-on-error: true
     steps:
