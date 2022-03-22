@@ -1,0 +1,14 @@
+apiVersion: db.orange.com/v1alpha1
+kind: CassandraRestore
+metadata:
+  name: restore-compat-tests
+spec:
+  cassandraBackup: backup-compat-tests
+  cassandraCluster: cassandra-e2e
+  entities: k1.standard1
+  rename:
+    k1.standard1: k2.standard1
+status:
+  condition:
+    type: COMPLETED
+  progress: 100%

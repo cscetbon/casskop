@@ -1,0 +1,26 @@
+apiVersion: db.orange.com/v1alpha1
+kind: CassandraCluster
+metadata:
+  name: cassandra-e2e
+spec:
+  nodesPerRacks: 2
+  cassandraImage: cassandra:3.11.9
+  bootstrapImage: ghcr.io/cscetbon/casskop-bootstrap:0.1.9
+  dataCapacity: "256Mi"
+  hardAntiAffinity: false
+  deletePVC: true
+  autoPilot: true
+  autoUpdateSeedList: false
+  dataStorageClass: local-path
+  backRestSidecar:
+    image: gcr.io/cassandra-operator/instaclustr-icarus:1.1.0
+    resources: &resources
+      limits:
+        memory: 512Mi
+        cpu: 200m
+  resources: *resources
+  topology:
+    dc:
+      - name: dc1
+        rack:
+          - name: rack1

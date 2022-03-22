@@ -1,0 +1,11 @@
+apiVersion: db.orange.com/v1alpha1
+kind: CassandraBackup
+metadata:
+  name: backup-compat-tests
+spec:
+  cassandraCluster: cassandra-e2e
+  datacenter: dc1
+  storageLocation: s3://cscetbon-lab
+  snapshotTag: CassOpCassKopCompatTest
+  secret: aws-backup-secrets
+  entities: k1.standard1

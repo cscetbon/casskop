@@ -1,0 +1,8 @@
+apiVersion: db.orange.com/v1alpha1
+kind: CassandraBackup
+metadata:
+  name: backup-compat-tests
+status:
+  condition: 
+    type: COMPLETED
+  progress: 100%

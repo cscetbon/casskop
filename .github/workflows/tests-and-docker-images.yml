@@ -132,7 +132,8 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        kuttl-test-name: [operations, sidecars, scaling, multi-dcs]
+        # kuttl-test-name: [operations, sidecars, scaling, multi-dcs]
+        kuttl-test-name: [backup-restore]
     steps:
     - name: Check out repository
       uses: actions/checkout@v2
@@ -154,6 +155,33 @@ jobs:
       with:
         path: kuttl
         key: ${{ runner.os }}-kuttl-${{ env.KUTTL_VERSION }}
+
+    - name: Apply backup S3 secret
+      run: |
+        cd test/kuttl
+        cat <<EOF >> backup-restore/00-createCluster.yaml
+        ---
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: aws-backup-secrets
+        type: Opaque
+        stringData:
+          awsaccesskeyid: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awssecretaccesskey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsregion: us-west-2
+        EOF
+
+        cat <<EOF >> backup-restore/00-assert.yaml
+        ---
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: aws-backup-secrets
+        EOF
+
+        cat backup-restore/00-createCluster.yaml
+        cat backup-restore/00-assert.yaml
 
     - name: Run kuttl tests
       run: |
