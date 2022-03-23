@@ -83,6 +83,9 @@ jobs:
 
   docker-images:
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
     permissions:
       packages: write
     needs: unit-tests
@@ -128,6 +131,9 @@ jobs:
 
   kuttl-casskop:
     needs: install-kuttl
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 2
