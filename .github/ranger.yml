@@ -2,7 +2,7 @@ labels:
   duplicate: close
   wontfix: close
   invalid: close
-  'squash when passing': merge
+  'merge when passing': merge
   docs: merge
   stale: 
     action: close
@@ -10,10 +10,7 @@ labels:
     comment: false
   close:
     delay: "3 days"
-    comment: "⚠️ This issue has been marked $LABEL and will be closed in $DELAY".
-
-merges:
-  - action: tag
+    comment: "⚠️ This issue has been marked $LABEL and will be closed in $DELAY"
 
 comments:
   - action: delete_comment
@@ -26,17 +23,17 @@ comments:
 commits:
   - action: label
     pattern: BREAKING CHANGE
-    labels: 
+    labels:
       - Major Version
-	- action: label
-	  pattern: /perf.+?:/
-	  labels: 
-       - Major Version
-	- action: label
-	  pattern: /feat.+?:/
-	  labels: 
-	    - Minor Version
-	- action: label
-	  pattern: /fix.+?:/
-	  labels: 
-	    - Patch Version
+  - action: label
+    pattern: /perf.+?:/
+    labels:
+      - Major Version
+  - action: label
+    pattern: /feat.+?:/
+    labels:
+      - Minor Version
+  - action: label
+    pattern: /fix.+?:/
+    labels:
+      - Patch Version

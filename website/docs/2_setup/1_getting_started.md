@@ -42,7 +42,7 @@ If you already downloaded the helm chart previously, make sure you are using the
 Then install the chart using Helm 3:
 
 ```bash
-helm install casskop oci://ghcr.io/cscetbon/casskop
+helm install casskop oci://ghcr.io/cscetbon/casskop-helm
 ```
 
 You can find more information in the [Customizable install with helm](/casskop/docs/configuration_deployment/customizable_install_with_helm).
