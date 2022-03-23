@@ -21,7 +21,8 @@ jobs:
       - name: Publish ${{ matrix.chart }} chart
         uses: appany/helm-oci-chart-releaser@v0.3.0
         with:
-          name: ${{ matrix.chart }}
+          name: ${{ matrix.chart }}/helm
+          path: charts/${{ matrix.chart }}
           repository: ${{ github.repository_owner }}
           tag: ${{ github.ref_name }}
           registry: ghcr.io
