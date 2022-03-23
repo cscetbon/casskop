@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	api "github.com/cscetbon/casskop/api/v2"
-	"github.com/cscetbon/casskop/pkg/cassandrabackup"
 	"github.com/cscetbon/casskop/controllers/common"
+	"github.com/cscetbon/casskop/pkg/cassandrabackup"
 	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -16,9 +16,8 @@ import (
 )
 
 var (
-	regexSpaceOrComma = regexp.MustCompile("[\\s,]+")
+	regexSpaceOrComma = regexp.MustCompile(`[\s,]+`)
 )
-
 
 type Client struct {
 	client            cassandrabackup.Client
@@ -46,31 +45,31 @@ func filterEmptyStrings(input []string) []string {
 	return output
 }
 
-func formatEntities(entities string) string{
+func formatEntities(entities string) string {
 	return strings.Join(filterEmptyStrings(regexSpaceOrComma.Split(strings.TrimSpace(entities), -1)), ",")
 }
 
 func (c *Client) PerformRestore(restore *api.CassandraRestore,
 	backup *api.CassandraBackup) (*api.BackRestStatus, error) {
-	restoreOperationRequest := &icarus.RestoreOperationRequest {
-		Type_: "restore",
-		Dc: restore.Spec.Datacenter,
-		StorageLocation: backup.Spec.StorageLocation,
-		SnapshotTag: backup.Spec.SnapshotTag,
-		NoDeleteTruncates: restore.Spec.NoDeleteTruncates,
+	restoreOperationRequest := &icarus.RestoreOperationRequest{
+		Type_:              "restore",
+		Dc:                 restore.Spec.Datacenter,
+		StorageLocation:    backup.Spec.StorageLocation,
+		SnapshotTag:        backup.Spec.SnapshotTag,
+		NoDeleteTruncates:  restore.Spec.NoDeleteTruncates,
 		ExactSchemaVersion: restore.Spec.ExactSchemaVersion,
-		RestorationPhase: "INIT",
-		GlobalRequest: true,
+		RestorationPhase:   "INIT",
+		GlobalRequest:      true,
 		Import_: &icarus.AllOfRestoreOperationRequestImport_{
-			Type_: "import",
+			Type_:     "import",
 			SourceDir: "/var/lib/cassandra/downloadedsstables",
 		},
-		Entities: restore.Spec.Entities,
-		Rename: restore.Spec.Rename,
-		K8sSecretName: restore.Spec.Secret,
-		CassandraDirectory: restore.Spec.CassandraDirectory,
-		SchemaVersion: restore.Spec.SchemaVersion,
-		RestorationStrategyType: "HARDLINKS",
+		Entities:                  restore.Spec.Entities,
+		Rename:                    restore.Spec.Rename,
+		K8sSecretName:             restore.Spec.Secret,
+		CassandraDirectory:        restore.Spec.CassandraDirectory,
+		SchemaVersion:             restore.Spec.SchemaVersion,
+		RestorationStrategyType:   "HARDLINKS",
 		ResolveHostIdFromTopology: true,
 	}
 
@@ -101,7 +100,7 @@ func (c *Client) PerformRestore(restore *api.CassandraRestore,
 
 func (c *Client) PerformBackup(backup *api.CassandraBackup) (string, error) {
 	bandwidth := strings.Replace(backup.Spec.Bandwidth, " ", "", -1)
-	bandwidthDataRate, err := dataRateFromBandwidth(bandwidth)
+	bandwidthDataRate, _ := dataRateFromBandwidth(bandwidth)
 
 	backupOperationRequest := &icarus.BackupOperationRequest{
 		Type_:                 "backup",
@@ -128,7 +127,7 @@ func (c *Client) PerformBackup(backup *api.CassandraBackup) (string, error) {
 func (c *Client) RestoreStatusByID(id string) (*api.BackRestStatus, error) {
 
 	restoreOperation, err := c.client.RestoreOperationByID(id)
-	if err != nil  {
+	if err != nil {
 		logrus.WithFields(logrus.Fields{"id": id}).Error("Cannot find restore operation")
 		return nil, err
 	}
@@ -140,7 +139,7 @@ func (c *Client) RestoreStatusByID(id string) (*api.BackRestStatus, error) {
 func (c *Client) BackupStatusByID(id string) (api.BackRestStatus, error) {
 
 	backupOperation, err := c.client.BackupOperationByID(id)
-	if err != nil  {
+	if err != nil {
 		logrus.WithFields(logrus.Fields{"id": id}).Error("Cannot find backup operation")
 		return api.BackRestStatus{}, err
 	}

@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"math/rand"
 	"reflect"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"time"
+
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/sirupsen/logrus"
 
@@ -119,7 +120,7 @@ func validateBackupSecret(secret *corev1.Secret, backup *api.CassandraBackup, lo
 
 		if len(secret.Data["awssecretaccesskey"]) != 0 && len(secret.Data["awsaccesskeyid"]) != 0 {
 			if len(secret.Data["awsregion"]) == 0 {
-				return fmt.Errorf("There is no awsregion property "+
+				return fmt.Errorf("there is no awsregion property "+
 					"while you have set both awssecretaccesskey and awsaccesskeyid in %s secret for backups", secret.Name)
 			}
 		}

@@ -25,8 +25,7 @@ const (
 
 type mockCassandraBackupClient struct {
 	Client
-	opts      *Config
-	podClient *icarus.APIClient
+	opts *Config
 
 	newClient func(*icarus.Configuration) *icarus.APIClient
 	failOpts  bool

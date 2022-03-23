@@ -25,9 +25,9 @@ import (
 	"github.com/banzaicloud/k8s-objectmatcher/patch"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	"github.com/allamand/godebug/pretty"
 	api "github.com/cscetbon/casskop/api/v2"
 	"github.com/cscetbon/casskop/pkg/k8s"
-	"github.com/allamand/godebug/pretty"
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -251,9 +251,9 @@ func (rcc *CassandraClusterReconciler) CreateOrUpdateStatefulSet(statefulSet *ap
 			incrementValue *= -1
 		}
 		logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
-			"dc-rack": dcRackName}).Debugf("Must scale %s one node at a time. Update stfs " +
+			"dc-rack": dcRackName}).Debugf("Must scale %s one node at a time. Update stfs "+
 			"replicas to %d instead of %d for now",
-			scaleOperation, *rcc.storedStatefulSet.Spec.Replicas + incrementValue, *statefulSet.Spec.Replicas)
+			scaleOperation, *rcc.storedStatefulSet.Spec.Replicas+incrementValue, *statefulSet.Spec.Replicas)
 		*statefulSet.Spec.Replicas = *rcc.storedStatefulSet.Spec.Replicas + incrementValue
 	}
 
@@ -315,8 +315,5 @@ func getStoredSeedList(storedStatefulSet *appsv1.StatefulSet) []string {
 }
 
 func isStatefulSetNotReady(storedStatefulSet *appsv1.StatefulSet) bool {
-	if storedStatefulSet.Status.ReadyReplicas != *storedStatefulSet.Spec.Replicas {
-		return true
-	}
-	return false
+	return storedStatefulSet.Status.ReadyReplicas != *storedStatefulSet.Spec.Replicas
 }

@@ -98,7 +98,7 @@ func (jolokiaClient *JolokiaClient) leavingNodes() ([]string, error) {
 		"org.apache.cassandra.db:type=StorageService", nil, "LeavingNodes")
 	result, err := checkJolokiaErrors(jolokiaClient.client.ExecuteReadRequest(request))
 	if err != nil {
-		return nil, fmt.Errorf("Cannot get list of leaving nodes: %v", err.Error())
+		return nil, fmt.Errorf("cannot get list of leaving nodes: %v", err.Error())
 	}
 	v, isSlice := result.Value.([]interface{})
 	if isSlice {
@@ -112,7 +112,7 @@ func (jolokiaClient *JolokiaClient) leavingNodes() ([]string, error) {
 		logrus.WithFields(logrus.Fields{"leavingNodes": leavingNodes}).Debug("List of leaving nodes")
 		return leavingNodes, nil
 	}
-	return nil, fmt.Errorf("Value returned by Jolokia is not a slice: %v", result.Value)
+	return nil, fmt.Errorf("value returned by Jolokia is not a slice: %v", result.Value)
 }
 
 func (jolokiaClient *JolokiaClient) hostIDMap() (map[string]string, error) {
@@ -120,7 +120,7 @@ func (jolokiaClient *JolokiaClient) hostIDMap() (map[string]string, error) {
 		"org.apache.cassandra.db:type=StorageService", nil, "HostIdMap")
 	result, err := checkJolokiaErrors(jolokiaClient.client.ExecuteReadRequest(request))
 	if err != nil {
-		return nil, fmt.Errorf("Cannot get host id map: %v", err.Error())
+		return nil, fmt.Errorf("cannot get host id map: %v", err.Error())
 	}
 	if m, ok := result.Value.(map[string]interface{}); ok {
 		hostIDMap := map[string]string{}
@@ -133,7 +133,7 @@ func (jolokiaClient *JolokiaClient) hostIDMap() (map[string]string, error) {
 		logrus.WithFields(logrus.Fields{"hostIDMap": hostIDMap}).Debug("Map of hosts IPs and IDs")
 		return hostIDMap, nil
 	}
-	return nil, fmt.Errorf("Value returned by Jolokia is not a map: %v", result.Value)
+	return nil, fmt.Errorf("value returned by Jolokia is not a map: %v", result.Value)
 }
 
 func (jolokiaClient *JolokiaClient) keyspaces() ([]string, error) {
@@ -141,7 +141,7 @@ func (jolokiaClient *JolokiaClient) keyspaces() ([]string, error) {
 		"org.apache.cassandra.db:type=StorageService", nil, "Keyspaces")
 	result, err := checkJolokiaErrors(jolokiaClient.client.ExecuteReadRequest(request))
 	if err != nil {
-		return nil, fmt.Errorf("Cannot get list of keyspaces: %v", err.Error())
+		return nil, fmt.Errorf("cannot get list of keyspaces: %v", err.Error())
 	}
 	v, isSlice := result.Value.([]interface{})
 	if isSlice {
@@ -154,7 +154,7 @@ func (jolokiaClient *JolokiaClient) keyspaces() ([]string, error) {
 		}
 		return keyspaces, nil
 	}
-	return nil, fmt.Errorf("Value returned by Jolokia is not a slice: %v", result.Value)
+	return nil, fmt.Errorf("value returned by Jolokia is not a slice: %v", result.Value)
 }
 
 func (jolokiaClient *JolokiaClient) nonLocalKeyspaces() ([]string, error) {
@@ -230,21 +230,21 @@ func (jolokiaClient *JolokiaClient) NodeRebuild(dc string) error {
 		"rebuild(java.lang.String)",
 		[]interface{}{dc}, ""))
 	if err != nil {
-		return fmt.Errorf("Cannot rebuild from %s: %v", dc, err.Error())
+		return fmt.Errorf("cannot rebuild from %s: %v", dc, err.Error())
 	}
 	return nil
 }
 
 /*NodeDecommission decommissions a node using a jolokia client and returns any error*/
 func (jolokiaClient *JolokiaClient) NodeDecommission(v4 bool) error {
-	args:=[]interface{}{}
+	args := []interface{}{}
 	if v4 {
 		args = append(args, true)
 	}
 	_, err := checkJolokiaErrors(jolokiaClient.executeOperation("org.apache.cassandra.db:type=StorageService",
 		"decommission", args, ""))
 	if err != nil {
-		return fmt.Errorf("Cannot decommission: %v", err.Error())
+		return fmt.Errorf("cannot decommission: %v", err.Error())
 	}
 	return nil
 }
@@ -256,7 +256,7 @@ func (jolokiaClient *JolokiaClient) NodeRemove(hostid string) error {
 		[]interface{}{hostid}, ""))
 
 	if err != nil {
-		return fmt.Errorf("Cannot remove node %s: %v", hostid, err.Error())
+		return fmt.Errorf("cannot remove node %s: %v", hostid, err.Error())
 	}
 
 	return nil
@@ -265,10 +265,10 @@ func (jolokiaClient *JolokiaClient) NodeRemove(hostid string) error {
 /*NodeOperationMode returns OperationMode of a node using a jolokia client and returns any error*/
 func (jolokiaClient *JolokiaClient) NodeOperationMode() (operationMode, error) {
 	request := go_jolokia.NewJolokiaRequest(go_jolokia.READ,
-		"org.apache.cassandra.db:type=StorageService",nil, "OperationMode")
+		"org.apache.cassandra.db:type=StorageService", nil, "OperationMode")
 	result, err := checkJolokiaErrors(jolokiaClient.executeReadRequest(request))
 	if err != nil {
-		return UNKNOWN, fmt.Errorf("Cannot get OperationMode: %v", err.Error())
+		return UNKNOWN, fmt.Errorf("cannot get OperationMode: %v", err.Error())
 	}
 	v, _ := result.Value.(string)
 	return operationMode(v), nil
@@ -276,10 +276,10 @@ func (jolokiaClient *JolokiaClient) NodeOperationMode() (operationMode, error) {
 
 func (jolokiaClient *JolokiaClient) hasStreamingSessions() (bool, error) {
 	request := go_jolokia.NewJolokiaRequest(go_jolokia.READ,
-		"org.apache.cassandra.net:type=StreamManager",nil, "CurrentStreams")
+		"org.apache.cassandra.net:type=StreamManager", nil, "CurrentStreams")
 	result, err := checkJolokiaErrors(jolokiaClient.executeReadRequest(request))
 	if err != nil {
-		return true, fmt.Errorf("Cannot get list of current streams: %v", err.Error())
+		return true, fmt.Errorf("cannot get list of current streams: %v", err.Error())
 	}
 	val, _ := result.Value.([]interface{})
 	return len(val) > 0, nil
@@ -291,7 +291,7 @@ func (jolokiaClient *JolokiaClient) hasCompactions(name string) (bool, error) {
 	result, err := checkJolokiaErrors(jolokiaClient.executeReadRequest(request))
 	if err != nil {
 		logrus.Error(err.Error())
-		return true, fmt.Errorf("Cannot get list of current compactions: %v", err.Error())
+		return true, fmt.Errorf("cannot get list of current compactions: %v", err.Error())
 	}
 	compactions, _ := result.Value.([]interface{})
 	for _, compaction := range compactions {
@@ -345,7 +345,7 @@ func (jolokiaClient *JolokiaClient) hasKeyspaceDataInDC(keyspace, dc string) (bo
 		"org.apache.cassandra.db:type=StorageService", "describeRingJMX", []interface{}{keyspace},
 		""))
 	if err != nil {
-		return false, fmt.Errorf("Cannot describe ring using keyspace %s: %v", keyspace, err.Error())
+		return false, fmt.Errorf("cannot describe ring using keyspace %s: %v", keyspace, err.Error())
 	}
 	regexDc := regexp.MustCompile(fmt.Sprintf("datacenter:%s", dc))
 	tokenRanges, _ := result.Value.([]interface{})
@@ -360,11 +360,11 @@ func (jolokiaClient *JolokiaClient) hasKeyspaceDataInDC(keyspace, dc string) (bo
 
 func (jolokiaClient *JolokiaClient) hasJoiningNodes() (bool, error) {
 	request := go_jolokia.NewJolokiaRequest(go_jolokia.READ,
-		"org.apache.cassandra.db:type=StorageService",nil, "JoiningNodes")
+		"org.apache.cassandra.db:type=StorageService", nil, "JoiningNodes")
 	result, err := checkJolokiaErrors(jolokiaClient.executeReadRequest(request))
 	if err != nil {
-		return true, fmt.Errorf("Cannot check if there are joining nodes: %v", err.Error())
+		return true, fmt.Errorf("cannot check if there are joining nodes: %v", err.Error())
 	}
 	v, _ := result.Value.([]interface{})
-	return len(v)>0, nil
+	return len(v) > 0, nil
 }

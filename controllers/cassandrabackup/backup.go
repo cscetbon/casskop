@@ -2,15 +2,16 @@ package cassandrabackup
 
 import (
 	"context"
-	"emperror.dev/errors"
 	"fmt"
+	"time"
+
+	"emperror.dev/errors"
 	api "github.com/cscetbon/casskop/api/v2"
 	"github.com/cscetbon/casskop/pkg/backrest"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 )
 
 type backupClient struct {
@@ -27,7 +28,7 @@ func backup(
 	operationID, err := backrestClient.PerformBackup(backupClient.backup)
 
 	if err != nil {
-		logging.Error(err, fmt.Sprintf("Error while starting backup operation"))
+		logging.Error(err, "Error while starting backup operation")
 		recorder.Event(backupClient.backup,
 			corev1.EventTypeWarning,
 			"BackupNotInitiated",
@@ -51,7 +52,7 @@ func backup(
 			ticker.Stop()
 			break
 		} else {
-			if !backupClient.updateStatus(status, logging){
+			if !backupClient.updateStatus(status, logging) {
 				continue
 			}
 			switch api.BackupConditionType(status.Condition.Type) {

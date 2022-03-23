@@ -17,14 +17,15 @@ package cassandracluster
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"testing"
+
 	"github.com/Jeffail/gabs"
 	"github.com/cscetbon/casskop/controllers/common"
 	"github.com/ghodss/yaml"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
-	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"testing"
 
 	api "github.com/cscetbon/casskop/api/v2"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -192,7 +193,7 @@ func TestInitContainerConfiguration(t *testing.T) {
 	cc.Spec.Config, _ = json.Marshal(map[string]map[string]interface{}{
 		"jvm-options": {
 			"initial_heap_size": "800M",
-			"max_heap_size": "1600M",
+			"max_heap_size":     "1600M",
 		},
 	})
 	cassieResources := cc.Spec.Resources
@@ -231,8 +232,8 @@ func TestInitContainerConfiguration(t *testing.T) {
 
 	vars := map[string]interface{}{
 		"CONFIG_FILE_DATA": configFileData.String(),
-		"PRODUCT_NAME": "cassandra",
-		"PRODUCT_VERSION": "4.0.1",
+		"PRODUCT_NAME":     "cassandra",
+		"PRODUCT_VERSION":  "4.0.1",
 	}
 
 	checkInitContainerVarEnv(t, initEnvVar, vars)
@@ -243,14 +244,14 @@ func TestInitContainerConfiguration(t *testing.T) {
 		},
 		"jvm-options": {
 			"cassandra_ring_delay_ms": 10000,
-			"initial_heap_size": "800M",
-			"max_heap_size": "4G",
+			"initial_heap_size":       "800M",
+			"max_heap_size":           "4G",
 		},
 	})
 
 	cc.Spec.Topology.DC[0].Config, _ = json.Marshal(map[string]map[string]interface{}{
 		"jvm-options": {
-			"resize_tlb": "true",
+			"resize_tlb":        "true",
 			"initial_heap_size": "1024M",
 		},
 	})
@@ -279,8 +280,8 @@ func TestInitContainerConfiguration(t *testing.T) {
 
 	vars = map[string]interface{}{
 		"CONFIG_FILE_DATA": configFileData.String(),
-		"PRODUCT_NAME": "cassandra",
-		"PRODUCT_VERSION": cc.Spec.ServerVersion,
+		"PRODUCT_NAME":     "cassandra",
+		"PRODUCT_VERSION":  cc.Spec.ServerVersion,
 	}
 
 	checkInitContainerVarEnv(t, initEnvVar, vars)
@@ -490,7 +491,7 @@ func checkResourcesConfiguration(t *testing.T, containers []v1.Container, cpu st
 			assert.Equal(t, resource.MustParse(cpu), *c.Resources.Requests.Cpu())
 			assert.Equal(t, resource.MustParse(memory), *c.Resources.Requests.Memory())
 			assert.Equal(t, resource.MustParse(cpu), *c.Resources.Limits.Cpu())
-			assert.Equal(t, resource.MustParse(memory),  *c.Resources.Limits.Memory())
+			assert.Equal(t, resource.MustParse(memory), *c.Resources.Limits.Memory())
 		}
 	}
 }
@@ -588,31 +589,6 @@ func generateExpectedDataStoragePVC(expectedlabels map[string]string, dataCapaci
 				},
 			},
 			StorageClassName: &dataClassStorage,
-		},
-	}
-}
-
-func generateExpectedGcLogsStoragePVC(expectedlabels map[string]string) v1.PersistentVolumeClaim {
-
-	expectedDataStorageQuantity, _ := resource.ParseQuantity("10Gi")
-	expectedDataStorageClassName := "standard-wait"
-
-	return v1.PersistentVolumeClaim{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   "gc-logs",
-			Labels: expectedlabels,
-		},
-		Spec: v1.PersistentVolumeClaimSpec{
-			AccessModes: []v1.PersistentVolumeAccessMode{
-				v1.ReadWriteOnce,
-			},
-
-			Resources: v1.ResourceRequirements{
-				Requests: v1.ResourceList{
-					"storage": expectedDataStorageQuantity,
-				},
-			},
-			StorageClassName: &expectedDataStorageClassName,
 		},
 	}
 }
@@ -753,13 +729,13 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 	}`))
 
 	vars := map[string]interface{}{
-		"CONFIG_FILE_DATA": configFileData.String(),
-		"PRODUCT_NAME":     "cassandra",
-		"PRODUCT_VERSION":  "3.11.7",
-		"CASSANDRA_SEEDS": "",
-		"CASSANDRA_DC": "",
-		"CASSANDRA_RACK": "",
-		"CASSANDRA_LOG_DIR": "/var/log/cassandra",
+		"CONFIG_FILE_DATA":       configFileData.String(),
+		"PRODUCT_NAME":           "cassandra",
+		"PRODUCT_VERSION":        "3.11.7",
+		"CASSANDRA_SEEDS":        "",
+		"CASSANDRA_DC":           "",
+		"CASSANDRA_RACK":         "",
+		"CASSANDRA_LOG_DIR":      "/var/log/cassandra",
 		"CASSANDRA_CLUSTER_NAME": "cassandra-demo",
 	}
 

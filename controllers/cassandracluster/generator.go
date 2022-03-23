@@ -17,6 +17,7 @@ package cassandracluster
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/Jeffail/gabs"
 	"github.com/banzaicloud/k8s-objectmatcher/patch"
 
@@ -45,13 +46,13 @@ type JvmMemory struct {
 
 /*Bunch of different constants*/
 const (
-	cassandraContainerName = "cassandra"
-	bootstrapContainerName = "bootstrap"
-	cassConfigBuilderName = "config-builder"
+	cassandraContainerName    = "cassandra"
+	bootstrapContainerName    = "bootstrap"
+	cassConfigBuilderName     = "config-builder"
 	cassBaseConfigBuilderName = "base-config-builder"
-	defaultJvmMaxHeap      = "2048M"
-	defaultJvmInitHeap      = "512M"
-	hostnameTopologyKey    = "kubernetes.io/hostname"
+	defaultJvmMaxHeap         = "2048M"
+	defaultJvmInitHeap        = "512M"
+	hostnameTopologyKey       = "kubernetes.io/hostname"
 
 	// InitContainer resources
 	defaultInitContainerLimitsCPU      = "0.5"
@@ -237,7 +238,7 @@ func generateStorageConfigVolumeClaimTemplates(cc *api.CassandraCluster, labels 
 
 	for _, storage := range cc.Spec.StorageConfigs {
 		if storage.PVCSpec == nil {
-			return nil, fmt.Errorf("Can't create PVC from storageConfig named %s, with mountPath %s, because the PvcSpec is not specified", storage.Name, storage.MountPath)
+			return nil, fmt.Errorf("can't create PVC from storageConfig named %s, with mountPath %s, because the PvcSpec is not specified", storage.Name, storage.MountPath)
 		}
 		pvc := v1.PersistentVolumeClaim{
 			ObjectMeta: metav1.ObjectMeta{
@@ -465,7 +466,7 @@ func removeDuplicateVolumeMountsFromContainers(containers []v1.Container,
 func volumeClaimMapNameMountPath(containers []v1.Container,
 	volumeClaimTemplate []v1.PersistentVolumeClaim) map[string]string {
 	var cassandraContainerVolumeMounts []v1.VolumeMount
-	for _, container := range containers{
+	for _, container := range containers {
 		if container.Name == cassandraContainerName {
 			cassandraContainerVolumeMounts = container.VolumeMounts
 		}
@@ -499,9 +500,9 @@ func defineJvmMemory(resources v1.ResourceRequirements) JvmMemory {
 
 	var maxHeapSize, initialHeapSize string
 
-	if resources.Limits.Memory().IsZero() == false {
+	if !resources.Limits.Memory().IsZero() {
 		mhsInBytes := float64(resources.Limits.Memory().Value()) / 4
-		mhsInMB := int(mhsInBytes / float64(1024 * 1024))
+		mhsInMB := int(mhsInBytes / float64(1024*1024))
 		ihs := mhsInMB / 4 // Newheapsize = (container Mem)/8
 		maxHeapSize = strings.Join([]string{strconv.Itoa(mhsInMB), "M"}, "")
 		initialHeapSize = strings.Join([]string{strconv.Itoa(ihs), "M"}, "")
@@ -651,8 +652,8 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 
 	defaultConfig := NodeConfig{
 		"cassandra-yaml": {
-			"read_request_timeout_in_ms": 5000,
-			"write_request_timeout_in_ms": 5000,
+			"read_request_timeout_in_ms":          5000,
+			"write_request_timeout_in_ms":         5000,
 			"counter_write_request_timeout_in_ms": 5000,
 		},
 		"logback-xml": {
@@ -743,7 +744,7 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 	}
 }
 
-func jvmOptionName(cc *api.CassandraCluster) (jvmOption string)  {
+func jvmOptionName(cc *api.CassandraCluster) (jvmOption string) {
 	jvmOption = "jvm-options"
 	if strings.HasPrefix(cc.Spec.ServerVersion, "4") {
 		jvmOption = "jvm-server-options"
@@ -816,7 +817,7 @@ func commonBootstrapCassandraEnvVar(cc *api.CassandraCluster) []v1.EnvVar {
 			},
 		},
 		{
-			Name: "CASSANDRA_LOG_DIR",
+			Name:  "CASSANDRA_LOG_DIR",
 			Value: "/var/log/cassandra",
 		},
 	}
@@ -871,8 +872,8 @@ func createBaseConfigBuilderContainer(cc *api.CassandraCluster) v1.Container {
 		Name:            cassBaseConfigBuilderName,
 		Image:           cc.Spec.CassandraImage,
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
-		Command: 		 []string{"/bin/sh"},
-		Args: 			 []string{"-c", "cp -r /etc/cassandra/* /bootstrap/"},
+		Command:         []string{"/bin/sh"},
+		Args:            []string{"-c", "cp -r /etc/cassandra/* /bootstrap/"},
 		VolumeMounts:    generateContainerVolumeMount(cc, initContainer),
 		Resources:       initContainerResources(),
 	}
@@ -929,7 +930,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 	volumeMounts := append(generateContainerVolumeMount(cc, cassandraContainer),
 		generateStorageConfigVolumesMount(cc)...)
 
-	var command = []string{}
+	var command []string
 	if cc.Spec.Debug {
 		//debug: keep container running
 		command = []string{"sh", "-c", "tail -f /dev/null"}
@@ -1045,7 +1046,7 @@ func backrestSidecarContainer(cc *api.CassandraCluster) v1.Container {
 		Image:           cc.Spec.BackRestSidecar.Image,
 		ImagePullPolicy: cc.Spec.BackRestSidecar.ImagePullPolicy,
 		Ports:           []v1.ContainerPort{{Name: "http", ContainerPort: defaultBackRestPort}},
-		Resources: 		 v1.ResourceRequirements{
+		Resources: v1.ResourceRequirements{
 			Limits:   resources,
 			Requests: resources,
 		},

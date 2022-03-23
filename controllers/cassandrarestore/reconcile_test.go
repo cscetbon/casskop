@@ -3,9 +3,10 @@ package cassandrarestore
 import (
 	"context"
 	"fmt"
-	"github.com/cscetbon/casskop/controllers/common"
 	"os"
 	"testing"
+
+	"github.com/cscetbon/casskop/controllers/common"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -35,25 +36,6 @@ spec:
 #   schemaVersion:
 #   exactSchemaVersion:
   entities: "k1,k2.t1"
-`
-
-var cassandraBackupYaml = `
-apiVersion: db.orange.com/v2
-kind: CassandraRestore
-metadata:
-  name: test-cassandra-backup
-  namespace: default
-  labels:
-    app: cassandra
-  annotations:
-    a1: v1
-spec:
-  cassandraCluster: test-cluster-dc1
-  cluster: test-cluster
-  datacenter: dc1
-  storageLocation: s3://cassie
-  snapshotTag: SnapshotTag2
-  secret: cloud-backup-secrets
 `
 
 func helperInitCassandraRestore(cassandraRestoreYaml string) api.CassandraRestore {
