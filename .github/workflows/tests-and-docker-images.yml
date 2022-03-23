@@ -18,6 +18,9 @@ env:
 jobs:
 
   not-missing-manifests:
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     container: ghcr.io/cscetbon/casskop-build:v1.13.0
 

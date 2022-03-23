@@ -37,7 +37,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example,
 
 ```console
-helm install casskop oci://ghcr.io/cscetbon/casskop -f values.yaml
+helm install casskop oci://ghcr.io/cscetbon/casskop-helm -f values.yaml
 ```
 
 ### Installing the Chart
@@ -54,7 +54,7 @@ helm install casskop oci://ghcr.io/cscetbon/casskop -f values.yaml
 
 ```bash
 helm install --dry-run \
-    --debug.enabled oci://ghcr.io/cscetbon/casskop \
+    --debug.enabled oci://ghcr.io/cscetbon/casskop-helm \
     --set debug.enabled=true \
     --name casskop
 ```
@@ -63,7 +63,7 @@ helm install --dry-run \
 <TabItem value="rn">
 
 ```bash
-helm install casskop oci://ghcr.io/cscetbon/casskop
+helm install casskop oci://ghcr.io/cscetbon/casskop-helm
 ```
 
 </TabItem>
@@ -89,7 +89,7 @@ helm status casskop
 To install another version of the operator use:
 
 ```bash
-helm install --name=casskop --namespace=cassandra --set operator.image.tag=x.y.z oci://ghcr.io/cscetbon/casskop`
+helm install --name=casskop --namespace=cassandra --set operator.image.tag=x.y.z oci://ghcr.io/cscetbon/casskop-helm`
 ```
 
 where x.y.z is the version you want.
@@ -128,5 +128,5 @@ to delete the CRDs BEFORE installing the new chart. If you don't want to install
 in [Helm 3 official documentation](https://helm.sh/docs/chart_best_practices/custom_resource_definitions/).
 
 ```bash
-helm install casskop oci://ghcr.io/cscetbon/casskop --skip-crds
+helm install casskop oci://ghcr.io/cscetbon/casskop-helm --skip-crds
 ```

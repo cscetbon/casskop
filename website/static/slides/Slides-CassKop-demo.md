@@ -374,14 +374,14 @@ kubectl apply -f https://raw.githubusercontent.com/cscetbon/casskop/master/confi
 You can deploy CassKop from official helm/charts/incubator repository
 
 ```yaml
-$ helm install --name casskop oci://ghcr.io/cscetbon/casskop
+$ helm install --name casskop oci://ghcr.io/cscetbon/casskop-helm
 ```
 
 Or You can also add the CassKop repository from Github 
 
 ```yaml
 helm repo add orange-incubator https://orange-kubernetes-charts-incubator.storage.googleapis.com
-helm install --name casskop oci://ghcr.io/cscetbon/casskop
+helm install --name casskop oci://ghcr.io/cscetbon/casskop-helm
 ```
 
 > This deploy the Operator and it's CRD via a helm hook.
@@ -395,7 +395,7 @@ Error: customresourcedefinitions.apiextensions.k8s.io "cassandraclusters.db.oran
 In this case, add the `--no-hooks` helm cli flag to tell helm not to deploy the CRD hook:
 
 ```yaml
-$ helm install --name casskop oci://ghcr.io/cscetbon/casskop --no-hooks
+$ helm install --name casskop oci://ghcr.io/cscetbon/casskop-helm --no-hooks
 ```
 
 Check operator's logs: 
