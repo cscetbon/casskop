@@ -18,6 +18,9 @@ env:
 jobs:
 
   not-missing-manifests:
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     container: ghcr.io/cscetbon/casskop-build:v1.13.0
 
@@ -83,9 +86,6 @@ jobs:
 
   docker-images:
     runs-on: ubuntu-latest
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
     permissions:
       packages: write
     needs: unit-tests
@@ -131,9 +131,6 @@ jobs:
 
   kuttl-casskop:
     needs: install-kuttl
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 2
