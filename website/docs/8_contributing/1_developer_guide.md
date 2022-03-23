@@ -342,8 +342,8 @@ cd $(git rev-parse --show-toplevel)
 kubectl  apply -f config/crd/bases/
 kubectl  create namespace cluster1
 kubectl  create namespace cluster2
-helm install casskop -n cluster1 oci://ghcr.io/cscetbon/casskop --set debug.enabled=true
-helm install casskop -n cluster2 oci://ghcr.io/cscetbon/casskop --set debug.enabled=true
+helm install casskop -n cluster1 oci://ghcr.io/cscetbon/casskop-helm --set debug.enabled=true
+helm install casskop -n cluster2 oci://ghcr.io/cscetbon/casskop-helm --set debug.enabled=true
 kubemcsa export --context=k3d-multi-casskop-qa casskop --as k8s-cluster2 -n cluster1 | k apply -n cluster1 -f -
 ```
 - Update generated secret to use `server: https://kubernetes.default.svc/` in its config (We won't need that method 
@@ -370,7 +370,7 @@ INFO[0008] DONE
 ```
 - Install multi-casskop using the image you just imported
 ```
-helm install multi-casskop oci://ghcr.io/cscetbon/multi-casskop --set k8s.local=k3d-multi-casskop-qa \
+helm install multi-casskop oci://ghcr.io/cscetbon/multi-casskop-helm --set k8s.local=k3d-multi-casskop-qa \
     --set k8s.remote={k8s-cluster2} --set image.tag=0.5.6-my-pr --set debug.enabled=true -n cluster1 \
     --set image.pullPolicy=IfNotPresent
 ```

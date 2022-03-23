@@ -90,5 +90,5 @@ ConfigMap and remove it from your CassandraCluster object.
 Now you can install version 2 of the operator by running the usual install
 command:
 ```shell
-helm install casskop oci://ghcr.io/cscetbon/casskop
+helm install casskop oci://ghcr.io/cscetbon/casskop-helm
 ```
