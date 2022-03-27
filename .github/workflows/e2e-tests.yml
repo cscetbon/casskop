@@ -12,6 +12,13 @@ env:
 
 jobs:
 
+  show-info:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo ${{ toJSON(github.event) }}
+          echo ${{ github.repository_owner }}
+
   install-kuttl:
     if: |
       ! github.event.issue || (
