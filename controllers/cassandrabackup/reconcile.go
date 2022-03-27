@@ -177,9 +177,11 @@ func (r *CassandraBackupReconciler) Reconcile(request reconcile.Request) (reconc
 
 	// Get CassandraCluster object
 	cc := &api.CassandraCluster{}
+	logrus.WithFields(logrus.Fields{"where": "CYRIL 1"}).Error("NO ERROR YET")
 	if err := r.Client.Get(context.TODO(),
 		types.NamespacedName{Name: cassandraBackup.Spec.CassandraCluster,
 			Namespace: cassandraBackup.Namespace}, cc); err != nil {
+		logrus.WithFields(logrus.Fields{"where": "CYRIL 2", "err": err}).Error("NO ERROR YET")
 		if k8sErrors.IsNotFound(err) {
 			r.Recorder.Event(
 				cassandraBackup,
