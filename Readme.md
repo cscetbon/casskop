@@ -21,7 +21,7 @@ that :
 
 ## Installation
 
-For detailed installation instructions, see the [Casskop Documentation Page](https://cscetbon.github.io/casskop/docs/setup/getting_started).
+For detailed see the [installation instructions](https://cscetbon.github.io/casskop/docs/setup/getting_started).
 
 ## Documentation
 
@@ -29,9 +29,9 @@ The documentation of the Casskop operator project is available at the [Casskop D
 
 ## Cassandra operator
 
-The Casskop image is automatically built and stored on [Github Packages](/pkgs/container/casskop)
+The Casskop image is automatically built and stored on [Github Packages](https://github.com/cscetbon/casskop/pkgs/container/casskop)
 
-Casskop uses standard Cassandra image (tested up to Version 3.11)
+Casskop uses standard Cassandra image (tested up to Version 3.11 and 4.0)
 
 ### Operator SDK
 
