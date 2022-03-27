@@ -26,47 +26,12 @@ KUBESQUASH_REGISTRY:=
 
 KUBECONFIG ?= ~/.kube/config
 
-# Compute image to use during tests
-ifdef CIRCLE_BRANCH
-  ifeq ($(CIRCLE_BRANCH),master)
-	  E2EIMAGE := $(DOCKER_REPO_BASE)/$(IMAGE_NAME):$(VERSION)
-  else
-	  E2EIMAGE := $(DOCKER_REPO_BASE_TEST)/$(IMAGE_NAME):$(VERSION)
-  endif
-else
-  ifdef CIRCLE_TAG
-	  E2EIMAGE := $(DOCKER_REPO_BASE)/$(IMAGE_NAME):$(BRANCH)
-  else
-		ifeq ($(BRANCH),master)
-	    E2EIMAGE := $(DOCKER_REPO_BASE)/$(IMAGE_NAME):latest
-    else
-	    E2EIMAGE := $(DOCKER_REPO_BASE_TEST)/$(IMAGE_NAME):$(VERSION)
-    endif
-  endif
-endif
-
-build-image:
-	@echo $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION)
-
-params:
-	@echo "CIRCLE_BRANCH = '$(CIRCLE_BRANCH)'"
-	@echo "CIRCLE_TAG = '$(CIRCLE_TAG)'"
-	@echo "Version = '$(VERSION)'"
-	@echo "E2EIMAGE = '$(E2EIMAGE)'"
-
-
 # The default action of this Makefile is to build the development docker image
 default: build
 
 .DEFAULT_GOAL := help
 help:	
 	@grep -E '(^[a-zA-Z_-]+:.*?##.*$$)|(^##)' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}{printf "\033[32m%-30s\033[0m %s\n", $$1, $$2}' | sed -e 's/\[32m##/[33m/'
-
-get-baseversion:
-	@echo $(BASEVERSION)
-
-get-version:
-	@echo $(VERSION)
 
 clean:
 	@rm -rf $(OUT_BIN) || true
@@ -97,25 +62,6 @@ update-crds:
 
 include shared.mk
 
-docker-generate-files: docker-generate-k8s docker-generate-crds
-
-# Build the Operator and its Docker Image
-docker-build: docker-generate-files docker-build-operator
-
-ifdef PUSHLATEST
-	docker tag $(REPOSITORY):$(VERSION) $(REPOSITORY):latest
-endif
-
-# Run a shell into the development docker image
-shell: docker-dev-build
-	docker run  --env GO111MODULE=on -ti --rm -v ~/.kube:/.kube:ro -v $(PWD):$(WORKDIR) --name $(SERVICE_NAME) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash
-
-debug-port-forward:
-	kubectl port-forward `kubectl get pod -l app=casskop -o jsonpath="{.items[0].metadata.name}"` 40000:40000
-
-debug-pod-logs:
-	kubectl logs -f `kubectl get pod -l app=casskop -o jsonpath="{.items[0].metadata.name}"`
-
 define debug_telepresence
 	export TELEPRESENCE_REGISTRY=$(TELEPRESENCE_REGISTRY) ; \
 	echo "execute : cat casskop.env" ; \
@@ -130,10 +76,6 @@ endef
 debug-telepresence:
 	$(call debug_telepresence)
 
-debug-telepresence-with-alias:
-	$(call debug_telepresence,--also-proxy,10.40.0.0/16)
-	# $(call debug_telepresence,--also-proxy,172.18.0.0/16)
-
 debug-kubesquash:
 	kubesquash --container-repo $(KUBESQUASH_REGISTRY)
 
@@ -141,49 +83,6 @@ debug-kubesquash:
 run:
 	export POD_NAME=casskop; \
 	go run ./main.go
-
-push:
-	docker push $(REPOSITORY):$(VERSION)
-ifdef PUSHLATEST
-	docker push $(REPOSITORY):latest
-endif
-
-tag:
-	git tag $(VERSION)
-
-publish:
-	@COMMIT_VERSION="$$(git rev-list -n 1 $(VERSION))"; \
-	docker tag $(REPOSITORY):"$$COMMIT_VERSION" $(REPOSITORY):$(VERSION)
-	docker push $(REPOSITORY):$(VERSION)
-ifdef PUSHLATEST
-	docker push $(REPOSITORY):latest
-endif
-
-release: tag image publish
-
-# Test stuff in dev
-docker-unit-test:
-	docker run --env GO111MODULE=on --rm -v $(PWD):$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod -v $(shell go env GOCACHE):/root/.cache/go-build $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c '$(UNIT_TEST_CMD); cat test-report.out; $(UNIT_TEST_COVERAGE)'
-
-docker-unit-test-with-vendor:
-	docker run --env GO111MODULE=on --rm -v $(PWD):$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod -v $(shell go env GOCACHE):/root/.cache/go-build $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c '$(UNIT_TEST_CMD_WITH_VENDOR); cat test-report.out; $(UNIT_TEST_COVERAGE)'
-
-unit-test:
-	$(UNIT_TEST_CMD) && echo "success!" || { echo "failure!"; cat test-report.out; exit 1; }
-	cat test-report.out
-	$(UNIT_TEST_COVERAGE)
-
-unit-test-with-vendor:
-	$(UNIT_TEST_CMD_WITH_VENDOR) && echo "success!" || { echo "failure!"; cat test-report.out; exit 1; }
-	cat test-report.out
-	$(UNIT_TEST_COVERAGE)
-
-# Test if the dependencies we need to run this Makefile are installed
-deps-development:
-ifndef DOCKER
-	@echo "Docker is not available. Please install docker"
-	@exit 1
-endif
 
 #Generate dep for graph
 UNAME := $(shell uname -s)
@@ -195,26 +94,6 @@ endif
 ifeq ($(UNAME), Linux)
 	dep status -dot | dot -T png | display
 endif
-
-count:
-	git ls-files | xargs wc -l
-
-image:
-	echo $(REPOSITORY):$(VERSION)
-
-export CGO_ENABLED:=0
-
-ifeq (kuttl-test-fix-arg,$(firstword $(MAKECMDGOALS)))
-  KUTTL_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
-  $(eval $(KUTTL_ARGS):;@:)
-endif
-
-kuttl-test-fix-arg:
-ifeq ($(KUTTL_ARGS),)
-	@echo "A test folder is required" && exit 1
-endif
-	helm install casskop charts/casskop --set image.tag=$(BRANCH)
-	cd test/kuttl; kuttl test --test $(KUTTL_ARGS) --namespace default
 
 dgoss-bootstrap:
 	 IMAGE_TO_TEST=$(BOOTSTRAP_IMAGE) ./docker/bootstrap/dgoss/runChecks.sh
