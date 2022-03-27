@@ -14,9 +14,11 @@ jobs:
 
   install-kuttl:
     if: |
-      github.event.issue.pull_request &&
-      github.event.issue.user == github.repository_owner &&
-      contains(github.event.issue.body, '/kuttl-tests')
+      github.event_name == 'workflow_dispatch' || (
+        github.event.issue.pull_request &&
+        github.event.comment.user.login == github.repository_owner &&
+        contains(github.event.comment.body, '/kuttl-tests')
+      )
     runs-on: ubuntu-latest
     steps:
       - name: Cache Kuttl
@@ -39,24 +41,24 @@ jobs:
       matrix:
         test-name: [operations, sidecars, scaling, multi-dcs, backup-restore]
     steps:
-      # - name: Get PR branch name if comment
-      #   if: github.event_name == 'issue_comment'
-      #   id: 'get-branch'
-      #   env:
-      #     REPO: ${{ github.repository }}
-      #     PR_NO: ${{ github.event.issue.number }}
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: echo ::set-output name=branch::$(gh pr view $PR_NO --repo $REPO --json headRefName --jq '.headRefName')
+      - name: Get PR branch name
+        id: get-branch
+        env:
+          REPO: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = "issue_comment" ]
+          then
+            echo ::set-output name=branch::$(gh pr view ${{ github.event.issue.number }} --repo $REPO --json headRefName --jq '.headRefName')
+          else
+            echo ::set-output name=branch::${{ github.ref_name }}
+          fi
 
-      # - name: Checkout branch from issue if comment
-      #   if: github.event_name == 'issue_comment'
-      #   uses: actions/checkout@v3
-      #   with:
-      #     ref: ${{ steps.get-branch.outputs.branch }}
-
-      - name: Checkout
-        if: github.event_name != 'issue_comment'
+      - name: Checkout branch
         uses: actions/checkout@v3
+        with:
+          ref: ${{ steps.get-branch.outputs.branch }}
+
 
       - uses: rinx/setup-k3d@v0.0.4
         with:
