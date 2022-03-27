@@ -169,7 +169,8 @@ jobs:
         path: kuttl
         key: ${{ runner.os }}-kuttl-${{ env.KUTTL_VERSION }}
 
-    - name: Apply backup S3 secret
+    - name: Add aws-backup-secrets with S3
+      if: matrix.test-name == 'backup-restore'
       working-directory: test/kuttl
       run: |
         cat <<EOF >> backup-restore/00-createCluster.yaml
