@@ -61,7 +61,13 @@ jobs:
       #     REPO: ${{ github.repository }}
       #     PR_NO: ${{ github.event.issue.number }}
       #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: echo ::set-output name=branch::$(gh pr view $PR_NO --repo $REPO --json headRefName --jq '.headRefName')
+      #   run: |
+      #     if [ "${{ github.event_name }}" = "issue_comment"]
+      #     then
+      #       echo ::set-output name=branch::$(gh pr view $PR_NO --repo $REPO --json headRefName --jq '.headRefName')
+      #     else
+      #       echo ::set-output name=branch::$(gh pr view $PR_NO --repo $REPO --json headRefName --jq '.headRefName')
+
 
       # - name: Checkout branch from issue if comment
       #   if: github.event_name == 'issue_comment'
@@ -70,7 +76,7 @@ jobs:
       #     ref: ${{ steps.get-branch.outputs.branch }}
 
       - name: Checkout
-        if: github.event_name != 'issue_comment'
+        # if: github.event_name != 'issue_comment'
         uses: actions/checkout@v3
 
       - uses: rinx/setup-k3d@v0.0.4
