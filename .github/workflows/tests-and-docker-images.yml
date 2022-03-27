@@ -195,15 +195,6 @@ jobs:
         cat backup-restore/00-createCluster.yaml
         cat backup-restore/00-assert.yaml
 
-    - name: Push 00-createCluster.yaml to s3
-      uses: prewk/s3-cp-action@v2
-      with:
-        aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        source: test/kuttl/backup-restore/00-createCluster.yaml
-        dest: s3://cscetbon-lab/
-
-
     - name: Run kuttl tests
       run: |
         chmod u+x kuttl
