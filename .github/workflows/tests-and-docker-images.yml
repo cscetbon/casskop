@@ -148,7 +148,7 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        kuttl-test-name: [operations, sidecars, scaling, multi-dcs, backup-restore]
+        test-name: [operations, sidecars, scaling, multi-dcs, backup-restore]
     steps:
     - name: Check out repository
       uses: actions/checkout@v3
@@ -194,13 +194,10 @@ jobs:
           name: aws-backup-secrets
         EOF
 
-        cat backup-restore/00-createCluster.yaml
-        cat backup-restore/00-assert.yaml
-
     - name: Run kuttl tests
       run: |
         chmod u+x kuttl
         PATH=$PWD:$PATH
         helm install casskop charts/casskop --set image.tag=${{ env.IMAGE }}
         cd test/kuttl/
-        kuttl test --test ${{ matrix.kuttl-test-name }} --namespace default --skip-delete
+        kuttl test --test ${{ matrix.test-name }} --namespace default --skip-delete
