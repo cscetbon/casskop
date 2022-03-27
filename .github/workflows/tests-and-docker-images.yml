@@ -79,7 +79,7 @@ jobs:
             ${{ runner.os }}-
 
       - name: Run unit Tests
-        if: ! startsWith(github.ref, 'refs/tags/')
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         env:
           POD_NAME: test
           KUBERNETES_CONFIG: config/test-kube-config.yaml
