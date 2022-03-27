@@ -204,4 +204,4 @@ jobs:
         PATH=$PWD:$PATH
         helm install casskop charts/casskop --set image.tag=${{ env.IMAGE }}
         cd test/kuttl/
-        kuttl test --test ${{ matrix.kuttl-test-name }} --namespace default
+        kuttl test --test ${{ matrix.kuttl-test-name }} --namespace default --skip-delete
