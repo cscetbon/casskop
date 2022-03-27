@@ -16,8 +16,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          echo ${{ toJSON(github.event) }}
-          echo ${{ github.repository_owner }}
+          echo github.event ${{ github.event }}
+          echo github.event_name ${{ github.event_name }}
+          echo github.event.issue ${{ github.event.issue }}
+          echo github.event.issue.pull_request ${{ github.event.issue.pull_request }}
+          echo github.event.issue.user ${{ github.event.issue.user }}
+          echo github.repository_owner ${{ github.repository_owner }}
+          echo github.event.issue.body ${{ github.event.issue.body }}
+          echo ${{ contains(github.event.issue.body, '/kuttl-tests') }}
 
   install-kuttl:
     if: |
