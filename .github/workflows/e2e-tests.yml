@@ -27,7 +27,7 @@ jobs:
 
   install-kuttl:
     if: |
-      ! github.event.issue || (
+      github.event.issue == '' || (
         github.event.issue.pull_request &&
         github.event.issue.user == github.repository_owner &&
         contains(github.event.issue.body, '/kuttl-tests')
