@@ -172,8 +172,8 @@ jobs:
         key: ${{ runner.os }}-kuttl-${{ env.KUTTL_VERSION }}
 
     - name: Apply backup S3 secret
+      working-directory: test/kuttl
       run: |
-        cd test/kuttl
         cat <<EOF >> backup-restore/00-createCluster.yaml
         ---
         apiVersion: v1
