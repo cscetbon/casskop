@@ -1,7 +1,7 @@
 media: ./assets
 local: ./assets/kubernetes-operators
 layout: true
-gitlab: https://github.com/Orange-OpenSource/casskop
+gitlab: https://github.com/cscetbon/casskop
 editpath: /edit/master/docs/Slides-CassKop-demo.md
 <!-- /!\ pas de commentaires avant les parametres ci-dessus -->
 <!-- /assets fait partie du viewer global a toutes les pres -->
@@ -362,9 +362,9 @@ namespace with the use of thoses capabilities:
 The PSP RoleBinding can be retrieved from the cassandra namespace
 
 ```console
-kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/config/crd/bases/psp-cassie.yaml
-kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/config/crd/bases/psp-sa-cassie.yaml
-kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/config/crd/bases/clusterRole-cassie.yaml
+kubectl apply -f https://raw.githubusercontent.com/cscetbon/casskop/master/config/crd/bases/psp-cassie.yaml
+kubectl apply -f https://raw.githubusercontent.com/cscetbon/casskop/master/config/crd/bases/psp-sa-cassie.yaml
+kubectl apply -f https://raw.githubusercontent.com/cscetbon/casskop/master/config/crd/bases/clusterRole-cassie.yaml
 ```
 
 ---
@@ -374,14 +374,14 @@ kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/mas
 You can deploy CassKop from official helm/charts/incubator repository
 
 ```yaml
-$ helm install --name casskop oci://ghcr.io/cscetbon/casskop
+$ helm install --name casskop oci://ghcr.io/cscetbon/casskop-helm
 ```
 
 Or You can also add the CassKop repository from Github 
 
 ```yaml
 helm repo add orange-incubator https://orange-kubernetes-charts-incubator.storage.googleapis.com
-helm install --name casskop oci://ghcr.io/cscetbon/casskop
+helm install --name casskop oci://ghcr.io/cscetbon/casskop-helm
 ```
 
 > This deploy the Operator and it's CRD via a helm hook.
@@ -395,7 +395,7 @@ Error: customresourcedefinitions.apiextensions.k8s.io "cassandraclusters.db.oran
 In this case, add the `--no-hooks` helm cli flag to tell helm not to deploy the CRD hook:
 
 ```yaml
-$ helm install --name casskop oci://ghcr.io/cscetbon/casskop --no-hooks
+$ helm install --name casskop oci://ghcr.io/cscetbon/casskop-helm --no-hooks
 ```
 
 Check operator's logs: 
@@ -409,16 +409,16 @@ $ k logs -l app=casskop --tail=10
 # Deployment of a C* cluster (rack or AZ aware)
 
 First, we deploy the configmap which contains the Cassandra configuration override files.
-[config/samples/cassandra-configmap-v1.yaml](https://github.com/Orange-OpenSource/casskop/blob/master/config/samples/cassandra-configmap-v1.yaml).
+[config/samples/cassandra-configmap-v1.yaml](https://github.com/cscetbon/casskop/blob/master/config/samples/cassandra-configmap-v1.yaml).
 Then the cassandra cluster :
 
 
 Depending on your k8s cluster topology you may choose or adapt one of the
 following configurations files to deploy a cluster with a 3 nodes ring in 3
 different racks with anti-affinity
-- [config/samples/cassandracluster.yaml (with no labels)](https://github.com/Orange-OpenSource/casskop/blob/master/config/samples/cassandracluster.yaml)
-- [config/samples/cassandracluster-demo.yaml (with basic labels)](https://github.com/Orange-OpenSource/casskop/blob/master/config/samples/cassandracluster-demo.yaml)
-- [config/samples/cassandracluster-demo-gke.yaml (with europe-west gke labels)](https://github.com/Orange-OpenSource/casskop/blob/master/config/samples/cassandracluster-demo-gke.yaml)
+- [config/samples/cassandracluster.yaml (with no labels)](https://github.com/cscetbon/casskop/blob/master/config/samples/cassandracluster.yaml)
+- [config/samples/cassandracluster-demo.yaml (with basic labels)](https://github.com/cscetbon/casskop/blob/master/config/samples/cassandracluster-demo.yaml)
+- [config/samples/cassandracluster-demo-gke.yaml (with europe-west gke labels)](https://github.com/cscetbon/casskop/blob/master/config/samples/cassandracluster-demo-gke.yaml)
 
 
 > On GKE I deploy, using a dedicated storagecless for ssd local-storage on
@@ -1195,7 +1195,7 @@ k apply -f config/samples/prometheus-cassandra-service-monitor.yaml
 
 ## Add Grafana dashboard for Cassandra
 
-You can import this [dashboard](https://github.com/Orange-OpenSource/casskop/blob/master/config/samples/prometheus-grafana-cassandra-dashboard.json) to retrieve metrics about your cassandra cluster.
+You can import this [dashboard](https://github.com/cscetbon/casskop/blob/master/config/samples/prometheus-grafana-cassandra-dashboard.json) to retrieve metrics about your cassandra cluster.
 
 
 ---
