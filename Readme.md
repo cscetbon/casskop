@@ -21,15 +21,15 @@ that :
 
 ## Installation
 
-For detailed installation instructions, see the [Casskop Documentation Page](https://cscetbon.github.io/casskop/docs/2_setup/1_getting_started).
+For detailed installation instructions, see the [Casskop Documentation Page](https://cscetbon.github.io/casskop/docs/setup/getting_started).
 
 ## Documentation
 
-The documentation of the Casskop operator project is available at the [Casskop Documentation Page](https://cscetbon.github.io/casskop/docs/1_concepts/1_introduction).
+The documentation of the Casskop operator project is available at the [Casskop Documentation Page](https://cscetbon.github.io/casskop/docs/concepts/introduction).
 
 ## Cassandra operator
 
-The Casskop image is automatically built and stored on [Github Packages](https://github.com/cscetbon/casskop/pkgs/container/casskop)
+The Casskop image is automatically built and stored on [Github Packages](/pkgs/container/casskop)
 
 Casskop uses standard Cassandra image (tested up to Version 3.11)
 
@@ -65,11 +65,11 @@ The quick start guide walks through the process of building the Cassandra operat
 using the SDK CLI, setting up the RBAC, deploying the operator and creating a 
 Cassandra cluster.
 
-You can find this in the [Developer section](/casskop/docs/8_contributing/1_developer_guide)
+You can find this in the [Developer section](https://cscetbon.github.io/casskop/docs/contributing/developer_guide)
 
 # Contacts
 
-You can contact the team with our mailing-list prj.casskop.support@list.orangeportails.net and join our slack https://casskop.slack.com (request sent to that ML)
+You can contact the team on our slack https://casskop.slack.com (request sent to that ML)
 
 # License
 
