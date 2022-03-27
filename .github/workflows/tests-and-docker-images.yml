@@ -151,9 +151,7 @@ jobs:
         kuttl-test-name: [operations, sidecars, scaling, multi-dcs, backup-restore]
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
-      with:
-        ref: ${{ github.event.workflow_run.head_branch }}
+      uses: actions/checkout@v3
 
     - uses: rinx/setup-k3d@v0.0.4
       with:
