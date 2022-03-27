@@ -20,17 +20,17 @@ jobs:
           echo github.event_name ${{ github.event_name }}
           echo github.event.issue ${{ github.event.issue }}
           echo github.event.issue.pull_request ${{ github.event.issue.pull_request }}
-          echo github.event.issue.user ${{ github.event.issue.user }}
+          echo github.event.comment.user.login ${{ github.event.comment.user.login }}
           echo github.repository_owner ${{ github.repository_owner }}
-          echo github.event.issue.body ${{ github.event.issue.body }}
-          echo ${{ contains(github.event.issue.body, '/kuttl-tests') }}
+          echo github.event.comment.body ${{ github.event.comment.body }}
+          echo ${{ contains(github.event.comment.body, '/kuttl-tests') }}
 
   install-kuttl:
     if: |
-      github.event.issue == '' || (
+      github.event_name == 'workflow_dispatch' || (
         github.event.issue.pull_request &&
-        github.event.issue.user == github.repository_owner &&
-        contains(github.event.issue.body, '/kuttl-tests')
+        github.event.comment.user.login == github.repository_owner &&
+        contains(github.event.comment.body, '/kuttl-tests')
       )
     runs-on: ubuntu-latest
     steps:
