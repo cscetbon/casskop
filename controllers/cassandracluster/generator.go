@@ -1050,8 +1050,24 @@ func backrestSidecarContainer(cc *api.CassandraCluster) v1.Container {
 			Limits:   resources,
 			Requests: resources,
 		},
+		ReadinessProbe: &v1.Probe{
+			InitialDelaySeconds: 10,
+			TimeoutSeconds:      5,
+			PeriodSeconds:       10,
+			FailureThreshold:    10,
+			Handler: v1.Handler{
+				HTTPGet: &v1.HTTPGetAction{
+					Port: intstr.IntOrString{IntVal: defaultBackRestPort},
+					Path: "/status",
+				},
+			},
+		},
 		VolumeMounts: cc.Spec.BackRestSidecar.VolumeMounts,
 	}
+
+	livenessProbe := container.ReadinessProbe.DeepCopy()
+	livenessProbe.InitialDelaySeconds = 40
+	livenessProbe.PeriodSeconds = 20
 
 	if cc.Spec.BackRestSidecar.Resources != nil {
 		container.Resources = *cc.Spec.BackRestSidecar.Resources
