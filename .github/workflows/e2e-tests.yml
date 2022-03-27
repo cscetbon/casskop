@@ -14,9 +14,11 @@ jobs:
 
   install-kuttl:
     if: |
-      github.event.issue.pull_request &&
-      github.event.issue.user == github.repository_owner &&
-      contains(github.event.issue.body, '/kuttl-tests')
+      ! github.event.issue.pull_request || (
+        github.event.issue.pull_request &&
+        github.event.issue.user == github.repository_owner &&
+        contains(github.event.issue.body, '/kuttl-tests')
+      )
     runs-on: ubuntu-latest
     steps:
       - name: Cache Kuttl
