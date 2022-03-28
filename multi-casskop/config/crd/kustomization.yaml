@@ -2,7 +2,7 @@
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
 resources:
-- bases/multicasskops.db.orange.com.multicasskops.db.orange.com_multicasskops.yaml
+- bases/multicasskops.db.orange.com_multicasskops.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
