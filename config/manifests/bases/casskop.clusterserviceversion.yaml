@@ -1,0 +1,55 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+  name: casskop.v0.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: CassandraBackup is the Schema for the cassandrabackups API
+      displayName: Cassandra Backup
+      kind: CassandraBackup
+      name: cassandrabackups.db.orange.com
+      version: v2
+    - description: CassandraCluster is the Schema for the cassandraclusters API
+      displayName: Cassandra Cluster
+      kind: CassandraCluster
+      name: cassandraclusters.db.orange.com
+      version: v2
+    - description: CassandraRestore is a Casskop Operator resource that represents
+        the restoration of a backup of a Cassandra cluster
+      displayName: Cassandra Restore
+      kind: CassandraRestore
+      name: cassandrarestores.db.orange.com
+      version: v2
+  description: casskop
+  displayName: casskop
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - cassandra
+  links:
+  - name: Casskop
+    url: https://casskop.domain
+  maturity: alpha
+  provider:
+    name: casskop
+  version: 0.0.0
