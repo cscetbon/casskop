@@ -36,6 +36,10 @@ createCustomResource: true
 ##
 rbacEnable: true
 
+## If true (and rbacEnable=true), create & use clusterrole and clusterrolebinding
+##
+rbacCreateClusterRole: true
+
 ## if true deploy service for metrics access
 metricService: false
 
