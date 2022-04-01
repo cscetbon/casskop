@@ -4,7 +4,7 @@ metadata:
   name: cassandra-e2e
 spec:
   nodesPerRacks: 1
-  cassandraImage: cassandra:4.0-rc1
+  cassandraImage: cassandra:4.0.2
   serverVersion: 4.0.0
   config:
     jvm-options:
