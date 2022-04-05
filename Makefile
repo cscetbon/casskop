@@ -25,7 +25,7 @@ TELEPRESENCE_REGISTRY ?= datawire
 KUBESQUASH_REGISTRY:=
 
 
-VERSION ?= 2.1.5
+VERSION ?= $(cat version/version.go | grep "Version =" | cut -d\   -f3)
 # Default bundle image tag
 BUNDLE_IMG ?= controller-bundle:$(VERSION)
 # Options for 'bundle-build'
@@ -168,9 +168,10 @@ endif
 
 # Generate bundle manifests and metadata, then validate generated files.
 bundle: generate
-	operator-sdk generate kustomize manifests -q
-	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
-	operator-sdk bundle validate ./bundle
+	operator-sdk generate kustomize manifests -q;\
+	VERSION=$$(cat ./version/version.go | grep -Po '(?<=Version =\s").*(?=")');\
+	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $${VERSION} $(BUNDLE_METADATA_OPTS);\
+	operator-sdk bundle validate ./bundle;\
 
 # Build the bundle image.
 bundle-build:
