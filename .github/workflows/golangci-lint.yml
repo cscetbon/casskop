@@ -16,6 +16,9 @@ jobs:
       - name: Add configuration file
         run: |
           cat <<EOF > .golangci.yml
+          run:
+            timeout: 5m
+            issues-exit-code: 0
           linters-settings:
             gosimple:
               checks:
@@ -32,5 +35,3 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: v1.45.0
-          args: --issues-exit-code=0
-
