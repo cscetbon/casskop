@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - master
+      - trigger-integration
     paths-ignore:
       - 'website/**'
     tags: ["*"]
