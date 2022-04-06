@@ -12,13 +12,37 @@ env:
 
 jobs:
 
-  install-kuttl:
+  docker-images:
+    runs-on: ubuntu-latest
     if: |
       github.event_name == 'workflow_dispatch' || (
         github.event.issue.pull_request &&
         github.event.comment.user.login == github.repository_owner &&
         contains(github.event.comment.body, '/kuttl-tests')
       )
+    permissions:
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v1.14.1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2.10.0
+        with:
+          context: .
+          file: docker/casskop/Dockerfile
+          tags: ghcr.io/cscetbon/casskop:${{ env.IMAGE }}
+          push: true
+
+  install-kuttl:
+    needs: docker-images
     runs-on: ubuntu-latest
     steps:
       - name: Cache Kuttl
