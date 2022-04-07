@@ -49,6 +49,7 @@ RUN curl -L https://github.com/gotestyourself/gotestsum/releases/download/v0.3.4
 RUN go get -u golang.org/x/lint/golint
 RUN go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.2
 RUN go get sigs.k8s.io/kustomize/kustomize/v3@v3.5.4
+RUN go install github.com/mikefarah/yq/v4@latest
 
 # Install kubectl cli
 RUN curl -o /usr/local/bin/kubectl -L https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl \
