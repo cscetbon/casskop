@@ -24,6 +24,19 @@ BOOTSTRAP_IMAGE ?= ghcr.io/cscetbon/casskop-bootstrap:0.1.9
 TELEPRESENCE_REGISTRY ?= datawire
 KUBESQUASH_REGISTRY:=
 
+
+VERSION ?= $(cat version/version.go | grep "Version =" | cut -d\   -f3)
+# Default bundle image tag
+BUNDLE_IMG ?= controller-bundle:$(VERSION)
+# Options for 'bundle-build'
+ifneq ($(origin CHANNELS), undefined)
+BUNDLE_CHANNELS := --channels=$(CHANNELS)
+endif
+ifneq ($(origin DEFAULT_CHANNEL), undefined)
+BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
+endif
+BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
+
 KUBECONFIG ?= ~/.kube/config
 
 # The default action of this Makefile is to build the development docker image
@@ -152,3 +165,15 @@ endif
 
 	cat /tmp/cassandra-stress-$(STRESS_TYPE).yaml
 	kubectl apply -f /tmp/cassandra-stress-$(STRESS_TYPE).yaml
+
+# Generate bundle manifests and metadata, then validate generated files.
+bundle: generate
+	operator-sdk generate kustomize manifests -q;\
+	VERSION=$$(cat ./version/version.go | grep -Po '(?<=Version =\s").*(?=")');\
+	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $${VERSION} $(BUNDLE_METADATA_OPTS);\
+	operator-sdk bundle validate ./bundle;\
+
+# Build the bundle image.
+bundle-build:
+	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+
