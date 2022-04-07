@@ -12,7 +12,7 @@ env:
 
 jobs:
 
-  docker-images:
+  casskop-image:
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'workflow_dispatch' || (
@@ -42,7 +42,7 @@ jobs:
           push: true
 
   install-kuttl:
-    needs: docker-images
+    needs: casskop-image
     runs-on: ubuntu-latest
     steps:
       - name: Cache Kuttl
