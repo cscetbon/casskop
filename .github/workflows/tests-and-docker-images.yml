@@ -123,4 +123,4 @@ jobs:
           context: .
           file: docker/${{ matrix.image }}/Dockerfile
           tags: ghcr.io/cscetbon/${{ matrix.image }}:latest
-          push: ${{github.actor == github.repository_owner}}
+          push: true
