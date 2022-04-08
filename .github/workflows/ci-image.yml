@@ -32,4 +32,5 @@ jobs:
           tags: |
             ghcr.io/cscetbon/casskop-build:latest
             ghcr.io/cscetbon/casskop-build:${{ github.event.inputs.alias }}
+          build-args: OPERATOR_SDK_VERSION=v1.13.0
           push: true
