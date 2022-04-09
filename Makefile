@@ -170,6 +170,7 @@ endif
 bundle: generate
 	operator-sdk generate kustomize manifests -q;\
 	VERSION=$$(cat ./version/version.go | grep -Po '(?<=Version =\s").*(?=")');\
+	make kustomize; \
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $${VERSION} $(BUNDLE_METADATA_OPTS);\
 	operator-sdk bundle validate ./bundle;\
 
