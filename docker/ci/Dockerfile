@@ -60,7 +60,7 @@ RUN curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 |
 
 # Install Operator SDK
 ARG OPERATOR_SDK_VERSION
-RUN curl -o /usr/local/bin/operator-sdk -L https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk-${OPERATOR_SDK_VERSION}-x86_64-linux-gnu \
+RUN curl -o /usr/local/bin/operator-sdk -L https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk_linux_amd64 \
     && chmod +x /usr/local/bin/operator-sdk
 
 WORKDIR /go/casskop
