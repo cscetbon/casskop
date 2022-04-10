@@ -7,6 +7,7 @@ module.exports = {
   favicon: 'img/casskop.ico',
   organizationName: 'cscetbon', // Usually your GitHub org/user name.
   projectName: 'casskop', // Usually your repo name.
+  themes: ['@docusaurus/theme-search-algolia'],
   themeConfig: {
     navbar: {
       title: 'CassKop',
