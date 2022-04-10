@@ -174,8 +174,3 @@ bundle: generate
 
 bundle-validate: bundle
 	operator-sdk bundle validate ./bundle
-
-# Build the bundle image.
-bundle-build:
-	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
-
