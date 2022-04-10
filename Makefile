@@ -170,8 +170,10 @@ endif
 bundle: generate
 	operator-sdk generate kustomize manifests -q;\
 	VERSION=$$(cat ./version/version.go | grep -Po '(?<=Version =\s").*(?=")');\
-	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $${VERSION} $(BUNDLE_METADATA_OPTS);\
-	operator-sdk bundle validate ./bundle;\
+	$(KUSTOMIZE) build config/crd | operator-sdk generate bundle -q --overwrite --version $${VERSION} $(BUNDLE_METADATA_OPTS)
+
+bundle-validate: bundle
+	operator-sdk bundle validate ./bundle
 
 # Build the bundle image.
 bundle-build:
