@@ -56,17 +56,17 @@ FIRST_VERSION = .spec.versions[0]
 
 include ../shared.mk
 
-# Build the Operator and its Docker Image
-docker-build: docker-generate-files docker-build-operator
-
 # Override generate as controller-gen crashes
 .PHONY: generate
 generate:
-	cd .. && make generate
-	cp -v ../config/crd/bases/* helm/*/crds/
+	$(MAKE) -C .. generate
+	cp -v ../config/crd/bases/*.yaml ../charts/multi-casskop/crds/
 	$(MAKE) generate-k8s
 	$(GENERATE_CMD)
-	cp config/crd/bases/* helm/*/crds/
+	cp config/crd/bases/*.yaml ../charts/multi-casskop/crds/
+
+docker-generate:
+	docker run --rm -ti -v $PWD:/go/casskop ghcr.io/cscetbon/casskop-build:latest make -C multi-casskop generate
 
 # Build CassKop executable file in local go env
 .PHONY: build
