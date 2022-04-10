@@ -48,11 +48,11 @@ jobs:
       - name: Vendor dependencies
         run: go mod vendor
 
-      - name: Generate k8s & crds
+      - name: Validate operator-sdk Bundle
         run: |
           make bundle-validate
 
-      - name: Ensure there are no missing changes
+      - name: Ensure there are no missing CRDs changes
         run: |
           [ "$(git ls-files -m | grep -cE 'zz_generated|crds')" -eq 0 ]
 
