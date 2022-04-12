@@ -49,6 +49,7 @@ RUN curl -L https://github.com/gotestyourself/gotestsum/releases/download/v0.3.4
 RUN go get -u golang.org/x/lint/golint
 RUN go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.2
 RUN go get sigs.k8s.io/kustomize/kustomize/v3@v3.5.4
+RUN go install github.com/mikefarah/yq/v4@latest
 
 # Install kubectl cli
 RUN curl -o /usr/local/bin/kubectl -L https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl \
@@ -59,7 +60,7 @@ RUN curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 |
 
 # Install Operator SDK
 ARG OPERATOR_SDK_VERSION
-RUN curl -o /usr/local/bin/operator-sdk -L https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk-${OPERATOR_SDK_VERSION}-x86_64-linux-gnu \
+RUN curl -o /usr/local/bin/operator-sdk -L https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk_linux_amd64 \
     && chmod +x /usr/local/bin/operator-sdk
 
 WORKDIR /go/casskop

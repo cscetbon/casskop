@@ -70,7 +70,7 @@ update-crds:
 		yq -i e '$(FIRST_VERSION).storage = false' $$crd; \
 	done
 	for chart in $(ls charts); do \
-	  cp -v config/crd/bases/* charts/${chart}/crds/; \
+	  cp -v config/crd/bases/*.yaml charts/${chart}/crds/; \
 	done
 
 include shared.mk
@@ -170,10 +170,10 @@ endif
 bundle: generate
 	operator-sdk generate kustomize manifests -q;\
 	VERSION=$$(cat ./version/version.go | grep -Po '(?<=Version =\s").*(?=")');\
-	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $${VERSION} $(BUNDLE_METADATA_OPTS);\
-	operator-sdk bundle validate ./bundle;\
+	$(KUSTOMIZE) build config/crd | operator-sdk generate bundle -q --overwrite --version $${VERSION} $(BUNDLE_METADATA_OPTS)
 
-# Build the bundle image.
-bundle-build:
-	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+bundle-validate: bundle
+	operator-sdk bundle validate ./bundle
 
+docker-generate:
+	docker run --rm -ti -v ${PWD}:/go/casskop ghcr.io/cscetbon/casskop-build:latest make generate

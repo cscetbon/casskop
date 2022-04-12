@@ -23,7 +23,7 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: true
-    container: ghcr.io/cscetbon/casskop-build:v1.13.0
+    container: ghcr.io/cscetbon/casskop-build
 
     steps:
       - name: Checkout repository
@@ -48,18 +48,17 @@ jobs:
       - name: Vendor dependencies
         run: go mod vendor
 
-      - name: Generate k8s & crds
+      - name: Validate operator-sdk Bundle
         run: |
-          GO111MODULE=on go install github.com/mikefarah/yq/v4@latest
-          make generate
+          make bundle-validate
 
-      - name: Ensure there are no missing changes
+      - name: Ensure there are no missing CRDs changes
         run: |
           [ "$(git ls-files -m | grep -cE 'zz_generated|crds')" -eq 0 ]
 
   unit-tests:
     runs-on: ubuntu-latest
-    container: ghcr.io/cscetbon/casskop-build:v1.13.0
+    container: ghcr.io/cscetbon/casskop-build
 
     steps:
       - name: Checkout repository

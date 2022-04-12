@@ -40,8 +40,11 @@ WORKDIR := /go/casskop
 .PHONY: generate
 generate:
 	echo "Generate zzz-deepcopy objects"
-	$(MAKE) controller-gen
 	$(MAKE) generate-k8s
 	@rm -f */crds/*
 	$(CONTROLLER_GEN) $(CONTROLLER_GEN_OPTIONS)
 	$(MAKE) update-crds
+
+# Build the bundle image.
+bundle-build:
+	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
