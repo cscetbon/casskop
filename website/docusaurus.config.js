@@ -7,7 +7,6 @@ module.exports = {
   favicon: 'img/casskop.ico',
   organizationName: 'cscetbon',
   projectName: 'casskop',
-  themes: ['@docusaurus/theme-search-algolia'],
   themeConfig: {
     navbar: {
       title: 'CassKop',
