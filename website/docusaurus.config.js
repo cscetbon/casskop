@@ -5,8 +5,8 @@ module.exports = {
   baseUrl: '/casskop/',
   onBrokenLinks: 'throw',
   favicon: 'img/casskop.ico',
-  organizationName: 'cscetbon', // Usually your GitHub org/user name.
-  projectName: 'casskop', // Usually your repo name.
+  organizationName: 'cscetbon',
+  projectName: 'casskop',
   themes: ['@docusaurus/theme-search-algolia'],
   themeConfig: {
     navbar: {
@@ -58,10 +58,6 @@ module.exports = {
           title: 'Contact',
           items: [
             {
-              label: 'Email',
-              href: 'mailto:prj.casskop.support@list.orangeportails.net',
-            },
-            {
               label: 'Feature request',
               href: 'https://github.com/cscetbon/casskop/issues',
             },
@@ -84,13 +80,11 @@ module.exports = {
       {
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
-          // Please change this to your repo.
           editUrl:
             'https://github.com/cscetbon/casskop/edit/master/website/',
         },
         blog: {
           showReadingTime: true,
-          // Please change this to your repo.
           editUrl:
             'https://github.com/cscetbon/casskop/edit/master/website/blog',
         },
