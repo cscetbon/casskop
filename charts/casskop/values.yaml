@@ -2,7 +2,7 @@
 ##
 image:
   repository: ghcr.io/cscetbon/casskop
-  tag: 2.1.6
+  tag: 2.1.7
   pullPolicy: Always
   imagePullSecrets:
     enabled: false
