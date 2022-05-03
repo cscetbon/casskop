@@ -68,8 +68,8 @@ module.exports = {
 
     // Search option
     algolia: {
-      appId: 'HI64OQWYI7',
-      apiKey: '156f01dc3a2caa65e7ee1e725198186a',
+      appId: 'N8HRRYXE70',
+      apiKey: '20115d6011851f46b33f7ffc1960153c',
       indexName: 'casskop',
     },
   },
