@@ -53,7 +53,7 @@ func (jolokiaClient *JolokiaClient) executeOperation(mBean, operation string,
 }
 
 /*NewJolokiaClient returns a new Joloka Client for the host name and port provided*/
-func NewJolokiaClient(host string, port int, rcc *CassandraClusterReconciler,
+func NewJolokiaClient(ctx context.Context, host string, port int, rcc *CassandraClusterReconciler,
 	secretRef v1.LocalObjectReference, namespace string) (*JolokiaClient, error) {
 	jolokiaClient := JolokiaClient{go_jolokia.NewJolokiaClient(JolokiaURL(host, port)), host}
 	logrus.WithFields(logrus.Fields{"host": host, "port": port,
@@ -71,7 +71,7 @@ func NewJolokiaClient(host string, port int, rcc *CassandraClusterReconciler,
 				Namespace: namespace,
 			},
 		}
-		err := rcc.Client.Get(context.TODO(), types.NamespacedName{Name: secretRef.Name, Namespace: namespace}, secret)
+		err := rcc.Client.Get(ctx, types.NamespacedName{Name: secretRef.Name, Namespace: namespace}, secret)
 
 		if err != nil {
 			logrus.WithFields(logrus.Fields{"host": host, "port": port,

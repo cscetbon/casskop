@@ -51,7 +51,7 @@ func PodContainersReady(pod *v1.Pod) bool {
 	return false
 }
 
-func (rcc *CassandraClusterReconciler) GetPod(namespace, name string) (*v1.Pod, error) {
+func (rcc *CassandraClusterReconciler) GetPod(ctx context.Context, namespace, name string) (*v1.Pod, error) {
 
 	pod := &v1.Pod{
 		TypeMeta: metav1.TypeMeta{
@@ -63,7 +63,7 @@ func (rcc *CassandraClusterReconciler) GetPod(namespace, name string) (*v1.Pod, 
 			Namespace: namespace,
 		},
 	}
-	return pod, rcc.Client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, pod)
+	return pod, rcc.Client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, pod)
 }
 
 // GetLastOrFirstPod returns the last or first pod satisfying the selector and being in the namespace
@@ -110,8 +110,8 @@ func GetLastOrFirstPodItem(podsList []v1.Pod, last bool) (*v1.Pod, error) {
 }
 
 // GetFirstPod returns the first pod satisfying the selector and being in the namespace
-func (rcc *CassandraClusterReconciler) GetFirstPod(namespace string, selector map[string]string) (*v1.Pod, error) {
-	podsList, err := rcc.ListPods(namespace, selector)
+func (rcc *CassandraClusterReconciler) GetFirstPod(ctx context.Context, namespace string, selector map[string]string) (*v1.Pod, error) {
+	podsList, err := rcc.ListPods(ctx, namespace, selector)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cassandra's pods: %v", err)
 	}
@@ -119,8 +119,8 @@ func (rcc *CassandraClusterReconciler) GetFirstPod(namespace string, selector ma
 }
 
 // GetLastPod returns the last pod satisfying the selector and being in the namespace
-func (rcc *CassandraClusterReconciler) GetLastPod(namespace string, selector map[string]string) (*v1.Pod, error) {
-	podsList, err := rcc.ListPods(namespace, selector)
+func (rcc *CassandraClusterReconciler) GetLastPod(ctx context.Context, namespace string, selector map[string]string) (*v1.Pod, error) {
+	podsList, err := rcc.ListPods(ctx, namespace, selector)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cassandra's pods: %v", err)
 	}
@@ -128,8 +128,8 @@ func (rcc *CassandraClusterReconciler) GetLastPod(namespace string, selector map
 }
 
 // GetFirstPod returns the first pod satisfying the selector, being in the namespace and being ready
-func (rcc *CassandraClusterReconciler) GetFirstPodReady(namespace string, selector map[string]string) (*v1.Pod, error) {
-	podsList, err := rcc.ListPods(namespace, selector)
+func (rcc *CassandraClusterReconciler) GetFirstPodReady(ctx context.Context, namespace string, selector map[string]string) (*v1.Pod, error) {
+	podsList, err := rcc.ListPods(ctx, namespace, selector)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cassandra's pods: %v", err)
 	}
@@ -137,30 +137,30 @@ func (rcc *CassandraClusterReconciler) GetFirstPodReady(namespace string, select
 }
 
 // GetLastPod returns the last pod satisfying the selector and being in the namespace
-func (rcc *CassandraClusterReconciler) GetLastPodReady(namespace string, selector map[string]string) (*v1.Pod, error) {
-	podsList, err := rcc.ListPods(namespace, selector)
+func (rcc *CassandraClusterReconciler) GetLastPodReady(ctx context.Context, namespace string, selector map[string]string) (*v1.Pod, error) {
+	podsList, err := rcc.ListPods(ctx, namespace, selector)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cassandra's pods: %v", err)
 	}
 	return GetLastOrFirstPodReady(podsList.Items, last)
 }
 
-func (rcc *CassandraClusterReconciler) UpdatePodLabel(pod *v1.Pod, label map[string]string) error {
-	podToUpdate, err := rcc.GetPod(pod.Namespace, pod.Name)
+func (rcc *CassandraClusterReconciler) UpdatePodLabel(ctx context.Context, pod *v1.Pod, label map[string]string) error {
+	podToUpdate, err := rcc.GetPod(ctx, pod.Namespace, pod.Name)
 	if err != nil {
 		return err
 	}
 	labels := k8s.MergeLabels(podToUpdate.GetLabels(), label)
 	podToUpdate.SetLabels(labels)
-	return rcc.UpdatePod(podToUpdate)
+	return rcc.UpdatePod(ctx, podToUpdate)
 }
 
 //hasUnschedulablePod goal is to detect if Pods are unschedulable
 // - for lake of resources cpu/memory
 // - with bad docker image (imagepullbackoff)
 // - or else to add
-func (rcc *CassandraClusterReconciler) hasUnschedulablePod(namespace string, dcName, rackName string) bool {
-	podsList, err := rcc.ListPods(rcc.cc.Namespace, k8s.LabelsForCassandraDCRack(rcc.cc, dcName, rackName))
+func (rcc *CassandraClusterReconciler) hasUnschedulablePod(ctx context.Context, namespace string, dcName, rackName string) bool {
+	podsList, err := rcc.ListPods(ctx, rcc.cc.Namespace, k8s.LabelsForCassandraDCRack(rcc.cc, dcName, rackName))
 	if err != nil || len(podsList.Items) < 1 {
 		return false
 	}
@@ -185,7 +185,7 @@ func (rcc *CassandraClusterReconciler) hasUnschedulablePod(namespace string, dcN
 	return false
 }
 
-func (rcc *CassandraClusterReconciler) ListPods(namespace string, selector map[string]string) (*v1.PodList, error) {
+func (rcc *CassandraClusterReconciler) ListPods(ctx context.Context, namespace string, selector map[string]string) (*v1.PodList, error) {
 
 	clientOpt := &client.ListOptions{
 		Namespace:     namespace,
@@ -197,11 +197,11 @@ func (rcc *CassandraClusterReconciler) ListPods(namespace string, selector map[s
 	}
 
 	pl := &v1.PodList{}
-	return pl, rcc.Client.List(context.TODO(), pl, opt...)
+	return pl, rcc.Client.List(ctx, pl, opt...)
 }
 
-func (rcc *CassandraClusterReconciler) CreatePod(pod *v1.Pod) error {
-	err := rcc.Client.Create(context.TODO(), pod)
+func (rcc *CassandraClusterReconciler) CreatePod(ctx context.Context, pod *v1.Pod) error {
+	err := rcc.Client.Create(ctx, pod)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return fmt.Errorf("pod already exists: %cc", err)
@@ -212,8 +212,8 @@ func (rcc *CassandraClusterReconciler) CreatePod(pod *v1.Pod) error {
 	return nil
 }
 
-func (rcc *CassandraClusterReconciler) UpdatePod(pod *v1.Pod) error {
-	err := rcc.Client.Update(context.TODO(), pod)
+func (rcc *CassandraClusterReconciler) UpdatePod(ctx context.Context, pod *v1.Pod) error {
+	err := rcc.Client.Update(ctx, pod)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return fmt.Errorf("pod already exists: %cc", err)
@@ -224,24 +224,24 @@ func (rcc *CassandraClusterReconciler) UpdatePod(pod *v1.Pod) error {
 	return nil
 }
 
-func (rcc *CassandraClusterReconciler) CreateOrUpdatePod(namespace string, name string, pod *v1.Pod) error {
-	storedPod, err := rcc.GetPod(namespace, pod.Name)
+func (rcc *CassandraClusterReconciler) CreateOrUpdatePod(ctx context.Context, namespace string, name string, pod *v1.Pod) error {
+	storedPod, err := rcc.GetPod(ctx, namespace, pod.Name)
 	if err != nil {
 		// If no resource we need to create.
 		if apierrors.IsNotFound(err) {
-			return rcc.CreatePod(pod)
+			return rcc.CreatePod(ctx, pod)
 		}
 		return err
 	}
 
 	// Already exists, need to Update.
 	pod.ResourceVersion = storedPod.ResourceVersion
-	return rcc.UpdatePod(pod)
+	return rcc.UpdatePod(ctx, pod)
 }
 
 //DeletePod delete a pod
-func (rcc *CassandraClusterReconciler) DeletePod(pod *v1.Pod) error {
-	err := rcc.Client.Delete(context.TODO(), pod)
+func (rcc *CassandraClusterReconciler) DeletePod(ctx context.Context, pod *v1.Pod) error {
+	err := rcc.Client.Delete(ctx, pod)
 	if err != nil {
 		return fmt.Errorf("failed to delete Pod: %cc", err)
 	}
@@ -249,8 +249,8 @@ func (rcc *CassandraClusterReconciler) DeletePod(pod *v1.Pod) error {
 }
 
 //ForceDeletePod delete a pod with a grace period of 0 seconds
-func (rcc *CassandraClusterReconciler) ForceDeletePod(pod *v1.Pod) error {
-	err := rcc.Client.Delete(context.TODO(), pod, client.GracePeriodSeconds(0))
+func (rcc *CassandraClusterReconciler) ForceDeletePod(ctx context.Context, pod *v1.Pod) error {
+	err := rcc.Client.Delete(ctx, pod, client.GracePeriodSeconds(0))
 	if err != nil {
 		return fmt.Errorf("failed to delete Pod: %cc", err)
 	}

@@ -25,7 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func (rcc *CassandraClusterReconciler) GetPVC(namespace, name string) (*v1.PersistentVolumeClaim, error) {
+func (rcc *CassandraClusterReconciler) GetPVC(ctx context.Context, namespace, name string) (*v1.PersistentVolumeClaim, error) {
 
 	o := &v1.PersistentVolumeClaim{
 		TypeMeta: metav1.TypeMeta{
@@ -37,10 +37,10 @@ func (rcc *CassandraClusterReconciler) GetPVC(namespace, name string) (*v1.Persi
 			Namespace: namespace,
 		},
 	}
-	return o, rcc.Client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, o)
+	return o, rcc.Client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, o)
 }
 
-func (rcc *CassandraClusterReconciler) ListPVC(namespace string,
+func (rcc *CassandraClusterReconciler) ListPVC(ctx context.Context, namespace string,
 	selector map[string]string) (*v1.PersistentVolumeClaimList, error) {
 
 	clientOpt := &client.ListOptions{Namespace: namespace, LabelSelector: labels.SelectorFromSet(selector)}
@@ -55,11 +55,11 @@ func (rcc *CassandraClusterReconciler) ListPVC(namespace string,
 		},
 	}
 
-	return o, rcc.Client.List(context.TODO(), o, opt...)
+	return o, rcc.Client.List(ctx, o, opt...)
 }
 
-func (rcc *CassandraClusterReconciler) deletePVC(pvc *v1.PersistentVolumeClaim) error {
+func (rcc *CassandraClusterReconciler) deletePVC(ctx context.Context, pvc *v1.PersistentVolumeClaim) error {
 
-	return rcc.Client.Delete(context.TODO(), pvc)
+	return rcc.Client.Delete(ctx, pvc)
 
 }

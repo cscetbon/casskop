@@ -42,7 +42,7 @@ var (
 )
 
 //GetStatefulSet return the Statefulset name from the cluster in the namespace
-func (rcc *CassandraClusterReconciler) GetStatefulSet(namespace, name string) (*appsv1.StatefulSet, error) {
+func (rcc *CassandraClusterReconciler) GetStatefulSet(ctx context.Context, namespace, name string) (*appsv1.StatefulSet, error) {
 
 	ss := &appsv1.StatefulSet{
 		TypeMeta: metav1.TypeMeta{
@@ -54,10 +54,10 @@ func (rcc *CassandraClusterReconciler) GetStatefulSet(namespace, name string) (*
 			Namespace: namespace,
 		},
 	}
-	return ss, rcc.Client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, ss)
+	return ss, rcc.Client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, ss)
 }
 
-func (rcc *CassandraClusterReconciler) DeleteStatefulSet(namespace, name string) error {
+func (rcc *CassandraClusterReconciler) DeleteStatefulSet(ctx context.Context, namespace, name string) error {
 
 	ss := &appsv1.StatefulSet{
 		TypeMeta: metav1.TypeMeta{
@@ -69,12 +69,12 @@ func (rcc *CassandraClusterReconciler) DeleteStatefulSet(namespace, name string)
 			Namespace: namespace,
 		},
 	}
-	return rcc.Client.Delete(context.TODO(), ss)
+	return rcc.Client.Delete(ctx, ss)
 }
 
 //CreateStatefulSet create a new statefulset ss
-func (rcc *CassandraClusterReconciler) CreateStatefulSet(statefulSet *appsv1.StatefulSet) error {
-	err := rcc.Client.Create(context.TODO(), statefulSet)
+func (rcc *CassandraClusterReconciler) CreateStatefulSet(ctx context.Context, statefulSet *appsv1.StatefulSet) error {
+	err := rcc.Client.Create(ctx, statefulSet)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return fmt.Errorf("statefulset already exists: %cc", err)
@@ -86,9 +86,9 @@ func (rcc *CassandraClusterReconciler) CreateStatefulSet(statefulSet *appsv1.Sta
 }
 
 //UpdateStatefulSet updates an existing statefulset ss
-func (rcc *CassandraClusterReconciler) UpdateStatefulSet(statefulSet *appsv1.StatefulSet) error {
+func (rcc *CassandraClusterReconciler) UpdateStatefulSet(ctx context.Context, statefulSet *appsv1.StatefulSet) error {
 	revision := statefulSet.ResourceVersion
-	if err := rcc.Client.Update(context.TODO(), statefulSet); err != nil {
+	if err := rcc.Client.Update(ctx, statefulSet); err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return fmt.Errorf("statefulset already exists: %cc", err)
 		}
@@ -96,7 +96,7 @@ func (rcc *CassandraClusterReconciler) UpdateStatefulSet(statefulSet *appsv1.Sta
 	}
 	//Check that the new revision of statefulset has been taken into account
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		newSts, err := rcc.GetStatefulSet(statefulSet.Namespace, statefulSet.Name)
+		newSts, err := rcc.GetStatefulSet(ctx, statefulSet.Namespace, statefulSet.Name)
 		if err != nil && !apierrors.IsNotFound(err) {
 			return false, fmt.Errorf("failed to get cassandra statefulset: %cc", err)
 		}
@@ -184,7 +184,7 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 }
 
 //CreateOrUpdateStatefulSet Create statefulset if not found, or update it
-func (rcc *CassandraClusterReconciler) CreateOrUpdateStatefulSet(statefulSet *appsv1.StatefulSet,
+func (rcc *CassandraClusterReconciler) CreateOrUpdateStatefulSet(ctx context.Context, statefulSet *appsv1.StatefulSet,
 	status *api.CassandraClusterStatus, dcRackName string) (bool, error) {
 	// if there is an existing pod disruptions
 	// Or if we are not scaling Down the current statefulset
@@ -203,11 +203,11 @@ func (rcc *CassandraClusterReconciler) CreateOrUpdateStatefulSet(statefulSet *ap
 	var err error
 	now := metav1.Now()
 
-	rcc.storedStatefulSet, err = rcc.GetStatefulSet(statefulSet.Namespace, statefulSet.Name)
+	rcc.storedStatefulSet, err = rcc.GetStatefulSet(ctx, statefulSet.Namespace, statefulSet.Name)
 	if err != nil {
 		// If no resource we need to create.
 		if apierrors.IsNotFound(err) {
-			return api.BreakResyncLoop, rcc.CreateStatefulSet(statefulSet)
+			return api.BreakResyncLoop, rcc.CreateStatefulSet(ctx, statefulSet)
 		}
 		return api.ContinueResyncLoop, err
 	}
@@ -290,7 +290,7 @@ func (rcc *CassandraClusterReconciler) CreateOrUpdateStatefulSet(statefulSet *ap
 		dcRackStatus.CassandraLastAction.EndTime = nil
 	}
 
-	return api.BreakResyncLoop, rcc.UpdateStatefulSet(statefulSet)
+	return api.BreakResyncLoop, rcc.UpdateStatefulSet(ctx, statefulSet)
 }
 
 func getBootstrapContainerFromStatefulset(sts *appsv1.StatefulSet) *v1.Container {

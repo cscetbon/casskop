@@ -110,7 +110,7 @@ func HelperInitCluster(t *testing.T, name string) (*CassandraClusterReconciler,
 	fakeClientScheme := scheme.Scheme
 	fakeClientScheme.AddKnownTypes(api.GroupVersion, &cc)
 	fakeClientScheme.AddKnownTypes(api.GroupVersion, &ccList)
-	cl := fake.NewFakeClientWithScheme(fakeClientScheme, objs...)
+	cl := fake.NewClientBuilder().WithScheme(fakeClientScheme).WithRuntimeObjects(objs...).Build()
 	// Create a CassandraClusterReconciler object with the scheme and fake client.
 	rcc := CassandraClusterReconciler{Client: cl, Scheme: fakeClientScheme}
 
@@ -150,7 +150,7 @@ func TestUpdateStatusIfSeedListHasChanged(t *testing.T) {
 }
 
 //helperCreateCassandraCluster fake create a cluster from the yaml specified
-func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string) (*CassandraClusterReconciler,
+func helperCreateCassandraCluster(ctx context.Context, t *testing.T, cassandraClusterFileName string) (*CassandraClusterReconciler,
 	*reconcile.Request) {
 	assert := assert.New(t)
 	rcc, cc := HelperInitCluster(t, cassandraClusterFileName)
@@ -163,7 +163,7 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 	}
 
 	//The first Reconcile just makes Init
-	res, err := rcc.Reconcile(req)
+	res, err := rcc.Reconcile(context.TODO(), req)
 	if err != nil {
 		t.Fatalf("reconcile: (%v)", err)
 	}
@@ -182,7 +182,7 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 	}
 
 	//Second Reconcile creates objects
-	res, err = rcc.Reconcile(req)
+	res, err = rcc.Reconcile(context.TODO(), req)
 	if err != nil {
 		t.Fatalf("reconcile: (%v)", err)
 	}
@@ -202,7 +202,7 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 			//Now simulate sts to be ready for CassKop
 			sts.Status.Replicas = *sts.Spec.Replicas
 			sts.Status.ReadyReplicas = *sts.Spec.Replicas
-			rcc.UpdateStatefulSet(sts)
+			rcc.UpdateStatefulSet(ctx, sts)
 
 			//Create Statefulsets associated fake Pods
 			podTemplate := v1.Pod{
@@ -238,13 +238,13 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 				pod.Name = sts.Name + strconv.Itoa(i)
 				pod.Spec.Hostname = pod.Name
 				pod.Spec.Subdomain = cc.Name
-				if err = rcc.CreatePod(pod); err != nil {
+				if err = rcc.CreatePod(ctx, pod); err != nil {
 					t.Fatalf("can't create pod: (%v)", err)
 				}
 			}
 
 			//We recall Reconcile to update Next rack
-			if res, err = rcc.Reconcile(req); err != nil {
+			if res, err = rcc.Reconcile(context.TODO(), req); err != nil {
 				t.Fatalf("reconcile: (%v)", err)
 			}
 		}
@@ -275,12 +275,12 @@ func TestCassandraClusterReconciler(t *testing.T) {
 
 	// Mock request to simulate Reconcile() being called on an event for a
 	// watched resource .
-	rcc, req := helperCreateCassandraCluster(t, "cassandracluster-2DC.yaml")
+	rcc, req := helperCreateCassandraCluster(context.TODO(), t, "cassandracluster-2DC.yaml")
 
 	//WARNING: ListPod with fieldselector is not working on Client-side
 	//So CassKop will try to execute podActions in pods without succeed (they are fake pod)
 	//https://github.com/kubernetes/client-go/issues/326
-	res, err := rcc.Reconcile(*req)
+	res, err := rcc.Reconcile(context.TODO(), *req)
 	if err != nil {
 		t.Fatalf("reconcile: (%v)", err)
 	}
@@ -294,12 +294,12 @@ func TestCassandraClusterReconciler(t *testing.T) {
 func TestUpdateStatusIfconfigMapHasChangedWithNoConfigMap(t *testing.T) {
 	// Mock request to simulate Reconcile() being called on an event for a
 	// watched resource .
-	rcc, req := helperCreateCassandraCluster(t, "cassandracluster-2DC.yaml")
+	rcc, req := helperCreateCassandraCluster(context.TODO(), t, "cassandracluster-2DC.yaml")
 
 	//WARNING: ListPod with fieldselector is not working on Client-side
 	//So CassKop will try to execute podActions in pods without succeed (they are fake pod)
 	//https://github.com/kubernetes/client-go/issues/326
-	res, err := rcc.Reconcile(*req)
+	res, err := rcc.Reconcile(context.TODO(), *req)
 	if err != nil {
 		t.Fatalf("reconcile: (%v)", err)
 	}
@@ -347,12 +347,12 @@ func TestUpdateStatusIfconfigMapHasChangedWithNoConfigMap(t *testing.T) {
 func TestUpdateStatusIfconfigMapHasChangedWithConfigMap(t *testing.T) {
 	// Mock request to simulate Reconcile() being called on an event for a
 	// watched resource .
-	rcc, req := helperCreateCassandraCluster(t, "cassandracluster-2DC-configmap.yaml")
+	rcc, req := helperCreateCassandraCluster(context.TODO(), t, "cassandracluster-2DC-configmap.yaml")
 
 	//WARNING: ListPod with fieldselector is not working on Client-side
 	//So CassKop will try to execute podActions in pods without succeed (they are fake pod)
 	//https://github.com/kubernetes/client-go/issues/326
-	res, err := rcc.Reconcile(*req)
+	res, err := rcc.Reconcile(context.TODO(), *req)
 	if err != nil {
 		t.Fatalf("reconcile: (%v)", err)
 	}
@@ -418,12 +418,12 @@ func TestUpdateStatusIfconfigMapHasChangedWithConfigMap(t *testing.T) {
 func TestUpdateStatusIfDockerImageHasChanged(t *testing.T) {
 	// Mock request to simulate Reconcile() being called on an event for a
 	// watched resource .
-	rcc, req := helperCreateCassandraCluster(t, "cassandracluster-2DC-configmap.yaml")
+	rcc, req := helperCreateCassandraCluster(context.TODO(), t, "cassandracluster-2DC-configmap.yaml")
 
 	//WARNING: ListPod with fieldselector is not working on Client-side
 	//So CassKop will try to execute podActions in pods without succeed (they are fake pod)
 	//https://github.com/kubernetes/client-go/issues/326
-	res, err := rcc.Reconcile(*req)
+	res, err := rcc.Reconcile(context.TODO(), *req)
 	if err != nil {
 		t.Fatalf("reconcile: (%v)", err)
 	}

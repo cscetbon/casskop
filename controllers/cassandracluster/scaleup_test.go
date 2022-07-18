@@ -20,7 +20,7 @@ func stringOfSlice(a []string) string {
 
 func registerJolokiaOperationJoiningNodes(host podName, numberOfJoiningNodes int) {
 	joiningNodes := []string{}
-	for i:=1; i<=numberOfJoiningNodes; i++ {
+	for i := 1; i <= numberOfJoiningNodes; i++ {
 		joiningNodes = append(joiningNodes, "nodeX")
 	}
 	httpmock.RegisterResponder("POST", JolokiaURL(host.FullName, jolokiaPort),
@@ -57,22 +57,22 @@ func TestAddTwoNodes(t *testing.T) {
 	firstPod := podHost(stfsName, 0, rcc)
 	reconcileValidation(t, rcc, *req)
 	assert.GreaterOrEqual(jolokiaCallsCount(firstPod), 0)
-	assertStatefulsetReplicas(t, rcc, 3, cassandraCluster.Namespace, stfsName)
+	assertStatefulsetReplicas(ctx, t, rcc, 3, cassandraCluster.Namespace, stfsName)
 
 	//Reconcile adds one node at a time when it's asked to add more than one node
-	for expectedReplicas:=3; expectedReplicas <= 4; expectedReplicas++ {
+	for expectedReplicas := 3; expectedReplicas <= 4; expectedReplicas++ {
 		//Reconcile does not update the number of nodes when there are joining nodes
 		registerJolokiaOperationJoiningNodes(firstPod, 1)
 		for reconcileIteration := 0; reconcileIteration <= 2; reconcileIteration++ {
 			reconcileValidation(t, rcc, *req)
 			assert.GreaterOrEqual(jolokiaCallsCount(firstPod), 1)
-			assertStatefulsetReplicas(t, rcc, expectedReplicas, cassandraCluster.Namespace, stfsName)
+			assertStatefulsetReplicas(ctx, t, rcc, expectedReplicas, cassandraCluster.Namespace, stfsName)
 		}
 
 		//Reconcile adds a node as soon as there are no longer joining nodes
 		registerJolokiaOperationJoiningNodes(firstPod, 0)
 		reconcileValidation(t, rcc, *req)
 		assert.GreaterOrEqual(jolokiaCallsCount(firstPod), 1)
-		assertStatefulsetReplicas(t, rcc, expectedReplicas + 1, cassandraCluster.Namespace, stfsName)
+		assertStatefulsetReplicas(ctx, t, rcc, expectedReplicas+1, cassandraCluster.Namespace, stfsName)
 	}
 }
