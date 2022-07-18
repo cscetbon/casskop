@@ -63,7 +63,7 @@ type CassandraClusterReconciler struct {
 // Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
-func (rcc *CassandraClusterReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (rcc *CassandraClusterReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling CassandraCluster")
 
@@ -75,7 +75,7 @@ func (rcc *CassandraClusterReconciler) Reconcile(request reconcile.Request) (rec
 	// Fetch the CassandraCluster instance
 	rcc.cc = &api.CassandraCluster{}
 	cc := rcc.cc
-	err := rcc.Client.Get(context.TODO(), request.NamespacedName, cc)
+	err := rcc.Client.Get(ctx, request.NamespacedName, cc)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -94,36 +94,36 @@ func (rcc *CassandraClusterReconciler) Reconcile(request reconcile.Request) (rec
 		if changed {
 			updateDeletePvcStrategy(cc)
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Info("Initialization: Update CassandraCluster")
-			return requeue, rcc.Client.Update(context.TODO(), cc)
+			return requeue, rcc.Client.Update(ctx, cc)
 		}
 	}
 	cc.CheckDefaults()
 
-	if err = rcc.CheckDeletePVC(cc); err != nil {
+	if err = rcc.CheckDeletePVC(ctx, cc); err != nil {
 		return forget, err
 	}
 
 	status := cc.Status.DeepCopy()
 
 	//We Update Status at the end
-	defer rcc.updateCassandraStatus(cc, status)
+	defer rcc.updateCassandraStatus(ctx, cc, status)
 
 	//If non allowed changes on CRD, we return here
-	if rcc.CheckNonAllowedChanges(cc, status) {
+	if rcc.CheckNonAllowedChanges(ctx, cc, status) {
 		return requeue30, nil
 	}
 
-	if err = rcc.ensureCassandraPodDisruptionBudget(cc); err != nil {
+	if err = rcc.ensureCassandraPodDisruptionBudget(ctx, cc); err != nil {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Errorf("ensureCassandraPodDisruptionBudget Error: %v", err)
 	}
 
 	// check pods status
-	if err = rcc.CheckPodsState(cc, status); err != nil {
+	if err = rcc.CheckPodsState(ctx, cc, status); err != nil {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Errorf("CheckPodsState Error: %v", err)
 	}
 
 	//ReconcileRack will also add and initiate new racks, we must not go through racks before this method
-	if err = rcc.ReconcileRack(cc, status); err != nil {
+	if err = rcc.ReconcileRack(ctx, cc, status); err != nil {
 		return requeue5, err
 	}
 

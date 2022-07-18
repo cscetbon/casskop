@@ -41,7 +41,7 @@ type CassandraBackupReconciler struct {
 	Log       logr.Logger
 }
 
-func (r *CassandraBackupReconciler) listPods(namespace string, selector map[string]string) (*corev1.PodList, error) {
+func (r *CassandraBackupReconciler) listPods(ctx context.Context, namespace string, selector map[string]string) (*corev1.PodList, error) {
 
 	clientOpt := &client.ListOptions{
 		Namespace:     namespace,
@@ -53,7 +53,7 @@ func (r *CassandraBackupReconciler) listPods(namespace string, selector map[stri
 	}
 
 	pl := &corev1.PodList{}
-	return pl, r.Client.List(context.TODO(), pl, opt...)
+	return pl, r.Client.List(ctx, pl, opt...)
 }
 
 func (r *CassandraBackupReconciler) setFinalizer(cb *api.CassandraBackup, value bool) {
@@ -65,14 +65,14 @@ func (r *CassandraBackupReconciler) setFinalizer(cb *api.CassandraBackup, value 
 
 // Reconcile reads that state of the cluster for a CassandraBackup object and makes changes based on the state read
 // and what is in the CassandraBackup.Spec
-func (r *CassandraBackupReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *CassandraBackupReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := logrus.WithFields(logrus.Fields{"Request.Namespace": request.Namespace, "Request.Name": request.Name})
 	reqLogger.Info("Reconciling CassandraBackup")
 
 	// Fetch the CassandraBackup backup
 	cassandraBackup := &api.CassandraBackup{}
 
-	if err := r.Client.Get(context.TODO(), request.NamespacedName, cassandraBackup); err != nil {
+	if err := r.Client.Get(ctx, request.NamespacedName, cassandraBackup); err != nil {
 		if k8sErrors.IsNotFound(err) {
 			// if the resource is not found, that means all of
 			// the finalizers have been removed, and the resource has been deleted,
@@ -94,7 +94,7 @@ func (r *CassandraBackupReconciler) Reconcile(request reconcile.Request) (reconc
 				cassandraBackup.Name, cassandraBackup.Spec.CassandraCluster, cassandraBackup.Spec.SnapshotTag))
 		// Remove Finalizer
 		r.setFinalizer(cassandraBackup, false)
-		err := r.Client.Update(context.TODO(), cassandraBackup)
+		err := r.Client.Update(ctx, cassandraBackup)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{"backup": request.NamespacedName, "cluster": cassandraBackup.Name,
 				"err": err}).Error("Issue when updating CassandraBackup")
@@ -112,7 +112,7 @@ func (r *CassandraBackupReconciler) Reconcile(request reconcile.Request) (reconc
 			cassandraBackup.Annotations = make(map[string]string)
 		}
 		cassandraBackup.Annotations[annotationLastApplied] = lac
-		defer r.Client.Update(context.TODO(), cassandraBackup)
+		defer r.Client.Update(ctx, cassandraBackup)
 	}
 
 	if !cassandraBackup.IsScheduled() && cassandraBackup.Status.Condition != nil {
@@ -125,7 +125,7 @@ func (r *CassandraBackupReconciler) Reconcile(request reconcile.Request) (reconc
 
 	cassandraBackup.Status = api.BackRestStatus{}
 
-	if exists, err := existingNotScheduledSnapshot(r.Client, cassandraBackup); err != nil {
+	if exists, err := existingNotScheduledSnapshot(ctx, r.Client, cassandraBackup); err != nil {
 		return reconcile.Result{}, err
 	} else if exists {
 		// We can not backup with same snapshot, CassandraCluster and storageLocation
@@ -142,7 +142,7 @@ func (r *CassandraBackupReconciler) Reconcile(request reconcile.Request) (reconc
 	if !cassandraBackup.IsFileBackup() {
 		// fetch secret and make sure it exists
 		secret := &corev1.Secret{}
-		if err := r.Client.Get(context.TODO(),
+		if err := r.Client.Get(ctx,
 			types.NamespacedName{Name: cassandraBackup.Spec.Secret, Namespace: cassandraBackup.Namespace}, secret); err != nil {
 			if k8sErrors.IsNotFound(err) {
 				r.Recorder.Event(
@@ -178,7 +178,7 @@ func (r *CassandraBackupReconciler) Reconcile(request reconcile.Request) (reconc
 	// Get CassandraCluster object
 	cc := &api.CassandraCluster{}
 	logrus.WithFields(logrus.Fields{"where": "CYRIL 1"}).Error("NO ERROR YET")
-	if err := r.Client.Get(context.TODO(),
+	if err := r.Client.Get(ctx,
 		types.NamespacedName{Name: cassandraBackup.Spec.CassandraCluster,
 			Namespace: cassandraBackup.Namespace}, cc); err != nil {
 		logrus.WithFields(logrus.Fields{"where": "CYRIL 2", "err": err}).Error("NO ERROR YET")
@@ -225,7 +225,7 @@ func (r *CassandraBackupReconciler) Reconcile(request reconcile.Request) (reconc
 		}
 
 		if skipped, err := r.Scheduler.AddOrUpdate(
-			cassandraBackup, func() { r.backupData(cassandraBackup, cc, reqLogger) }, &r.Recorder); err != nil {
+			cassandraBackup, func() { r.backupData(ctx, cassandraBackup, cc, reqLogger) }, &r.Recorder); err != nil {
 			r.Recorder.Event(cassandraBackup, corev1.EventTypeWarning, "BackupScheduleError",
 				fmt.Sprintf("Wasn't able to schedule job %s: %s", cassandraBackup.Name, err.Error()))
 		} else if skipped {
@@ -240,13 +240,13 @@ func (r *CassandraBackupReconciler) Reconcile(request reconcile.Request) (reconc
 		return common.Reconciled()
 	}
 
-	return reconcile.Result{}, r.backupData(cassandraBackup, cc, reqLogger)
+	return reconcile.Result{}, r.backupData(ctx, cassandraBackup, cc, reqLogger)
 }
 
-func (r *CassandraBackupReconciler) backupData(cassandraBackup *api.CassandraBackup, cc *api.CassandraCluster,
+func (r *CassandraBackupReconciler) backupData(ctx context.Context, cassandraBackup *api.CassandraBackup, cc *api.CassandraCluster,
 	reqLogger *logrus.Entry) error {
 
-	pods, err := r.listPods(cassandraBackup.Namespace, k8s.LabelsForCassandraDC(cc, cassandraBackup.Spec.Datacenter))
+	pods, err := r.listPods(ctx, cassandraBackup.Namespace, k8s.LabelsForCassandraDC(cc, cassandraBackup.Spec.Datacenter))
 	if err != nil {
 		return fmt.Errorf("unable to list pods")
 	}

@@ -337,14 +337,14 @@ func TestCheckNonAllowedChangesNodesTo0(t *testing.T) {
 	rcc, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
 
 	status := cc.Status.DeepCopy()
-	rcc.updateCassandraStatus(cc, status)
+	rcc.updateCassandraStatus(ctx, cc, status)
 
-	res := rcc.CheckNonAllowedChanges(cc, status)
+	res := rcc.CheckNonAllowedChanges(ctx, cc, status)
 	assert.Equal(false, res)
 
 	//Global ScaleDown to 0 must be ignored
 	cc.Spec.NodesPerRacks = 0
-	res = rcc.CheckNonAllowedChanges(cc, status)
+	res = rcc.CheckNonAllowedChanges(ctx, cc, status)
 	assert.Equal(true, res)
 	assert.Equal(int32(1), cc.Spec.NodesPerRacks)
 }
@@ -353,7 +353,7 @@ func TestCheckNonAllowedChangesMix1(t *testing.T) {
 	assert := assert.New(t)
 	rcc, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
 	status := cc.Status.DeepCopy()
-	rcc.updateCassandraStatus(cc, status)
+	rcc.updateCassandraStatus(ctx, cc, status)
 
 	//Forbidden Changes
 	//Global ScaleDown to 0 must be ignored
@@ -363,7 +363,7 @@ func TestCheckNonAllowedChangesMix1(t *testing.T) {
 	//Allow Changed
 	cc.Spec.AutoPilot = false //instead of true
 
-	res := rcc.CheckNonAllowedChanges(cc, status)
+	res := rcc.CheckNonAllowedChanges(ctx, cc, status)
 	assert.Equal(true, res)
 
 	//Forbidden Changes
@@ -380,16 +380,16 @@ func TestCheckNonAllowedChangesResourcesIsAllowedButNeedAttention(t *testing.T) 
 
 	rcc, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
 	status := cc.Status.DeepCopy()
-	rcc.updateCassandraStatus(cc, status)
+	rcc.updateCassandraStatus(ctx, cc, status)
 
 	//Allow Changes but need sequential rolling pdate
 	//Global ScaleDown to 0 must be ignored
 	cc.Spec.Resources.Requests = v1.ResourceList{
-		"cpu":    resource.MustParse("2"), //instead of '1'
+		"cpu":    resource.MustParse("2"),   //instead of '1'
 		"memory": resource.MustParse("2Gi"), //instead of 2Gi
 	}
 
-	res := rcc.CheckNonAllowedChanges(cc, status)
+	res := rcc.CheckNonAllowedChanges(ctx, cc, status)
 	assert.Equal(false, res)
 
 	assert.Equal(resource.MustParse("2"), *cc.Spec.Resources.Requests.Cpu())
@@ -411,13 +411,13 @@ func TestCheckNonAllowedChangesRemove2DC(t *testing.T) {
 
 	rcc, cc := HelperInitCluster(t, "cassandracluster-3DC.yaml")
 	status := cc.Status.DeepCopy()
-	rcc.updateCassandraStatus(cc, status)
+	rcc.updateCassandraStatus(ctx, cc, status)
 
 	cc.Spec.Topology.DC.Remove(2)
 	cc.Spec.Topology.DC.Remove(1)
 
 	// We can't remove more than one DC at once
-	res := rcc.CheckNonAllowedChanges(cc, status)
+	res := rcc.CheckNonAllowedChanges(ctx, cc, status)
 	assert.Equal(true, res)
 }
 
@@ -427,13 +427,13 @@ func TestCheckNonAllowedChangesUpdateRack(t *testing.T) {
 
 	rcc, cc := HelperInitCluster(t, "cassandracluster-3DC.yaml")
 	status := cc.Status.DeepCopy()
-	rcc.updateCassandraStatus(cc, status)
+	rcc.updateCassandraStatus(ctx, cc, status)
 	assert.Equal(4, cc.GetDCRackSize())
 
 	//Remove 1 rack/dc at specified index
 	cc.Spec.Topology.DC[0].Rack.Remove(1)
 
-	res := rcc.CheckNonAllowedChanges(cc, status)
+	res := rcc.CheckNonAllowedChanges(ctx, cc, status)
 	assert.Equal(true, res)
 
 	//Topology must have been restored
@@ -447,7 +447,7 @@ func TestCheckNonAllowedChangesUpdateRack(t *testing.T) {
 	//Remove 1 rack/dc at specified index
 	cc.Spec.Topology.DC[0].Rack = append(cc.Spec.Topology.DC[0].Rack, api.Rack{Name: "ForbiddenRack"})
 
-	res = rcc.CheckNonAllowedChanges(cc, status)
+	res = rcc.CheckNonAllowedChanges(ctx, cc, status)
 
 	assert.Equal(true, res)
 
@@ -465,13 +465,13 @@ func TestCheckNonAllowedChangesRemoveDCNot0(t *testing.T) {
 	rcc, cc := HelperInitCluster(t, "cassandracluster-3DC.yaml")
 
 	status := cc.Status.DeepCopy()
-	rcc.updateCassandraStatus(cc, status)
+	rcc.updateCassandraStatus(ctx, cc, status)
 	assert.Equal(4, cc.GetDCRackSize())
 
 	//Remove DC at specified index
 	cc.Spec.Topology.DC.Remove(1)
 
-	res := rcc.CheckNonAllowedChanges(cc, status)
+	res := rcc.CheckNonAllowedChanges(ctx, cc, status)
 
 	//Change not allowed because DC still has nodes
 	assert.Equal(true, res)
@@ -492,7 +492,7 @@ func TestCheckNonAllowedChangesRemoveDC(t *testing.T) {
 	cc.Spec.Topology.DC[1].NodesPerRacks = &nb
 
 	status := cc.Status.DeepCopy()
-	rcc.updateCassandraStatus(cc, status)
+	rcc.updateCassandraStatus(ctx, cc, status)
 
 	//Initial Topology
 	assert.Equal(3, cc.GetDCSize())
@@ -502,7 +502,7 @@ func TestCheckNonAllowedChangesRemoveDC(t *testing.T) {
 	//Remove a dc at specified index
 	cc.Spec.Topology.DC.Remove(1)
 
-	res := rcc.CheckNonAllowedChanges(cc, status)
+	res := rcc.CheckNonAllowedChanges(ctx, cc, status)
 
 	//Change allowed because dc has no nodes
 	assert.Equal(true, res)
@@ -525,7 +525,7 @@ func TestCheckNonAllowedChangesScaleDown(t *testing.T) {
 
 	rcc, cc := HelperInitCluster(t, "cassandracluster-3DC.yaml")
 	status := cc.Status.DeepCopy()
-	rcc.updateCassandraStatus(cc, status)
+	rcc.updateCassandraStatus(ctx, cc, status)
 
 	//Create the Pods wanted by the statefulset dc2-rack1 (1 node)
 	pod := &v1.Pod{
@@ -550,7 +550,7 @@ func TestCheckNonAllowedChangesScaleDown(t *testing.T) {
 	pod.Spec.Hostname = "cassandra-demo2-dc2-rack1-0"
 	pod.Spec.Subdomain = "cassandra-demo2-dc2-rack1"
 	hostName := k8s.PodHostname(*pod)
-	rcc.CreatePod(pod)
+	rcc.CreatePod(ctx, pod)
 
 	//Mock Jolokia Call to NonLocalKeyspacesInDC
 	httpmock.Activate()
@@ -600,8 +600,8 @@ func TestCheckNonAllowedChangesScaleDown(t *testing.T) {
 	var nb int32
 	cc.Spec.Topology.DC[1].NodesPerRacks = &nb
 
-	res := rcc.CheckNonAllowedChanges(cc, status)
-	rcc.updateCassandraStatus(cc, status)
+	res := rcc.CheckNonAllowedChanges(ctx, cc, status)
+	rcc.updateCassandraStatus(ctx, cc, status)
 	//Change not allowed because DC still has nodes
 	assert.Equal(true, res)
 
@@ -613,7 +613,7 @@ func TestCheckNonAllowedChangesScaleDown(t *testing.T) {
 	allKeyspaces = []string{"system", "system_auth", "system_schema", "something", "else"}
 	cc.Spec.Topology.DC[1].NodesPerRacks = &nb
 
-	res = rcc.CheckNonAllowedChanges(cc, status)
+	res = rcc.CheckNonAllowedChanges(ctx, cc, status)
 
 	//Change  allowed because there is no more keyspace with replicated datas
 	assert.Equal(false, res)

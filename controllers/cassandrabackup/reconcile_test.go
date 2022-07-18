@@ -57,6 +57,7 @@ spec:
   storageLocation: file:///data/test
   snapshotTag: SnapshotTag2
 `
+var ctx = context.TODO()
 
 func HelperInitCassandraBackupController(cassandraBackupYaml string) (*CassandraBackupReconciler,
 	*api.CassandraBackup, *record.FakeRecorder) {
@@ -80,7 +81,7 @@ func HelperInitCassandraBackupController(cassandraBackupYaml string) (*Cassandra
 		&cassandraBackup,
 	}
 
-	fakeClient := fake.NewFakeClientWithScheme(fakeClientScheme, objs...)
+	fakeClient := fake.NewClientBuilder().WithScheme(fakeClientScheme).WithRuntimeObjects(objs...).Build()
 
 	fakeRecorder := record.NewFakeRecorder(3)
 	reconcileCassandraBackup := CassandraBackupReconciler{
@@ -96,17 +97,22 @@ func TestCassandraBackupAlreadyExists(t *testing.T) {
 	assert := assert.New(t)
 	reconcileCassandraBackup, cassandraBackup, recorder := HelperInitCassandraBackupController(cbyaml)
 
-	oldBackup := cassandraBackup.DeepCopy()
-	oldBackup.Status = api.BackRestStatus{
-		CoordinatorMember: "node1",
-		Condition: &api.BackRestCondition{
-			Type: "COMPLETED",
+	oldBackup := api.CassandraBackup{
+		Status: api.BackRestStatus{
+			CoordinatorMember: "node1",
+			Condition: &api.BackRestCondition{
+				Type: "COMPLETED",
+			},
+			Progress: "Done",
 		},
-		Progress: "Done",
+		Spec: cassandraBackup.Spec,
 	}
-	ctx := context.TODO()
 	oldBackup.Name = "prev-test-cassandra-backup"
-	reconcileCassandraBackup.Client.Create(ctx, oldBackup)
+
+	err := reconcileCassandraBackup.Client.Create(ctx, &oldBackup)
+	if err != nil {
+		assert.Nil(err)
+	}
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -114,7 +120,7 @@ func TestCassandraBackupAlreadyExists(t *testing.T) {
 			Namespace: cassandraBackup.Namespace,
 		},
 	}
-	res, err := reconcileCassandraBackup.Reconcile(req)
+	res, err := reconcileCassandraBackup.Reconcile(ctx, req)
 
 	assert.Equal(reconcile.Result{}, res)
 	assert.Nil(err)
@@ -132,7 +138,7 @@ func TestCassandraBackupSecretNotFound(t *testing.T) {
 		},
 	}
 
-	res, err := reconcileCassandraBackup.Reconcile(req)
+	res, err := reconcileCassandraBackup.Reconcile(ctx, req)
 
 	assert.Equal(reconcile.Result{}, res)
 	assert.Nil(err)
@@ -150,7 +156,7 @@ func TestCassandraBackupFile(t *testing.T) {
 		},
 	}
 
-	res, err := reconcileCassandraBackup.Reconcile(req)
+	res, err := reconcileCassandraBackup.Reconcile(ctx, req)
 
 	assert.Equal(reconcile.Result{}, res)
 	assert.Nil(err)
@@ -196,7 +202,7 @@ func TestCassandraBackupDatacenterNotFound(t *testing.T) {
 		},
 	}
 
-	reconcileCassandraBackup.Client.Create(context.TODO(), secret)
+	err := reconcileCassandraBackup.Client.Create(ctx, secret)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -205,7 +211,7 @@ func TestCassandraBackupDatacenterNotFound(t *testing.T) {
 		},
 	}
 
-	res, err := reconcileCassandraBackup.Reconcile(req)
+	res, err := reconcileCassandraBackup.Reconcile(ctx, req)
 
 	assert.Equal(reconcile.Result{}, res)
 	assert.Nil(err)

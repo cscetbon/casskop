@@ -87,7 +87,7 @@ func updateDeletePvcStrategy(cc *api.CassandraCluster) {
 }
 
 // CheckDeletePVC checks if DeletePVC is updated and update DeletePVC strategy
-func (rcc *CassandraClusterReconciler) CheckDeletePVC(cc *api.CassandraCluster) error {
+func (rcc *CassandraClusterReconciler) CheckDeletePVC(ctx context.Context, cc *api.CassandraCluster) error {
 	var oldCRD api.CassandraCluster
 	if cc.Annotations[api.AnnotationLastApplied] == "" {
 		return nil
@@ -103,7 +103,7 @@ func (rcc *CassandraClusterReconciler) CheckDeletePVC(cc *api.CassandraCluster) 
 	if cc.Spec.DeletePVC != oldCRD.Spec.DeletePVC {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Debug("DeletePVC has been updated")
 		updateDeletePvcStrategy(cc)
-		return rcc.Client.Update(context.TODO(), cc)
+		return rcc.Client.Update(ctx, cc)
 	}
 
 	return nil
@@ -112,7 +112,7 @@ func (rcc *CassandraClusterReconciler) CheckDeletePVC(cc *api.CassandraCluster) 
 // CheckNonAllowedChanges - checks if there are some changes on CRD that are not allowed on statefulset
 // If a non Allowed Changed is Find we won't Update associated kubernetes objects, but we will put back the old value
 // and Patch the CRD with correct values
-func (rcc *CassandraClusterReconciler) CheckNonAllowedChanges(cc *api.CassandraCluster,
+func (rcc *CassandraClusterReconciler) CheckNonAllowedChanges(ctx context.Context, cc *api.CassandraCluster,
 	status *api.CassandraClusterStatus) bool {
 	var oldCRD api.CassandraCluster
 	if cc.Annotations[api.AnnotationLastApplied] == "" {
@@ -169,7 +169,7 @@ func (rcc *CassandraClusterReconciler) CheckNonAllowedChanges(cc *api.CassandraC
 	}
 
 	var updateStatus string
-	if needUpdate, updateStatus = CheckTopologyChanges(rcc, cc, status, &oldCRD); needUpdate {
+	if needUpdate, updateStatus = CheckTopologyChanges(ctx, rcc, cc, status, &oldCRD); needUpdate {
 		if updateStatus != "" {
 			status.LastClusterAction = updateStatus
 		}
@@ -186,7 +186,7 @@ func (rcc *CassandraClusterReconciler) CheckNonAllowedChanges(cc *api.CassandraC
 		return true
 	}
 
-	if needUpdate = rcc.CheckNonAllowedScaleDown(cc, &oldCRD); needUpdate {
+	if needUpdate = rcc.CheckNonAllowedScaleDown(ctx, cc, &oldCRD); needUpdate {
 		status.LastClusterAction = api.ActionCorrectCRDConfig.Name
 		ClusterActionMetric.set(api.ActionCorrectCRDConfig, cc.Name)
 		return true
@@ -295,7 +295,7 @@ func hasChange(changelog diff.Changelog, changeType string, paths ...string) boo
 }
 
 //CheckTopologyChanges checks to see if the Operator accepts or refuses the CRD changes
-func CheckTopologyChanges(rcc *CassandraClusterReconciler, cc *api.CassandraCluster,
+func CheckTopologyChanges(ctx context.Context, rcc *CassandraClusterReconciler, cc *api.CassandraCluster,
 	status *api.CassandraClusterStatus, oldCRD *api.CassandraCluster) (bool, string) {
 
 	changelog, _ := diff.Diff(oldCRD.Spec.Topology, cc.Spec.Topology)
@@ -339,13 +339,13 @@ func CheckTopologyChanges(rcc *CassandraClusterReconciler, cc *api.CassandraClus
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf("Removing DC %s", dcName)
 
 		//We apply this change to the Cluster status
-		return rcc.deleteDCObjects(cc, status)
+		return rcc.deleteDCObjects(ctx, cc, status)
 	}
 
 	return false, ""
 }
 
-func (rcc *CassandraClusterReconciler) deleteDCObjects(cc *api.CassandraCluster,
+func (rcc *CassandraClusterReconciler) deleteDCObjects(ctx context.Context, cc *api.CassandraCluster,
 	status *api.CassandraClusterStatus) (bool, string) {
 
 	dcRackNameToDeleteList := cc.FixCassandraRackList(status)
@@ -354,7 +354,7 @@ func (rcc *CassandraClusterReconciler) deleteDCObjects(cc *api.CassandraCluster,
 
 		for _, dcRackNameToDelete := range dcRackNameToDeleteList {
 
-			err := rcc.DeleteStatefulSet(cc.Namespace, cc.Name+"-"+dcRackNameToDelete)
+			err := rcc.DeleteStatefulSet(ctx, cc.Namespace, cc.Name+"-"+dcRackNameToDelete)
 			if err != nil && !apierrors.IsNotFound(err) {
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackNameToDelete}).Warnf(
 					"Can't Delete Statefulset: %v", err)
@@ -365,7 +365,7 @@ func (rcc *CassandraClusterReconciler) deleteDCObjects(cc *api.CassandraCluster,
 				cc.Name + "-" + cc.GetDCNameFromDCRackName(dcRackNameToDelete) + "-exporter-jmx", //name-dc-exporter-jmx
 			}
 			for i := range names {
-				err = rcc.DeleteService(cc.Namespace, names[i])
+				err = rcc.DeleteService(ctx, cc.Namespace, names[i])
 				if err != nil && !apierrors.IsNotFound(err) {
 					logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackNameToDelete}).Warnf(
 						"Can't Delete Service: %v", err)
@@ -381,7 +381,7 @@ func (rcc *CassandraClusterReconciler) deleteDCObjects(cc *api.CassandraCluster,
 
 //CheckNonAllowedScaleDown goal is to discard the scaleDown to 0 is there is still replicated data towards the
 // corresponding DC
-func (rcc *CassandraClusterReconciler) CheckNonAllowedScaleDown(cc *api.CassandraCluster,
+func (rcc *CassandraClusterReconciler) CheckNonAllowedScaleDown(ctx context.Context, cc *api.CassandraCluster,
 	oldCRD *api.CassandraCluster) bool {
 
 	if ok, dcName, dc := cc.FindDCWithNodesTo0(); ok {
@@ -391,7 +391,7 @@ func (rcc *CassandraClusterReconciler) CheckNonAllowedScaleDown(cc *api.Cassandr
 		rackName := cc.GetRackName(dc, 0)
 
 		selector := k8s.MergeLabels(k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
-		podsList, err := rcc.ListPods(cc.Namespace, selector)
+		podsList, err := rcc.ListPods(ctx, cc.Namespace, selector)
 		if err != nil || len(podsList.Items) < 1 {
 			if err != nil {
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf(
@@ -411,7 +411,7 @@ func (rcc *CassandraClusterReconciler) CheckNonAllowedScaleDown(cc *api.Cassandr
 			}
 			hostName := k8s.PodHostname(pod)
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Debugf("The Operator will ask node %s", hostName)
-			jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
+			jolokiaClient, err := NewJolokiaClient(ctx, hostName, JolokiaPort, rcc,
 				cc.Spec.ImageJolokiaSecret, cc.Namespace)
 			var keyspacesWithData []string
 			if err == nil {
@@ -438,7 +438,7 @@ func (rcc *CassandraClusterReconciler) CheckNonAllowedScaleDown(cc *api.Cassandr
 }
 
 //ReconcileRack will try to reconcile cassandra for each of the couple DC/Rack defined in the topology
-func (rcc *CassandraClusterReconciler) ReconcileRack(cc *api.CassandraCluster,
+func (rcc *CassandraClusterReconciler) ReconcileRack(ctx context.Context, cc *api.CassandraCluster,
 	status *api.CassandraClusterStatus) (err error) {
 
 	newStatus := false
@@ -463,27 +463,27 @@ func (rcc *CassandraClusterReconciler) ReconcileRack(cc *api.CassandraCluster,
 			dcRackStatus := status.CassandraRackStatus[dcRackName]
 
 			if cc.DeletionTimestamp != nil && cc.Spec.DeletePVC {
-				rcc.DeletePVCs(cc, dcName, rackName)
+				rcc.DeletePVCs(ctx, cc, dcName, rackName)
 				//Go to next rack
 				continue
 			}
 			Name := cc.Name + "-" + dcRackName
-			storedStatefulSet, err := rcc.GetStatefulSet(cc.Namespace, Name)
+			storedStatefulSet, err := rcc.GetStatefulSet(ctx, cc.Namespace, Name)
 			if err != nil {
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 					"dc-rack": dcRackName}).Infof("failed to get cassandra's statefulset (%s) %v", Name, err)
 			} else {
 
 				//Update CassandraClusterPhase
-				rcc.UpdateCassandraRackStatusPhase(cc, dcName, rackName, storedStatefulSet, status)
+				rcc.UpdateCassandraRackStatusPhase(ctx, cc, dcName, rackName, storedStatefulSet, status)
 
 				//Find if there is an Action to execute/end
-				rcc.getNextCassandraClusterStatus(cc, dc, rack, dcName, rackName, storedStatefulSet, status)
+				rcc.getNextCassandraClusterStatus(ctx, cc, dc, rack, dcName, rackName, storedStatefulSet, status)
 
 				//If not Initializing cluster execute pod operations queued
 				if dcRackStatus.Phase != api.ClusterPhaseInitial.Name {
 					// Check if there are joining nodes and break the loop if there are
-					breakResyncloop, err := rcc.handlePodOperation(cc, dcName, rackName, status,
+					breakResyncloop, err := rcc.handlePodOperation(ctx, cc, dcName, rackName, status,
 						!isStatefulSetNotReady(storedStatefulSet))
 					if err != nil {
 						logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName,
@@ -515,16 +515,16 @@ func (rcc *CassandraClusterReconciler) ReconcileRack(cc *api.CassandraCluster,
 				}
 			}
 
-			if err = rcc.ensureCassandraService(cc); err != nil {
+			if err = rcc.ensureCassandraService(ctx, cc); err != nil {
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Errorf("ensureCassandraService Error: %v", err)
 			}
 
-			if err = rcc.ensureCassandraServiceMonitoring(cc, dcName); err != nil {
+			if err = rcc.ensureCassandraServiceMonitoring(ctx, cc, dcName); err != nil {
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 					"dc-rack": dcRackName}).Errorf("ensureCassandraServiceMonitoring Error: %v", err)
 			}
 
-			breakLoop, err := rcc.ensureCassandraStatefulSet(cc, status, dcName, dcRackName, dc, rack)
+			breakLoop, err := rcc.ensureCassandraStatefulSet(ctx, cc, status, dcName, dcRackName, dc, rack)
 			if err != nil {
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 					"dc-rack": dcRackName}).Errorf("ensureCassandraStatefulSet Error: %v", err)
@@ -537,7 +537,7 @@ func (rcc *CassandraClusterReconciler) ReconcileRack(cc *api.CassandraCluster,
 			if breakLoop {
 				if status.LastClusterAction == api.ActionUpdateSeedList.Name &&
 					status.LastClusterActionStatus == api.StatusConfiguring {
-					rcc.waitForStatefulSetToBeUpdated(cc, dcRackName, err)
+					rcc.waitForStatefulSetToBeUpdated(ctx, cc, dcRackName, err)
 				}
 				return nil
 			}
@@ -564,13 +564,13 @@ func (rcc *CassandraClusterReconciler) ReconcileRack(cc *api.CassandraCluster,
 	//cause PVCs have been deleted
 	if cc.DeletionTimestamp != nil && cc.Spec.DeletePVC {
 		preventClusterDeletion(cc, false)
-		return rcc.Client.Update(context.TODO(), cc)
+		return rcc.Client.Update(ctx, cc)
 	}
 
 	return nil
 }
 
-func (rcc *CassandraClusterReconciler) waitForStatefulSetToBeUpdated(cc *api.CassandraCluster, dcRackName string,
+func (rcc *CassandraClusterReconciler) waitForStatefulSetToBeUpdated(ctx context.Context, cc *api.CassandraCluster, dcRackName string,
 	err error) {
 	logrus.WithFields(logrus.Fields{
 		"cluster": cc.Name, "dc-rack": dcRackName,
@@ -581,7 +581,7 @@ func (rcc *CassandraClusterReconciler) waitForStatefulSetToBeUpdated(cc *api.Cas
 		pdbEnvelope := rcc.podDisruptionBudgetEnvelope(cc)
 		for {
 			time.Sleep(time.Millisecond * 500)
-			if rcc.storedPdb, err = rcc.GetPodDisruptionBudget(pdbEnvelope.Namespace,
+			if rcc.storedPdb, err = rcc.GetPodDisruptionBudget(ctx, pdbEnvelope.Namespace,
 				pdbEnvelope.Name); err == nil && !rcc.hasNoPodDisruption() {
 				ch <- "Stop waiting"
 			}
@@ -705,10 +705,10 @@ func EnsureSeedListIsUpdatedWhenRequired(cc *api.CassandraCluster, status *api.C
 	}
 }
 
-func (rcc *CassandraClusterReconciler) CheckPodsState(cc *api.CassandraCluster,
+func (rcc *CassandraClusterReconciler) CheckPodsState(ctx context.Context, cc *api.CassandraCluster,
 	status *api.CassandraClusterStatus) (err error) {
 
-	podsList, err := rcc.ListCassandraClusterPods(cc)
+	podsList, err := rcc.ListCassandraClusterPods(ctx, cc)
 	if err != nil {
 		return err
 	}
@@ -733,7 +733,7 @@ func (rcc *CassandraClusterReconciler) CheckPodsState(cc *api.CassandraCluster,
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 		"err": err}).Info(fmt.Sprintf("We will request : %s to catch hostIdMap", hostName))
 
-	jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc, cc.Spec.ImageJolokiaSecret, cc.Namespace)
+	jolokiaClient, err := NewJolokiaClient(ctx, hostName, JolokiaPort, rcc, cc.Spec.ImageJolokiaSecret, cc.Namespace)
 	if err != nil {
 		return err
 	}
@@ -750,13 +750,13 @@ func (rcc *CassandraClusterReconciler) CheckPodsState(cc *api.CassandraCluster,
 		return err
 	}
 	if podToDelete != nil {
-		return rcc.Client.Delete(context.TODO(), podToDelete)
+		return rcc.Client.Delete(ctx, podToDelete)
 	}
 
 	return nil
 }
 
-func (rcc *CassandraClusterReconciler) ListCassandraClusterPods(cc *api.CassandraCluster) ([]v1.Pod, error) {
+func (rcc *CassandraClusterReconciler) ListCassandraClusterPods(ctx context.Context, cc *api.CassandraCluster) ([]v1.Pod, error) {
 	var podsList []v1.Pod
 
 	// We loop on each DC and Rack of the CassandraCluster
@@ -770,7 +770,7 @@ func (rcc *CassandraClusterReconciler) ListCassandraClusterPods(cc *api.Cassandr
 			}
 
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName}).Debug("List available pods")
-			pods, err := rcc.ListPods(cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
+			pods, err := rcc.ListPods(ctx, cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
 			if err != nil {
 				return nil, err
 			}

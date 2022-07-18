@@ -15,6 +15,7 @@
 package cassandracluster
 
 import (
+	"context"
 	"testing"
 
 	api "github.com/cscetbon/casskop/api/v2"
@@ -22,6 +23,8 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+var ctx = context.TODO()
 
 func TestPodsSlice(t *testing.T) {
 	assert := assert.New(t)
@@ -40,7 +43,7 @@ func TestPodsSlice(t *testing.T) {
 	podLastOperation.Status = api.StatusOngoing
 	podLastOperation.OperatorName = oldOperatorName
 
-	podsSlice, checkOnly := rcc.podsSlice(cc, status, *podLastOperation, dcRackName, operationName, operatorName)
+	podsSlice, checkOnly := rcc.podsSlice(ctx, cc, status, *podLastOperation, dcRackName, operationName, operatorName)
 
 	assert.Equal(len(podsSlice), 0)
 	assert.Equal(checkOnly, true)
@@ -48,7 +51,7 @@ func TestPodsSlice(t *testing.T) {
 	// Missing condition sets checkOnly to false
 	podLastOperation.Status = api.StatusDone
 
-	podsSlice, checkOnly = rcc.podsSlice(cc, status, *podLastOperation, dcRackName, operationName, operatorName)
+	podsSlice, checkOnly = rcc.podsSlice(ctx, cc, status, *podLastOperation, dcRackName, operationName, operatorName)
 
 	assert.Equal(len(podsSlice), 0)
 	assert.Equal(checkOnly, false)
@@ -66,14 +69,14 @@ func TestPodsSlice(t *testing.T) {
 		},
 	}
 	pod.Status.Phase = v1.PodRunning
-	rcc.CreatePod(pod)
+	rcc.CreatePod(ctx, pod)
 
 	podLastOperation.Status = api.StatusOngoing
 	podLastOperation.Pods = []string{pod.GetName()}
 	// Set the operator name to a different value than the current operator name
 	podLastOperation.OperatorName = oldOperatorName
 
-	podsSlice, checkOnly = rcc.podsSlice(cc, status, *podLastOperation, dcRackName, operationName, operatorName)
+	podsSlice, checkOnly = rcc.podsSlice(ctx, cc, status, *podLastOperation, dcRackName, operationName, operatorName)
 	assert.Equal(podsSlice, []v1.Pod{*pod})
 	assert.Equal(checkOnly, true)
 }

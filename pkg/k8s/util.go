@@ -50,11 +50,11 @@ func LabelsForCassandraDCRack(cc *api.CassandraCluster, dcName string, rackName 
 
 func LabelsForCassandraDC(cc *api.CassandraCluster, dcName string) map[string]string {
 	m := map[string]string{
-		"app":                                "cassandracluster",
-		"cassandracluster":                   cc.GetName(),
+		"app":              "cassandracluster",
+		"cassandracluster": cc.GetName(),
 	}
 
-	if len(dcName) > 0{
+	if len(dcName) > 0 {
 		m["cassandraclusters.db.orange.com.dc"] = dcName
 	}
 	return MergeLabels(cc.GetLabels(), m)
@@ -187,17 +187,17 @@ func DCRackLabelsAndNodeSelectorForStatefulSet(cc *api.CassandraCluster, dc int,
 }
 
 // LookupCassandra Cluster returns the running cluster instance based on its name and namespace
-func LookupCassandraCluster(client runtimeClient.Client, clusterName,
+func LookupCassandraCluster(ctx context.Context, client runtimeClient.Client, clusterName,
 	clusterNamespace string) (cluster *api.CassandraCluster, err error) {
 	cluster = &api.CassandraCluster{}
-	err = client.Get(context.TODO(), types.NamespacedName{Name: clusterName, Namespace: clusterNamespace}, cluster)
+	err = client.Get(ctx, types.NamespacedName{Name: clusterName, Namespace: clusterNamespace}, cluster)
 	return
 }
 
-func LookupCassandraBackup(client runtimeClient.Client, backupName,
+func LookupCassandraBackup(ctx context.Context, client runtimeClient.Client, backupName,
 	backupNamespace string) (backup *api.CassandraBackup, err error) {
 	backup = &api.CassandraBackup{}
-	err = client.Get(context.TODO(), types.NamespacedName{Name: backupName, Namespace: backupNamespace}, backup)
+	err = client.Get(ctx, types.NamespacedName{Name: backupName, Namespace: backupNamespace}, backup)
 	return
 }
 

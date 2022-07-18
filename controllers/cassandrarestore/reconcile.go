@@ -38,12 +38,10 @@ type CassandraRestoreReconciler struct {
 // +kubebuilder:rbac:groups=db.orange.com,resources=cassandrarestores,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=db.orange.com,resources=cassandrarestores/status,verbs=get;update;patch
 
-func (r CassandraRestoreReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r CassandraRestoreReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 
 	reqLogger := logrus.WithFields(logrus.Fields{"Request.Namespace": request.Namespace, "Request.Name": request.Name})
 	reqLogger.Info("Reconciling CassandraRestore")
-
-	ctx := context.TODO()
 
 	// Fetch the CassandraRestore cassandraRestore
 	cassandraRestore := &v2.CassandraRestore{}
@@ -63,7 +61,7 @@ func (r CassandraRestoreReconciler) Reconcile(request reconcile.Request) (reconc
 
 	// Check the referenced Cluster exists.
 	var cassandraCluster *v2.CassandraCluster
-	if cassandraCluster, err = k8s.LookupCassandraCluster(r.Client, cassandraRestore.Spec.CassandraCluster,
+	if cassandraCluster, err = k8s.LookupCassandraCluster(ctx, r.Client, cassandraRestore.Spec.CassandraCluster,
 		cassandraRestore.Namespace); err != nil {
 		// This shouldn't trigger anymore, but leaving it here as a safety belt
 		if k8s.IsMarkedForDeletion(cassandraRestore.ObjectMeta) {
@@ -80,7 +78,7 @@ func (r CassandraRestoreReconciler) Reconcile(request reconcile.Request) (reconc
 
 	// Check the referenced Backup exists.
 	var cassandraBackup *v2.CassandraBackup
-	if cassandraBackup, err = k8s.LookupCassandraBackup(r.Client, cassandraRestore.Spec.CassandraBackup,
+	if cassandraBackup, err = k8s.LookupCassandraBackup(ctx, r.Client, cassandraRestore.Spec.CassandraBackup,
 		cassandraRestore.Namespace); err != nil {
 		r.Recorder.Event(
 			cassandraRestore,
@@ -92,7 +90,7 @@ func (r CassandraRestoreReconciler) Reconcile(request reconcile.Request) (reconc
 
 	// Require restore
 	if len(cassandraRestore.Status.CoordinatorMember) == 0 {
-		err = r.requiredRestore(cassandraRestore, cassandraCluster, cassandraBackup, reqLogger)
+		err = r.requiredRestore(ctx, cassandraRestore, cassandraCluster, cassandraBackup, reqLogger)
 		if err != nil {
 			switch errors.Cause(err).(type) {
 			case errorfactory.ResourceNotReady:
@@ -113,7 +111,7 @@ func (r CassandraRestoreReconciler) Reconcile(request reconcile.Request) (reconc
 	restoreConditionType := v2.RestoreConditionType(cassandraRestore.Status.Condition.Type)
 
 	if restoreConditionType.IsRequired() {
-		err = r.handleRequiredRestore(cassandraRestore, cassandraCluster, cassandraBackup, reqLogger)
+		err = r.handleRequiredRestore(ctx, cassandraRestore, cassandraCluster, cassandraBackup, reqLogger)
 		if err != nil {
 			switch errors.Cause(err).(type) {
 			case errorfactory.CassandraBackupSidecarNotReady, errorfactory.ResourceNotReady:
@@ -138,7 +136,7 @@ func (r CassandraRestoreReconciler) Reconcile(request reconcile.Request) (reconc
 	}
 
 	if restoreConditionType.IsInProgress() {
-		err = r.checkRestoreOperationState(cassandraRestore, cassandraCluster, cassandraBackup, reqLogger)
+		err = r.checkRestoreOperationState(ctx, cassandraRestore, cassandraCluster, cassandraBackup, reqLogger)
 		if err != nil {
 			switch errors.Cause(err).(type) {
 			case errorfactory.CassandraBackupSidecarNotReady, errorfactory.ResourceNotReady:
@@ -176,11 +174,11 @@ func (r CassandraRestoreReconciler) restoreEventMessage(cassandraBackup *v2.Cass
 }
 
 // requiredRestore select restore coordinator on a specific member of a Cluster
-func (r *CassandraRestoreReconciler) requiredRestore(restore *v2.CassandraRestore, cc *v2.CassandraCluster,
+func (r *CassandraRestoreReconciler) requiredRestore(ctx context.Context, restore *v2.CassandraRestore, cc *v2.CassandraCluster,
 	backup *v2.CassandraBackup, reqLogger *logrus.Entry) error {
 	ns := restore.Namespace
 
-	pods, err := r.listPods(ns, k8s.LabelsForCassandraDC(cc, backup.Spec.Datacenter))
+	pods, err := r.listPods(ctx, ns, k8s.LabelsForCassandraDC(cc, backup.Spec.Datacenter))
 	if err != nil {
 		return errorfactory.New(errorfactory.ResourceNotReady{}, err, "No pods founds for this dc")
 	}
@@ -205,9 +203,9 @@ func (r *CassandraRestoreReconciler) requiredRestore(restore *v2.CassandraRestor
 	return errors.New("No pods found.")
 }
 
-func (r *CassandraRestoreReconciler) handleRequiredRestore(restore *v2.CassandraRestore,
+func (r *CassandraRestoreReconciler) handleRequiredRestore(ctx context.Context, restore *v2.CassandraRestore,
 	cc *v2.CassandraCluster, backup *v2.CassandraBackup, reqLogger *logrus.Entry) error {
-	pods, err := r.listPods(restore.Namespace, k8s.LabelsForCassandraDC(cc, backup.Spec.Datacenter))
+	pods, err := r.listPods(ctx, restore.Namespace, k8s.LabelsForCassandraDC(cc, backup.Spec.Datacenter))
 	if err != nil {
 		return errorfactory.New(errorfactory.ResourceNotReady{}, err, "no pods founds for this dc")
 	}
@@ -236,10 +234,10 @@ func sidecarError(reqLogger *logrus.Entry, err error) error {
 		"cassandra sidecar communication error")
 }
 
-func (r *CassandraRestoreReconciler) checkRestoreOperationState(restore *v2.CassandraRestore,
+func (r *CassandraRestoreReconciler) checkRestoreOperationState(ctx context.Context, restore *v2.CassandraRestore,
 	cc *v2.CassandraCluster, backup *v2.CassandraBackup, reqLogger *logrus.Entry) error {
 
-	pods, err := r.listPods(restore.Namespace, k8s.LabelsForCassandraDC(cc, backup.Spec.Datacenter))
+	pods, err := r.listPods(ctx, restore.Namespace, k8s.LabelsForCassandraDC(cc, backup.Spec.Datacenter))
 	if err != nil {
 		return errorfactory.New(errorfactory.ResourceNotReady{}, err, "no pods founds for this dc")
 	}
@@ -297,7 +295,7 @@ func (r *CassandraRestoreReconciler) checkRestoreOperationState(restore *v2.Cass
 		fmt.Sprintf("restore operation id : %s", restoreId))
 }
 
-func (r *CassandraRestoreReconciler) listPods(namespace string, selector map[string]string) (*v1.PodList, error) {
+func (r *CassandraRestoreReconciler) listPods(ctx context.Context, namespace string, selector map[string]string) (*v1.PodList, error) {
 
 	clientOpt := &client.ListOptions{
 		Namespace:     namespace,
@@ -309,5 +307,5 @@ func (r *CassandraRestoreReconciler) listPods(namespace string, selector map[str
 	}
 
 	pl := &v1.PodList{}
-	return pl, r.Client.List(context.TODO(), pl, opt...)
+	return pl, r.Client.List(ctx, pl, opt...)
 }
