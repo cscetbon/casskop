@@ -67,11 +67,11 @@ func (r *CassandraBackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // blank assignment to verify that CassandraBackupReconciler implements reconcile.Reconciler
 var _ reconcile.Reconciler = &CassandraBackupReconciler{}
 
-func existingNotScheduledSnapshot(c client.Client, instance *api.CassandraBackup) (bool, error) {
+func existingNotScheduledSnapshot(ctx context.Context, c client.Client, instance *api.CassandraBackup) (bool, error) {
 
 	backupsList := &api.CassandraBackupList{}
 
-	if err := c.List(context.TODO(), backupsList); err != nil {
+	if err := c.List(ctx, backupsList); err != nil {
 		return false, err
 	}
 

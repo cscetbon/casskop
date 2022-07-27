@@ -21,7 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (rcc *CassandraClusterReconciler) DeleteService(namespace, name string) error {
+func (rcc *CassandraClusterReconciler) DeleteService(ctx context.Context, namespace, name string) error {
 
 	svc := &v1.Service{
 		TypeMeta: metav1.TypeMeta{
@@ -33,5 +33,5 @@ func (rcc *CassandraClusterReconciler) DeleteService(namespace, name string) err
 			Namespace: namespace,
 		},
 	}
-	return rcc.Client.Delete(context.TODO(), svc)
+	return rcc.Client.Delete(ctx, svc)
 }

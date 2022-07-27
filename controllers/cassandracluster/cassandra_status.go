@@ -35,7 +35,7 @@ var needUpdate bool
 //updateCassandraStatus updates the CRD if the status has changed
 //if needUpdate is set that mean that we have updated some fields in the CRD
 //This method also stored the annotation cassandraclusters.db.orange.com/last-applied-configuration with last-applied-configuration
-func (rcc *CassandraClusterReconciler) updateCassandraStatus(cc *api.CassandraCluster,
+func (rcc *CassandraClusterReconciler) updateCassandraStatus(ctx context.Context, cc *api.CassandraCluster,
 	status *api.CassandraClusterStatus) error {
 	// don't update the status if there aren't any changes.
 	if cc.Annotations == nil {
@@ -55,7 +55,7 @@ func (rcc *CassandraClusterReconciler) updateCassandraStatus(cc *api.CassandraCl
 	cc.Status = *status.DeepCopy()
 	cc.Annotations[api.AnnotationLastApplied] = string(lastApplied)
 
-	err := rcc.Client.Update(context.TODO(), cc)
+	err := rcc.Client.Update(ctx, cc)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "err": err}).Errorf("Issue when updating CassandraCluster")
 	}
@@ -64,7 +64,7 @@ func (rcc *CassandraClusterReconciler) updateCassandraStatus(cc *api.CassandraCl
 
 // getNextCassandraClusterStatus goal is to detect some changes in the status between cassandracluster and its statefulset
 // We follow only one change at a Time : so this function will return on the first change found
-func (rcc *CassandraClusterReconciler) getNextCassandraClusterStatus(cc *api.CassandraCluster, dc, rack int,
+func (rcc *CassandraClusterReconciler) getNextCassandraClusterStatus(ctx context.Context, cc *api.CassandraCluster, dc, rack int,
 	dcName, rackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) error {
 
 	//UpdateStatusIfUpdateResources(cc, dcRackName, storedStatefulSet, status)
@@ -74,14 +74,14 @@ func (rcc *CassandraClusterReconciler) getNextCassandraClusterStatus(cc *api.Cas
 		return nil
 	}
 
-	if rcc.UpdateStatusIfActionEnded(cc, dcName, rackName, storedStatefulSet, status) {
+	if rcc.UpdateStatusIfActionEnded(ctx, cc, dcName, rackName, storedStatefulSet, status) {
 		return nil
 	}
 
 	//If we set up UnlockNextOperation in CRD we allow to see mode change even last operation didn't ended correctly
 	unlockNextOperation := false
 	if cc.Spec.UnlockNextOperation &&
-		rcc.hasUnschedulablePod(cc.Namespace, dcName, rackName) {
+		rcc.hasUnschedulablePod(ctx, cc.Namespace, dcName, rackName) {
 		unlockNextOperation = true
 	}
 	//Do nothing in Initial phase except if we force it
@@ -344,7 +344,7 @@ func UpdateStatusIfStatefulSetChanged(dcRackName string, storedStatefulSet *apps
 }
 
 //UpdateStatusIfActionEnded Implement Tests to detect End of Ongoing Actions
-func (rcc *CassandraClusterReconciler) UpdateStatusIfActionEnded(cc *api.CassandraCluster, dcName string,
+func (rcc *CassandraClusterReconciler) UpdateStatusIfActionEnded(ctx context.Context, cc *api.CassandraCluster, dcName string,
 	rackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
 	rackLastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
@@ -361,7 +361,7 @@ func (rcc *CassandraClusterReconciler) UpdateStatusIfActionEnded(cc *api.Cassand
 			//Does the Scaling ended ?
 			if nodesPerRacks == storedStatefulSet.Status.Replicas {
 
-				podsList, err := rcc.ListPods(cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
+				podsList, err := rcc.ListPods(ctx, cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
 				nb := len(podsList.Items)
 				if err != nil || nb < 1 {
 					return false
@@ -379,7 +379,7 @@ func (rcc *CassandraClusterReconciler) UpdateStatusIfActionEnded(cc *api.Cassand
 					} else {
 						labels["operation-status"] = api.StatusManual
 					}
-					rcc.addPodOperationLabels(cc, dcName, rackName, labels)
+					rcc.addPodOperationLabels(ctx, cc, dcName, rackName, labels)
 
 					return true
 				}
@@ -423,7 +423,7 @@ func (rcc *CassandraClusterReconciler) UpdateStatusIfActionEnded(cc *api.Cassand
 // UpdateCassandraRackStatusPhase goal is to calculate the Cluster Phase according to StatefulSet Status.
 // The Phase is: Initializing -> Running <--> Pending
 // The Phase is a very high level view of the cluster, for a better view we need to see Actions and Pod Operations
-func (rcc *CassandraClusterReconciler) UpdateCassandraRackStatusPhase(cc *api.CassandraCluster, dcName string,
+func (rcc *CassandraClusterReconciler) UpdateCassandraRackStatusPhase(ctx context.Context, cc *api.CassandraCluster, dcName string,
 	rackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
 	lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
@@ -449,7 +449,7 @@ func (rcc *CassandraClusterReconciler) UpdateCassandraRackStatusPhase(cc *api.Ca
 			return
 		}
 		//If yes, just check that lastPod is running
-		podsList, err := rcc.ListPods(cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
+		podsList, err := rcc.ListPods(ctx, cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
 		if err != nil || len(podsList.Items) < 1 {
 			return
 		}

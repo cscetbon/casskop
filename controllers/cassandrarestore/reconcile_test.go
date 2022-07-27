@@ -72,7 +72,7 @@ func helperInitCassandraRestoreController(cassandraRestoreYaml string) (*Cassand
 		&cassandraRestore,
 	}
 
-	fakeClient := fake.NewFakeClientWithScheme(fakeClientScheme, objs...)
+	fakeClient := fake.NewClientBuilder().WithScheme(fakeClientScheme).WithRuntimeObjects(objs...).Build()
 
 	fakeRecorder := record.NewFakeRecorder(3)
 	CassandraRestoreReconciler := CassandraRestoreReconciler{
@@ -97,7 +97,7 @@ func TestCassandraRestoreWithUnknownCassandraCluster(t *testing.T) {
 		},
 	}
 
-	res, err := CassandraRestoreReconciler.Reconcile(req)
+	res, err := CassandraRestoreReconciler.Reconcile(context.TODO(), req)
 
 	assert.Equal(reconcile.Result{}, res)
 	assert.NotNil(err)
@@ -128,7 +128,7 @@ func TestCassandraRestoreWithUnknownCassandraBackup(t *testing.T) {
 		},
 	}
 
-	res, err := CassandraRestoreReconciler.Reconcile(req)
+	res, err := CassandraRestoreReconciler.Reconcile(context.TODO(), req)
 
 	assert.Equal(reconcile.Result{}, res)
 	assert.NotNil(err)

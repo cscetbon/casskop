@@ -990,7 +990,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 			InitialDelaySeconds: *cc.Spec.ReadinessInitialDelaySeconds,
 			TimeoutSeconds:      *cc.Spec.ReadinessHealthCheckTimeout,
 			PeriodSeconds:       *cc.Spec.ReadinessHealthCheckPeriod,
-			Handler: v1.Handler{
+			ProbeHandler: v1.ProbeHandler{
 				Exec: &v1.ExecAction{
 					Command: []string{
 						"/bin/bash",
@@ -1004,7 +1004,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 			InitialDelaySeconds: *cc.Spec.LivenessInitialDelaySeconds,
 			TimeoutSeconds:      *cc.Spec.LivenessHealthCheckTimeout,
 			PeriodSeconds:       *cc.Spec.LivenessHealthCheckPeriod,
-			Handler: v1.Handler{
+			ProbeHandler: v1.ProbeHandler{
 				Exec: &v1.ExecAction{
 					Command: []string{
 						"/bin/bash",
@@ -1055,7 +1055,7 @@ func backrestSidecarContainer(cc *api.CassandraCluster) v1.Container {
 			TimeoutSeconds:      5,
 			PeriodSeconds:       10,
 			FailureThreshold:    10,
-			Handler: v1.Handler{
+			ProbeHandler: v1.ProbeHandler{
 				HTTPGet: &v1.HTTPGetAction{
 					Port: intstr.IntOrString{IntVal: defaultBackRestPort},
 					Path: "/status",

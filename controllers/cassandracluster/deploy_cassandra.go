@@ -43,25 +43,25 @@ const (
 	exporterCassandraJmxPortName = "promjmx"
 )
 
-func (rcc *CassandraClusterReconciler) ensureCassandraService(cc *api.CassandraCluster) error {
+func (rcc *CassandraClusterReconciler) ensureCassandraService(ctx context.Context, cc *api.CassandraCluster) error {
 	selector := k8s.LabelsForCassandra(cc)
 	svc := generateCassandraService(cc, selector, nil)
 
 	k8s.AddOwnerRefToObject(svc, k8s.AsOwner(cc))
-	err := rcc.Client.Create(context.TODO(), svc)
+	err := rcc.Client.Create(ctx, svc)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return fmt.Errorf("failed to create cassandra service (%v)", err)
 	}
 	return nil
 }
 
-func (rcc *CassandraClusterReconciler) ensureCassandraServiceMonitoring(cc *api.CassandraCluster,
+func (rcc *CassandraClusterReconciler) ensureCassandraServiceMonitoring(ctx context.Context, cc *api.CassandraCluster,
 	dcName string) error {
 	selector := k8s.LabelsForCassandra(cc)
 	svc := generateCassandraExporterService(cc, selector, nil)
 
 	k8s.AddOwnerRefToObject(svc, k8s.AsOwner(cc))
-	err := rcc.Client.Create(context.TODO(), svc)
+	err := rcc.Client.Create(ctx, svc)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return fmt.Errorf("failed to create cassandra service Monitoring: %v", err)
 	}
@@ -70,9 +70,9 @@ func (rcc *CassandraClusterReconciler) ensureCassandraServiceMonitoring(cc *api.
 
 // ensureCassandraPodDisruptionBudget generate and apply the PodDisruptionBudget
 // take dcName to accordingly named the pdb, and target the pods
-func (rcc *CassandraClusterReconciler) ensureCassandraPodDisruptionBudget(cc *api.CassandraCluster) error {
+func (rcc *CassandraClusterReconciler) ensureCassandraPodDisruptionBudget(ctx context.Context, cc *api.CassandraCluster) error {
 	pdb := rcc.podDisruptionBudgetEnvelope(cc)
-	err := rcc.CreateOrUpdatePodDisruptionBudget(pdb)
+	err := rcc.CreateOrUpdatePodDisruptionBudget(ctx, pdb)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		logrus.Errorf("CreateOrUpdatePodDisruptionBudget Error: %v", err)
 	}
@@ -88,7 +88,7 @@ func (rcc *CassandraClusterReconciler) podDisruptionBudgetEnvelope(cc *api.Cassa
 // ensureCassandraStatefulSet generate and apply the statefulset
 // take dcRackName to accordingly named the statefulset
 // take dc and rack index of dc and rack in conf to retrieve according  nodeselectors labels
-func (rcc *CassandraClusterReconciler) ensureCassandraStatefulSet(cc *api.CassandraCluster,
+func (rcc *CassandraClusterReconciler) ensureCassandraStatefulSet(ctx context.Context, cc *api.CassandraCluster,
 	status *api.CassandraClusterStatus, dcName string, dcRackName string, dc int, rack int) (bool, error) {
 
 	labels, nodeSelector := k8s.DCRackLabelsAndNodeSelectorForStatefulSet(cc, dc, rack)
@@ -99,7 +99,7 @@ func (rcc *CassandraClusterReconciler) ensureCassandraStatefulSet(cc *api.Cassan
 	}
 	k8s.AddOwnerRefToObject(ss, k8s.AsOwner(cc))
 
-	breakResyncloop, err := rcc.CreateOrUpdateStatefulSet(ss, status, dcRackName)
+	breakResyncloop, err := rcc.CreateOrUpdateStatefulSet(ctx, ss, status, dcRackName)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return breakResyncloop, fmt.Errorf("failed to create cassandra statefulset: %v", err)
 	}

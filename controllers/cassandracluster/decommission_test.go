@@ -16,7 +16,7 @@ import (
 )
 
 func reconcileValidation(t *testing.T, rcc *CassandraClusterReconciler, request reconcile.Request) {
-	if res, err := rcc.Reconcile(request); err != nil {
+	if res, err := rcc.Reconcile(context.TODO(), request); err != nil {
 		t.Fatalf("reconcile: (%v)", err)
 	} else if !res.Requeue && res.RequeueAfter == 0 {
 		t.Error("reconcile did not requeue request as expected")
@@ -25,7 +25,7 @@ func reconcileValidation(t *testing.T, rcc *CassandraClusterReconciler, request 
 
 func createCassandraClusterWithNoDisruption(t *testing.T, cassandraClusterFileName string) (*CassandraClusterReconciler,
 	*reconcile.Request) {
-	rcc, req := helperCreateCassandraCluster(t, cassandraClusterFileName)
+	rcc, req := helperCreateCassandraCluster(context.TODO(), t, cassandraClusterFileName)
 
 	pdb := &policyv1beta1.PodDisruptionBudget{
 		ObjectMeta: metav1.ObjectMeta{
@@ -81,6 +81,7 @@ func deletePodNotDeletedByFakeClient(rcc *CassandraClusterReconciler, host podNa
 }
 
 func TestOneDecommission(t *testing.T) {
+	ctx := context.TODO()
 	rcc, req := createCassandraClusterWithNoDisruption(t, "cassandracluster-1DC.yaml")
 
 	httpmock.Activate()
@@ -107,24 +108,24 @@ func TestOneDecommission(t *testing.T) {
 	registerJolokiaOperationModeResponder(lastPod, NORMAL)
 	reconcileValidation(t, rcc, *req)
 	assert.GreaterOrEqual(jolokiaCallsCount(lastPod), 1)
-	assertStatefulsetReplicas(t, rcc, 3, cassandraCluster.Namespace, stfsName)
+	assertStatefulsetReplicas(ctx, t, rcc, 3, cassandraCluster.Namespace, stfsName)
 
 	registerJolokiaOperationModeResponder(lastPod, LEAVING)
 	reconcileValidation(t, rcc, *req)
 	assert.GreaterOrEqual(jolokiaCallsCount(lastPod), 1)
-	assertStatefulsetReplicas(t, rcc, 3, cassandraCluster.Namespace, stfsName)
+	assertStatefulsetReplicas(ctx, t, rcc, 3, cassandraCluster.Namespace, stfsName)
 
 	registerJolokiaOperationModeResponder(lastPod, DECOMMISSIONED)
 	reconcileValidation(t, rcc, *req)
 	assert.GreaterOrEqual(jolokiaCallsCount(lastPod), 1)
-	assertStatefulsetReplicas(t, rcc, 2, cassandraCluster.Namespace, stfsName)
+	assertStatefulsetReplicas(ctx, t, rcc, 2, cassandraCluster.Namespace, stfsName)
 
 	deletedPod := podHost(stfsName, 2, rcc)
 	assert.Equal(1, jolokiaCallsCount(deletedPod))
 
 	lastPod = podHost(stfsName, 1, rcc)
 	deletePodNotDeletedByFakeClient(rcc, deletedPod)
-	stfs, _ := rcc.GetStatefulSet(namespace, stfsName)
+	stfs, _ := rcc.GetStatefulSet(ctx, namespace, stfsName)
 	stfs.Status.ReadyReplicas = 2
 	rcc.Client.Update(context.TODO(), stfs)
 
@@ -138,8 +139,8 @@ func TestOneDecommission(t *testing.T) {
 	assert.Equal(0, jolokiaCallsCount(lastPod))
 }
 
-func assertStatefulsetReplicas(t *testing.T, rcc *CassandraClusterReconciler, expected int, namespace, stfsName string) {
+func assertStatefulsetReplicas(ctx context.Context, t *testing.T, rcc *CassandraClusterReconciler, expected int, namespace, stfsName string) {
 	assert := assert.New(t)
-	stfs, _ := rcc.GetStatefulSet(namespace, stfsName)
+	stfs, _ := rcc.GetStatefulSet(ctx, namespace, stfsName)
 	assert.Equal(int32(expected), *stfs.Spec.Replicas)
 }
