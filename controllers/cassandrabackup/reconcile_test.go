@@ -109,8 +109,7 @@ func TestCassandraBackupAlreadyExists(t *testing.T) {
 	}
 	oldBackup.Name = "prev-test-cassandra-backup"
 
-	err := reconcileCassandraBackup.Client.Create(ctx, &oldBackup)
-	if err != nil {
+	if err := reconcileCassandraBackup.Client.Create(ctx, &oldBackup); err != nil {
 		assert.Nil(err)
 	}
 

@@ -166,9 +166,9 @@ func needToWaitDelayBeforeCheck(cc *api.CassandraCluster, dcRackName string, sto
 		if t.Add(api.DefaultDelayWait * time.Second).After(now.Time) {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 				"rack": dcRackName}).Info(
-				fmt.Sprintf("The Operator Waits %s seconds for the action to start correctly",
-					strconv.Itoa(api.DefaultDelayWait)),
-			)
+					fmt.Sprintf("The Operator Waits %s seconds for the action to start correctly",
+						strconv.Itoa(api.DefaultDelayWait)),
+					)
 			return true
 		}
 	}
