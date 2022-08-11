@@ -201,7 +201,7 @@ func TestCassandraBackupDatacenterNotFound(t *testing.T) {
 		},
 	}
 
-	err := reconcileCassandraBackup.Client.Create(ctx, secret)
+	reconcileCassandraBackup.Client.Create(ctx, secret)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
