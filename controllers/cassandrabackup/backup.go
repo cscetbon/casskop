@@ -63,14 +63,12 @@ func backup(
 					fmt.Sprintf("Backup operation %v on node %s has failed",
 						operationID, status.CoordinatorMember))
 				ticker.Stop()
-				break
 			case api.BackupCompleted:
 				recorder.Event(backupClient.backup,
 					corev1.EventTypeNormal,
 					"BackupCompleted",
 					fmt.Sprintf("Backup operation %v on node %s was completed.", operationID, status.CoordinatorMember))
 				ticker.Stop()
-				break
 			}
 		}
 	}
