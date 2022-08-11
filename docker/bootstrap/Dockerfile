@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM bitnami/minideb:stretch
+FROM bitnami/minideb:bullseye
 
 ENV \
     CASSANDRA_DATA=/var/lib/cassandra \
