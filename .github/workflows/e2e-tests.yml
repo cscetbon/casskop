@@ -95,7 +95,6 @@ jobs:
         with:
           ref: ${{ steps.get-branch.outputs.branch }}
 
-
       - uses: rinx/setup-k3d@v0.0.4
         with:
           version: v5.4.0
@@ -141,6 +140,6 @@ jobs:
         run: |
           chmod u+x kuttl
           PATH=$PWD:$PATH
-          helm install casskop charts/casskop --set image.tag=${{ env.IMAGE }}
+          helm install casskop charts/casskop --set image.tag=${{ steps.get-branch.outputs.branch }}
           cd test/kuttl/
           kuttl test --test ${{ matrix.test-name }} --namespace default --skip-delete
