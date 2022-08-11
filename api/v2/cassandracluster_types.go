@@ -21,7 +21,7 @@ const (
 	DefaultReadinessHealthCheckPeriod   int32 = 10
 
 	defaultCassandraImage     = "cassandra:3.11.10"
-	defaultBootstrapImage     = "ghcr.io/cscetbon/casskop-bootstrap:0.1.9"
+	defaultBootstrapImage     = "ghcr.io/cscetbon/casskop-bootstrap:0.1.10"
 	defaultConfigBuilderImage = "datastax/cass-config-builder:1.0.4"
 
 	DefaultBackRestImage      = "gcr.io/cassandra-operator/instaclustr-icarus:1.1.0"

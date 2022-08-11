@@ -47,7 +47,7 @@ spec:
         - name: config-builder
           image: datastax/cass-config-builder:1.0.3
         - name: bootstrap
-          image: ghcr.io/cscetbon/casskop-bootstrap:0.1.9
+          image: ghcr.io/cscetbon/casskop-bootstrap:0.1.10
       containers:
       - args:
         - tail
