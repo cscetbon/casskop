@@ -48,7 +48,7 @@ RUN curl -L https://github.com/gotestyourself/gotestsum/releases/download/v0.3.4
   tar -xz -C /usr/local/bin gotestsum
 RUN go install golang.org/x/lint/golint@latest
 RUN go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.2
-RUN go install sigs.k8s.io/kustomize/kustomize/v3@v3.5.4
+RUN go install sigs.k8s.io/kustomize/kustomize/v4@latest
 RUN go install github.com/mikefarah/yq/v4@latest
 
 # Install kubectl cli
