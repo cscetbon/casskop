@@ -89,16 +89,15 @@ resource "kubernetes_storage_class" "cassandra-standard" {
 
 // helm repository 
 data "helm_repository" "casskop" {
-  name = "orange-incubator"
-  url  = "https://orange-kubernetes-charts-incubator.storage.googleapis.com"
+  name = "casskop"
+  url  = "oci://ghcr.io/cscetbon/casskop-helm"
   depends_on = [kubernetes_cluster_role_binding.tiller-admin-binding]
 }
 
 // helm release
 resource "helm_release" "casskop" {
   name             = "casskop"
-  repository       = data.helm_repository.casskop.metadata[0].name
-  chart            = "casskop"
+  chart            = "oci://ghcr.io/cscetbon/casskop"
   namespace        = kubernetes_namespace.cassandra-demo.metadata[0].name
   disable_webhooks = false
   set {
