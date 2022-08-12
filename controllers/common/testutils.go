@@ -2,20 +2,20 @@ package common
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"testing"
+
 	"github.com/cscetbon/casskop/api/v2"
 	"github.com/ghodss/yaml"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
 	v12 "k8s.io/api/apps/v1"
-	"os"
-	"path/filepath"
-	"testing"
 )
 
 func HelperLoadBytes(t *testing.T, name string) []byte {
 	path := filepath.Join("testdata", name) // relative path
-	bytes, err := ioutil.ReadFile(path)
+	bytes, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,4 +43,3 @@ func AssertEvent(t *testing.T, event chan string, message string) {
 	eventMessage := <-event
 	assert.Contains(eventMessage, message)
 }
-

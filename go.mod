@@ -104,9 +104,3 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
-
-replace (
-	github.com/Azure/go-autorest => github.com/Azure/go-autorest v14.2.0+incompatible // Required by OLM
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.24.1
-	k8s.io/apimachinery => k8s.io/apimachinery v0.24.1
-)

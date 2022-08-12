@@ -1,4 +1,4 @@
-FROM golang:1.17
+FROM golang:1.19
 
 # Make Apt non-interactive
 RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90ci \
@@ -46,9 +46,9 @@ RUN groupadd --gid 3434 ci \
 RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | INSTALL_DIRECTORY=/usr/local/bin sh
 RUN curl -L https://github.com/gotestyourself/gotestsum/releases/download/v0.3.4/gotestsum_0.3.4_linux_amd64.tar.gz | \
   tar -xz -C /usr/local/bin gotestsum
-RUN go get -u golang.org/x/lint/golint
-RUN go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.2
-RUN go get sigs.k8s.io/kustomize/kustomize/v3@v3.5.4
+RUN go install golang.org/x/lint/golint@latest
+RUN go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.2
+RUN go install sigs.k8s.io/kustomize/kustomize/v4@latest
 RUN go install github.com/mikefarah/yq/v4@latest
 
 # Install kubectl cli
