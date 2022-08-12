@@ -67,7 +67,7 @@ replace (
 	github.com/go-logr/zapr => github.com/go-logr/zapr v0.4.0
 	github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v1.13.0
 	k8s.io/api => k8s.io/api v0.22.0
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.22.0
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.24.0
 	k8s.io/apimachinery => k8s.io/apimachinery v0.22.0
 	k8s.io/apiserver => k8s.io/apiserver v0.22.0
 	k8s.io/client-go => k8s.io/client-go v0.22.0 // Required by prometheus-operator
