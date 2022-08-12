@@ -84,13 +84,6 @@ thoses objects for the given namespace.
 
 CassKop must be deployed on each targeted Kubernetes clusters.
 
-Add the Helm repository for CassKop
-
-```console
-$ helm repo add orange-incubator https://orange-kubernetes-charts-incubator.storage.googleapis.com
-$ helm repo update
-```
-
 Connect to each kubernetes you want to deploy your Cassandra clusters to and install CassKop:
 
 ```console
