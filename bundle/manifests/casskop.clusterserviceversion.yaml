@@ -6,7 +6,7 @@ metadata:
     capabilities: Basic Install
     operators.operatorframework.io/builder: operator-sdk-v1.12.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
-  name: casskop.v2.1.9
+  name: casskop.v2.1.10
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -37,4 +37,4 @@ spec:
   maturity: alpha
   provider:
     name: casskop
-  version: 2.1.9
+  version: 2.1.10
