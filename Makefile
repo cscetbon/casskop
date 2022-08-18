@@ -24,7 +24,6 @@ BOOTSTRAP_IMAGE ?= ghcr.io/cscetbon/casskop-bootstrap:0.1.10
 TELEPRESENCE_REGISTRY ?= datawire
 KUBESQUASH_REGISTRY:=
 
-
 VERSION ?= $(shell git describe --abbrev=0)
 
 # Default bundle image tag
@@ -70,7 +69,7 @@ update-crds:
 		cp /tmp/$$crdname $$crd; \
 		yq -i e '$(FIRST_VERSION).storage = false' $$crd; \
 	done
-	for chart in $(ls charts); do \
+	for chart in $(shell ls charts); do \
 	  cp -v config/crd/bases/*.yaml charts/${chart}/crds/; \
 	done
 
