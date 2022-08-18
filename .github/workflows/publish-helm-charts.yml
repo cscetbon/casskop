@@ -17,6 +17,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Overwrite versions in chart before publishing it
+        run: |
+          VERSION=$(git describe --abbrev=0)
+          sed -i -e "s/1.0.0/$VERSION/" charts/${{ matrix.chart }}/Chart.yaml
 
       - name: Publish ${{ matrix.chart }} chart
         uses: appany/helm-oci-chart-releaser@v0.3.0
@@ -28,4 +35,3 @@ jobs:
           registry: ghcr.io
           registry_username: ${{ github.repository_owner }}
           registry_password: ${{ secrets.GITHUB_TOKEN }}
-

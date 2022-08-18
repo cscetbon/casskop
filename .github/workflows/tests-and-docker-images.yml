@@ -28,6 +28,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Cache vendor modules
         uses: actions/cache@v2.1.7
@@ -107,12 +109,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - run: |
+          echo "COMPILED_DATE=$(date -u '+%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
+          echo "VERSION=$(git describe --abbrev=0)" >> $GITHUB_ENV
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v2.10.0
         with:
           context: .
           file: docker/${{ matrix.image }}/Dockerfile
           tags: ghcr.io/cscetbon/${{ matrix.image }}:${{ env.IMAGE }}
+          build-args: |
+            COMPILED_DATE=${{ env.COMPILED_DATE }}
+            VERSION=${{ env.VERSION }}
           push: ${{ env.IMAGE == 'master' || github.ref_type == 'tag' }}
 
       - name: Tag Docker image as latest
@@ -122,4 +131,7 @@ jobs:
           context: .
           file: docker/${{ matrix.image }}/Dockerfile
           tags: ghcr.io/cscetbon/${{ matrix.image }}:latest
+          build-args: |
+            COMPILED_DATE=${{ env.COMPILED_DATE }}
+            VERSION=${{ env.VERSION }}
           push: true

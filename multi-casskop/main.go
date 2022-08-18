@@ -18,15 +18,18 @@ package main
 
 import (
 	"fmt"
+	"runtime"
+
 	"github.com/cscetbon/casskop/multi-casskop/controllers"
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/sample-controller/pkg/signals"
 
 	//	"flag"
-	"github.com/jessevdk/go-flags"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/jessevdk/go-flags"
 
 	"k8s.io/client-go/rest"
 
@@ -46,6 +49,19 @@ const (
 var (
 	scheme = apimachineryruntime.NewScheme()
 )
+
+// to be set by compilator with -ldflags "-X main.compileDate=`date -u +.%Y%m%d.%H%M%S`"
+var compileDate string
+
+// to be set by compilator with -ldflags "-X main.version=Major.Minor.Patch"
+var version string
+
+func printVersion() {
+	logrus.Infof("Go Version: %s", runtime.Version())
+	logrus.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
+	logrus.Infof("multi-casskop Version: %v", version)
+	logrus.Infof("multi-casskop Compilation Date: %s", compileDate)
+}
 
 func getLogLevel() logrus.Level {
 	logLevel, found := os.LookupEnv(logLevelEnvVar)
@@ -87,6 +103,8 @@ func main() {
 		logrus.SetFormatter(&logrus.JSONFormatter{})
 	}
 	logrus.SetLevel(getLogLevel())
+
+	printVersion()
 
 	if _, err := parser.Parse(); err != nil {
 		if flagsErr, ok := err.(*flags.Error); ok && flagsErr.Type == flags.ErrHelp {

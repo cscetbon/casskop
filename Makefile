@@ -24,8 +24,8 @@ BOOTSTRAP_IMAGE ?= ghcr.io/cscetbon/casskop-bootstrap:0.1.10
 TELEPRESENCE_REGISTRY ?= datawire
 KUBESQUASH_REGISTRY:=
 
+VERSION ?= $(shell git describe --abbrev=0)
 
-VERSION ?= $(cat version/version.go | grep "Version =" | cut -d\   -f3)
 # Default bundle image tag
 BUNDLE_IMG ?= controller-bundle:$(VERSION)
 # Options for 'bundle-build'
@@ -69,8 +69,8 @@ update-crds:
 		cp /tmp/$$crdname $$crd; \
 		yq -i e '$(FIRST_VERSION).storage = false' $$crd; \
 	done
-	for chart in $(ls charts); do \
-	  cp -v config/crd/bases/*.yaml charts/${chart}/crds/; \
+	for chart in $(shell ls charts); do \
+	  cp -v config/crd/bases/*.yaml charts/$$chart/crds/; \
 	done
 
 include shared.mk
@@ -167,10 +167,10 @@ endif
 	kubectl apply -f /tmp/cassandra-stress-$(STRESS_TYPE).yaml
 
 # Generate bundle manifests and metadata, then validate generated files.
+
 bundle: generate
 	operator-sdk generate kustomize manifests -q;\
-	VERSION=$$(cat ./version/version.go | grep -Po '(?<=Version =\s").*(?=")');\
-	$(KUSTOMIZE) build config/crd | operator-sdk generate bundle -q --overwrite --version $${VERSION} $(BUNDLE_METADATA_OPTS)
+	$(KUSTOMIZE) build config/crd | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 
 bundle-validate: bundle
 	operator-sdk bundle validate ./bundle
