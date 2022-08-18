@@ -25,7 +25,8 @@ TELEPRESENCE_REGISTRY ?= datawire
 KUBESQUASH_REGISTRY:=
 
 
-VERSION ?= $(cat version/version.go | grep "Version =" | cut -d\   -f3)
+VERSION ?= $(shell git describe --abbrev=0)
+
 # Default bundle image tag
 BUNDLE_IMG ?= controller-bundle:$(VERSION)
 # Options for 'bundle-build'
@@ -167,10 +168,10 @@ endif
 	kubectl apply -f /tmp/cassandra-stress-$(STRESS_TYPE).yaml
 
 # Generate bundle manifests and metadata, then validate generated files.
+
 bundle: generate
 	operator-sdk generate kustomize manifests -q;\
-	VERSION=$$(git describe --abbrev=0);\
-	$(KUSTOMIZE) build config/crd | operator-sdk generate bundle -q --overwrite --version $${VERSION} $(BUNDLE_METADATA_OPTS)
+	$(KUSTOMIZE) build config/crd | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 
 bundle-validate: bundle
 	operator-sdk bundle validate ./bundle
