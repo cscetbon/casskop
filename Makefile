@@ -169,7 +169,7 @@ endif
 # Generate bundle manifests and metadata, then validate generated files.
 bundle: generate
 	operator-sdk generate kustomize manifests -q;\
-	VERSION=$(git describe --abbrev=0);\
+	VERSION=$$(git describe --abbrev=0);\
 	$(KUSTOMIZE) build config/crd | operator-sdk generate bundle -q --overwrite --version $${VERSION} $(BUNDLE_METADATA_OPTS)
 
 bundle-validate: bundle
