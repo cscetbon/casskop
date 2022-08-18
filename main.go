@@ -21,15 +21,17 @@ import (
 	"os"
 	"path"
 	"runtime"
-	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"strconv"
 	"strings"
+
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
@@ -37,7 +39,6 @@ import (
 	"github.com/cscetbon/casskop/controllers/cassandrabackup"
 	"github.com/cscetbon/casskop/controllers/cassandracluster"
 	"github.com/cscetbon/casskop/controllers/cassandrarestore"
-	"github.com/cscetbon/casskop/version"
 	"github.com/operator-framework/operator-lib/leader"
 	"github.com/sirupsen/logrus"
 	"github.com/zput/zxcTool/ztLog/zt_formatter"
@@ -54,13 +55,16 @@ const (
 	resyncPeriodEnvVar = "RESYNC_PERIOD"
 )
 
-//to be set by compilator with -ldflags "-X main.compileDate=`date -u +.%Y%m%d.%H%M%S`"
+// to be set by compilator with -ldflags "-X main.compileDate=`date -u +.%Y%m%d.%H%M%S`"
 var compileDate string
+
+// to be set by compilator with -ldflags "-X main.version=Major.Minor.Patch"
+var version string
 
 func printVersion() {
 	logrus.Infof("Go Version: %s", runtime.Version())
 	logrus.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
-	logrus.Infof("casskop Version: %v", version.Version)
+	logrus.Infof("casskop Version: %v", version)
 	logrus.Infof("casskop Compilation Date: %s", compileDate)
 	logrus.Infof("casskop LogLevel: %v", getLogLevel())
 	logrus.Infof("casskop ResyncPeriod: %v", getResyncPeriod())
