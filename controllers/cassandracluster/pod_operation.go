@@ -595,7 +595,7 @@ func (rcc *CassandraClusterReconciler) podsSlice(ctx context.Context, cc *api.Ca
 func (rcc *CassandraClusterReconciler) getPodsToWorkOn(ctx context.Context, cc *api.CassandraCluster, dcName, rackName string,
 	status *api.CassandraClusterStatus, operationName string) ([]v1.Pod, bool) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
-	var checkOnly bool
+	checkOnly := false
 	podsSlice := make([]v1.Pod, 0)
 
 	operatorName := os.Getenv("POD_NAME")
