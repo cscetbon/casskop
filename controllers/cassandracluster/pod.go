@@ -54,10 +54,6 @@ func PodContainersReady(pod *v1.Pod) bool {
 func (rcc *CassandraClusterReconciler) GetPod(ctx context.Context, namespace, name string) (*v1.Pod, error) {
 
 	pod := &v1.Pod{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Pod",
-			APIVersion: "v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
@@ -155,7 +151,7 @@ func (rcc *CassandraClusterReconciler) UpdatePodLabel(ctx context.Context, pod *
 	return rcc.UpdatePod(ctx, podToUpdate)
 }
 
-//hasUnschedulablePod goal is to detect if Pods are unschedulable
+// hasUnschedulablePod goal is to detect if Pods are unschedulable
 // - for lake of resources cpu/memory
 // - with bad docker image (imagepullbackoff)
 // - or else to add
@@ -239,7 +235,7 @@ func (rcc *CassandraClusterReconciler) CreateOrUpdatePod(ctx context.Context, na
 	return rcc.UpdatePod(ctx, pod)
 }
 
-//DeletePod delete a pod
+// DeletePod delete a pod
 func (rcc *CassandraClusterReconciler) DeletePod(ctx context.Context, pod *v1.Pod) error {
 	err := rcc.Client.Delete(ctx, pod)
 	if err != nil {
@@ -248,7 +244,7 @@ func (rcc *CassandraClusterReconciler) DeletePod(ctx context.Context, pod *v1.Po
 	return nil
 }
 
-//ForceDeletePod delete a pod with a grace period of 0 seconds
+// ForceDeletePod delete a pod with a grace period of 0 seconds
 func (rcc *CassandraClusterReconciler) ForceDeletePod(ctx context.Context, pod *v1.Pod) error {
 	err := rcc.Client.Delete(ctx, pod, client.GracePeriodSeconds(0))
 	if err != nil {

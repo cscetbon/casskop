@@ -87,10 +87,6 @@ func generateCassandraService(cc *api.CassandraCluster, labels map[string]string
 	}
 
 	return &v1.Service{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Service",
-			APIVersion: "v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            cc.GetName(),
 			Namespace:       cc.GetNamespace(),
@@ -99,8 +95,6 @@ func generateCassandraService(cc *api.CassandraCluster, labels map[string]string
 			OwnerReferences: ownerRefs,
 		},
 		Spec: v1.ServiceSpec{
-			Type:      v1.ServiceTypeClusterIP,
-			ClusterIP: v1.ClusterIPNone,
 			Ports: []v1.ServicePort{
 				{
 					Port:     cassandraPort,
@@ -122,10 +116,6 @@ func generateCassandraExporterService(cc *api.CassandraCluster, labels map[strin
 	mlabels := k8s.MergeLabels(labels, map[string]string{"k8s-app": "exporter-cassandra-jmx"})
 
 	return &v1.Service{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Service",
-			APIVersion: "v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            fmt.Sprintf("%s-exporter-jmx", name),
 			Namespace:       namespace,
@@ -133,8 +123,7 @@ func generateCassandraExporterService(cc *api.CassandraCluster, labels map[strin
 			OwnerReferences: ownerRefs,
 		},
 		Spec: v1.ServiceSpec{
-			Type:      v1.ServiceTypeClusterIP,
-			ClusterIP: v1.ClusterIPNone,
+			Type: v1.ServiceTypeClusterIP,
 			Ports: []v1.ServicePort{
 				{
 					Port:     exporterCassandraJmxPort,
@@ -182,9 +171,11 @@ func generateCassandraVolumes(cc *api.CassandraCluster) []v1.Volume {
 
 // generateContainerVolumeMount generate volumemounts for cassandra containers
 // Volume Claim
-//  - /var/lib/cassandra for Cassandra data
+//   - /var/lib/cassandra for Cassandra data
+//
 // ConfigMap
-//  - /tmp/cassandra/configmap for user defined configmap
+//   - /tmp/cassandra/configmap for user defined configmap
+//
 // EmptyDirs
 //   - /bootstrap for Cassandra configuration
 //   - /extra-lib for additional jar we want to load
@@ -331,10 +322,6 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 	}
 
 	ss := &appsv1.StatefulSet{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "StatefulSet",
-			APIVersion: "apps/v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            name + "-" + dcRackName,
 			Namespace:       namespace,
@@ -520,10 +507,6 @@ func defineJvmMemory(resources v1.ResourceRequirements) JvmMemory {
 func generatePodDisruptionBudget(name string, namespace string, labels map[string]string,
 	ownerRefs metav1.OwnerReference, maxUnavailable intstr.IntOrString) *policyv1beta1.PodDisruptionBudget {
 	return &policyv1beta1.PodDisruptionBudget{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "PodDisruptionBudget",
-			APIVersion: "policy/v1beta1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            name,
 			Namespace:       namespace,

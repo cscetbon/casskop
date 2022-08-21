@@ -20,7 +20,6 @@ import (
 
 	api "github.com/cscetbon/casskop/api/v2"
 	"github.com/ghodss/yaml"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var cassandraRestoreYaml = `
@@ -52,12 +51,7 @@ func helperInitCassandraRestoreController(cassandraRestoreYaml string) (*Cassand
 	//cassandraBackup := common.HelperInitCassandraBackup(cassandraRestoreYaml)
 	cassandraRestore := helperInitCassandraRestore(cassandraRestoreYaml)
 
-	cassandraRestoreList := api.CassandraRestoreList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "CassandraRestoreList",
-			APIVersion: api.GroupVersion.String(),
-		},
-	}
+	cassandraRestoreList := api.CassandraRestoreList{}
 
 	// Register operator types with the runtime scheme.
 	fakeClientScheme := scheme.Scheme

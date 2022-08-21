@@ -17,7 +17,7 @@ package cassandracluster
 import (
 	"context"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,10 +28,6 @@ import (
 func (rcc *CassandraClusterReconciler) GetPVC(ctx context.Context, namespace, name string) (*v1.PersistentVolumeClaim, error) {
 
 	o := &v1.PersistentVolumeClaim{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "PersistentVolumeClaim",
-			APIVersion: "v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
@@ -48,12 +44,7 @@ func (rcc *CassandraClusterReconciler) ListPVC(ctx context.Context, namespace st
 		clientOpt,
 	}
 
-	o := &v1.PersistentVolumeClaimList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "PersistentVolumeClaim",
-			APIVersion: "v1",
-		},
-	}
+	o := &v1.PersistentVolumeClaimList{}
 
 	return o, rcc.Client.List(ctx, o, opt...)
 }

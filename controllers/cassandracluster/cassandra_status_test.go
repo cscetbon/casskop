@@ -95,12 +95,7 @@ func HelperInitCluster(t *testing.T, name string) (*CassandraClusterReconciler,
 	var cc api.CassandraCluster
 	yaml.Unmarshal(common.HelperLoadBytes(t, name), &cc)
 
-	ccList := api.CassandraClusterList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "CassandraClusterList",
-			APIVersion: api.GroupVersion.String(),
-		},
-	}
+	ccList := api.CassandraClusterList{}
 	//Create Fake client
 	//Objects to track in the Fake client
 	objs := []runtime.Object{
@@ -149,7 +144,7 @@ func TestUpdateStatusIfSeedListHasChanged(t *testing.T) {
 
 }
 
-//helperCreateCassandraCluster fake create a cluster from the yaml specified
+// helperCreateCassandraCluster fake create a cluster from the yaml specified
 func helperCreateCassandraCluster(ctx context.Context, t *testing.T, cassandraClusterFileName string) (*CassandraClusterReconciler,
 	*reconcile.Request) {
 	assert := assert.New(t)
@@ -206,10 +201,6 @@ func helperCreateCassandraCluster(ctx context.Context, t *testing.T, cassandraCl
 
 			//Create Statefulsets associated fake Pods
 			podTemplate := v1.Pod{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Pod",
-					APIVersion: "v1",
-				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "template",
 					Namespace: namespace,
