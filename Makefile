@@ -23,20 +23,6 @@ MOUNTDIR = $(PWD)
 BOOTSTRAP_IMAGE ?= ghcr.io/cscetbon/casskop-bootstrap:0.1.10
 TELEPRESENCE_REGISTRY ?= datawire
 KUBESQUASH_REGISTRY:=
-
-VERSION ?= $(shell git describe --abbrev=0)
-
-# Default bundle image tag
-BUNDLE_IMG ?= controller-bundle:$(VERSION)
-# Options for 'bundle-build'
-ifneq ($(origin CHANNELS), undefined)
-BUNDLE_CHANNELS := --channels=$(CHANNELS)
-endif
-ifneq ($(origin DEFAULT_CHANNEL), undefined)
-BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
-endif
-BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
-
 KUBECONFIG ?= ~/.kube/config
 
 # The default action of this Makefile is to build the development docker image
@@ -170,7 +156,7 @@ endif
 
 bundle: generate
 	operator-sdk generate kustomize manifests -q;\
-	$(KUSTOMIZE) build config/crd | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+	$(KUSTOMIZE) build config/crd | operator-sdk generate bundle -q --overwrite $(BUNDLE_METADATA_OPTS)
 
 bundle-validate: bundle
 	operator-sdk bundle validate ./bundle
