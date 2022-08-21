@@ -168,7 +168,7 @@ func (jolokiaClient *JolokiaClient) nonLocalKeyspaces() ([]string, error) {
 }
 
 /*
-NodeCleanup triggers a cleanup of all keyspaces on the pod using a jolokia client and return the index of the last
+NodeCleanup triggers a cleanup of all keyspaces on the pod using a jolokia client and returns the index of the last
 keyspace accessed and any error
 */
 func (jolokiaClient *JolokiaClient) NodeCleanup() error {
