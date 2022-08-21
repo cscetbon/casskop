@@ -22,8 +22,7 @@ jobs:
 
       - name: Overwrite versions in chart before publishing it
         run: |
-          VERSION=$(git describe --abbrev=0)
-          sed -i -e "s/1.0.0/$VERSION/" charts/${{ matrix.chart }}/Chart.yaml
+          sed -i -e "s/1.0.0/${{ github.ref_name }}/" charts/${{ matrix.chart }}/*.yaml
 
       - name: Publish ${{ matrix.chart }} chart
         uses: appany/helm-oci-chart-releaser@v0.3.0
