@@ -53,6 +53,7 @@ var (
 		},
 		[]string{"cluster"},
 	)}
+	regexPath = regexp.MustCompile(`^\-([^\+]*)$`)
 )
 
 const topologyChangeRefused = "The Operator has refused the Topology change. "
@@ -246,7 +247,6 @@ func lookForFilter(path []string, filters [][]string, filtersFound *map[string]b
 // for instance ('DC', '-DC.Rack') means a DC change without a DC.Rack change
 // changes of property NodesPerRacks are skipped
 func hasChange(changelog diff.Changelog, changeType string, paths ...string) bool {
-	regexPath := regexp.MustCompile(`^\-([^\+]*)$`)
 	if len(changelog) == 0 {
 		return false
 	}
