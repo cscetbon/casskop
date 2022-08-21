@@ -86,11 +86,6 @@ func GetLastOrFirstPodItem(podsList []v1.Pod, last bool) (*v1.Pod, error) {
 		return nil, fmt.Errorf("there is no pod")
 	}
 
-	idx := 0
-	if last {
-		idx = nb - 1
-	}
-
 	items := podsList[:]
 
 	// Sort pod list using ending number in field ObjectMeta.Name
@@ -99,6 +94,11 @@ func GetLastOrFirstPodItem(podsList []v1.Pod, last bool) (*v1.Pod, error) {
 		id2, _ := strconv.Atoi(reEndingNumber.FindString(items[j].ObjectMeta.Name))
 		return id1 < id2
 	})
+
+	idx := 0
+	if last {
+		idx = nb - 1
+	}
 
 	pod := podsList[idx]
 
