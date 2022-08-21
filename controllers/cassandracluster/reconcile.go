@@ -294,7 +294,7 @@ func hasChange(changelog diff.Changelog, changeType string, paths ...string) boo
 	return false
 }
 
-//CheckTopologyChanges checks to see if the Operator accepts or refuses the CRD changes
+// CheckTopologyChanges checks to see if the Operator accepts or refuses the CRD changes
 func CheckTopologyChanges(ctx context.Context, rcc *CassandraClusterReconciler, cc *api.CassandraCluster,
 	status *api.CassandraClusterStatus, oldCRD *api.CassandraCluster) (bool, string) {
 
@@ -379,7 +379,7 @@ func (rcc *CassandraClusterReconciler) deleteDCObjects(ctx context.Context, cc *
 	return false, ""
 }
 
-//CheckNonAllowedScaleDown goal is to discard the scaleDown to 0 is there is still replicated data towards the
+// CheckNonAllowedScaleDown goal is to discard the scaleDown to 0 is there is still replicated data towards the
 // corresponding DC
 func (rcc *CassandraClusterReconciler) CheckNonAllowedScaleDown(ctx context.Context, cc *api.CassandraCluster,
 	oldCRD *api.CassandraCluster) bool {
@@ -437,7 +437,7 @@ func (rcc *CassandraClusterReconciler) CheckNonAllowedScaleDown(ctx context.Cont
 	return false
 }
 
-//ReconcileRack will try to reconcile cassandra for each of the couple DC/Rack defined in the topology
+// ReconcileRack will try to reconcile cassandra for each of the couple DC/Rack defined in the topology
 func (rcc *CassandraClusterReconciler) ReconcileRack(ctx context.Context, cc *api.CassandraCluster,
 	status *api.CassandraClusterStatus) (err error) {
 
@@ -654,7 +654,7 @@ func UpdateCassandraClusterStatusPhase(cc *api.CassandraCluster, status *api.Cas
 	}
 }
 
-//EnsureSeedListIsUpdatedWhenRequired sets cassandraLastAction to UpdateSeedList=To-do
+// EnsureSeedListIsUpdatedWhenRequired sets cassandraLastAction to UpdateSeedList=To-do
 func EnsureSeedListIsUpdatedWhenRequired(cc *api.CassandraCluster, status *api.CassandraClusterStatus) {
 
 	//if global status is not yet Configuring, we skip this one
