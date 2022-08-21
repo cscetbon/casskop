@@ -113,7 +113,7 @@ jobs:
 
       - run: |
           echo "COMPILED_DATE=$(date -u '+%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
-          echo "VERSION=$(git describe --abbrev=0)" >> $GITHUB_ENV
+          echo "VERSION=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v2.10.0
