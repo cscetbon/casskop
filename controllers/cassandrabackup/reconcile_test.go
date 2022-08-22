@@ -63,12 +63,7 @@ func HelperInitCassandraBackupController(cassandraBackupYaml string) (*Cassandra
 	*api.CassandraBackup, *record.FakeRecorder) {
 	cassandraBackup := common.HelperInitCassandraBackup(cassandraBackupYaml)
 
-	cassandraBackupList := api.CassandraBackupList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "CassandraBackupList",
-			APIVersion: api.GroupVersion.String(),
-		},
-	}
+	cassandraBackupList := api.CassandraBackupList{}
 
 	// Register operator types with the runtime scheme.
 	fakeClientScheme := scheme.Scheme

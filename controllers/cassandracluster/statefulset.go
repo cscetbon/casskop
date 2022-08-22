@@ -41,14 +41,10 @@ var (
 	timeout       = time.Second * 5
 )
 
-//GetStatefulSet return the Statefulset name from the cluster in the namespace
+// GetStatefulSet return the Statefulset name from the cluster in the namespace
 func (rcc *CassandraClusterReconciler) GetStatefulSet(ctx context.Context, namespace, name string) (*appsv1.StatefulSet, error) {
 
 	ss := &appsv1.StatefulSet{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "StatefulSet",
-			APIVersion: "apps/v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
@@ -60,10 +56,6 @@ func (rcc *CassandraClusterReconciler) GetStatefulSet(ctx context.Context, names
 func (rcc *CassandraClusterReconciler) DeleteStatefulSet(ctx context.Context, namespace, name string) error {
 
 	ss := &appsv1.StatefulSet{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "StatefulSet",
-			APIVersion: "apps/v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
@@ -72,7 +64,7 @@ func (rcc *CassandraClusterReconciler) DeleteStatefulSet(ctx context.Context, na
 	return rcc.Client.Delete(ctx, ss)
 }
 
-//CreateStatefulSet create a new statefulset ss
+// CreateStatefulSet create a new statefulset ss
 func (rcc *CassandraClusterReconciler) CreateStatefulSet(ctx context.Context, statefulSet *appsv1.StatefulSet) error {
 	err := rcc.Client.Create(ctx, statefulSet)
 	if err != nil {
@@ -85,7 +77,7 @@ func (rcc *CassandraClusterReconciler) CreateStatefulSet(ctx context.Context, st
 	return nil
 }
 
-//UpdateStatefulSet updates an existing statefulset ss
+// UpdateStatefulSet updates an existing statefulset ss
 func (rcc *CassandraClusterReconciler) UpdateStatefulSet(ctx context.Context, statefulSet *appsv1.StatefulSet) error {
 	revision := statefulSet.ResourceVersion
 	if err := rcc.Client.Update(ctx, statefulSet); err != nil {
@@ -183,7 +175,7 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 	return true
 }
 
-//CreateOrUpdateStatefulSet Create statefulset if not found, or update it
+// CreateOrUpdateStatefulSet Create statefulset if not found, or update it
 func (rcc *CassandraClusterReconciler) CreateOrUpdateStatefulSet(ctx context.Context, statefulSet *appsv1.StatefulSet,
 	status *api.CassandraClusterStatus, dcRackName string) (bool, error) {
 	// if there is an existing pod disruptions

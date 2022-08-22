@@ -91,9 +91,9 @@ func title(s string) string {
 	return cases.Title(language.Und).String(s)
 }
 
-//handlePodOperation will ensure that all Pod Operations which needed to be performed are done accordingly.
-//It may return a breakResyncloop order meaning that the Operator won't update the statefulset until
-//PodOperations are finishing gracefully.
+// handlePodOperation will ensure that all Pod Operations which needed to be performed are done accordingly.
+// It may return a breakResyncloop order meaning that the Operator won't update the statefulset until
+// PodOperations are finishing gracefully.
 func (rcc *CassandraClusterReconciler) handlePodOperation(ctx context.Context, cc *api.CassandraCluster, dcName, rackName string,
 	status *api.CassandraClusterStatus, statefulsetIsReady bool) (bool, error) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
@@ -151,7 +151,7 @@ func (rcc *CassandraClusterReconciler) handlePodOperation(ctx context.Context, c
 	return breakResyncLoopSwitch, err
 }
 
-//addPodOperationLabels will add Pod Labels labels on all Pod in the Current dcRackName
+// addPodOperationLabels will add Pod Labels labels on all Pod in the Current dcRackName
 func (rcc *CassandraClusterReconciler) addPodOperationLabels(ctx context.Context, cc *api.CassandraCluster, dcName string,
 	rackName string, labels map[string]string) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
@@ -265,7 +265,7 @@ func (rcc *CassandraClusterReconciler) startOperation(ctx context.Context, cc *a
 }
 
 // ensureOperation goal is to find pods with Labels :
-//  - operation-name=xxxx and operation-status=To-Do
+//   - operation-name=xxxx and operation-status=To-Do
 func (rcc *CassandraClusterReconciler) ensureOperation(ctx context.Context, cc *api.CassandraCluster, dcName, rackName string,
 	status *api.CassandraClusterStatus, operationName string) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
@@ -316,13 +316,15 @@ func (rcc *CassandraClusterReconciler) runOperation(ctx context.Context, operati
 	chanRunningOp <- finalizedOp{err, dcRackName, pod, operationName}
 }
 
-/* ensureDecommission will ensure that the Last Pod of the StatefulSet will be decommissionned
-	- If pod.status=To-DO then executeDecommission in the Pod and flag pod.status as **Ongoing**
-	- If pod.status=Ongoing then if pod is not running then flag its status as **Done**
-	- If pod.status=Done then delete Pod PVC and ChangeActionStatus to **Continue**
+/*
+	 ensureDecommission will ensure that the Last Pod of the StatefulSet will be decommissionned
+		- If pod.status=To-DO then executeDecommission in the Pod and flag pod.status as **Ongoing**
+		- If pod.status=Ongoing then if pod is not running then flag its status as **Done**
+		- If pod.status=Done then delete Pod PVC and ChangeActionStatus to **Continue**
 
-  it return breakResyncloop=true is we need to bypass update of the Statefulset.
-  it return breakResyncloop=false if we want to call the ensureStatefulset method. */
+	  it return breakResyncloop=true is we need to bypass update of the Statefulset.
+	  it return breakResyncloop=false if we want to call the ensureStatefulset method.
+*/
 func (rcc *CassandraClusterReconciler) ensureDecommission(ctx context.Context, cc *api.CassandraCluster, dcName, rackName string,
 	status *api.CassandraClusterStatus, statefulsetIsReady bool) (bool, error) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
@@ -435,7 +437,7 @@ func (rcc *CassandraClusterReconciler) ensureDecommission(ctx context.Context, c
 	return continueResyncLoop, nil
 }
 
-//ensureDecommissionToDo
+// ensureDecommissionToDo
 // State To-DO -> Ongoing
 // set podLastOperation.Pods and label targeted pod (lastPod)
 func (rcc *CassandraClusterReconciler) ensureDecommissionToDo(ctx context.Context, cc *api.CassandraCluster, dcName, rackName string,
@@ -520,7 +522,7 @@ func (rcc *CassandraClusterReconciler) ensureDecommissionToDo(ctx context.Contex
 	return breakResyncLoop, nil
 }
 
-//deletePodPVC
+// deletePodPVC
 // State To-DO -> Ongoing
 func (rcc *CassandraClusterReconciler) deletePodPVC(ctx context.Context, cc *api.CassandraCluster, dcName, rackName string,
 	status *api.CassandraClusterStatus, lastPod *v1.Pod, statefulsetIsReady bool) (bool, error) {
@@ -593,7 +595,7 @@ func (rcc *CassandraClusterReconciler) podsSlice(ctx context.Context, cc *api.Ca
 func (rcc *CassandraClusterReconciler) getPodsToWorkOn(ctx context.Context, cc *api.CassandraCluster, dcName, rackName string,
 	status *api.CassandraClusterStatus, operationName string) ([]v1.Pod, bool) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
-	var checkOnly bool
+	checkOnly := false
 	podsSlice := make([]v1.Pod, 0)
 
 	operatorName := os.Getenv("POD_NAME")

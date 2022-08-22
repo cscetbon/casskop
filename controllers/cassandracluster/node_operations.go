@@ -62,10 +62,6 @@ func NewJolokiaClient(ctx context.Context, host string, port int, rcc *Cassandra
 		logrus.WithFields(logrus.Fields{"host": host, "port": port,
 			"secretRef": secretRef, "namespace": namespace}).Debug("Using Secret for Jolokia connection")
 		secret := &v1.Secret{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Secret",
-				APIVersion: "v1",
-			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      secretRef.Name,
 				Namespace: namespace,
@@ -171,8 +167,10 @@ func (jolokiaClient *JolokiaClient) nonLocalKeyspaces() ([]string, error) {
 	return nonLocalKeyspaces, nil
 }
 
-/*NodeCleanup triggers a cleanup of all keyspaces on the pod using a jolokia client and return the index of the last
-keyspace accessed and any error*/
+/*
+NodeCleanup triggers a cleanup of all keyspaces on the pod using a jolokia client and returns the index of the last
+keyspace accessed and any error
+*/
 func (jolokiaClient *JolokiaClient) NodeCleanup() error {
 	keyspaces, err := jolokiaClient.nonLocalKeyspaces()
 	if err != nil {
@@ -181,8 +179,10 @@ func (jolokiaClient *JolokiaClient) NodeCleanup() error {
 	return jolokiaClient.NodeCleanupKeyspaces(keyspaces)
 }
 
-/*NodeCleanupKeyspaces triggers a cleanup of each keyspaces on the pod using a jolokia client and returns the index of
-the last keyspace accessed and any error*/
+/*
+NodeCleanupKeyspaces triggers a cleanup of each keyspaces on the pod using a jolokia client and returns the index of
+the last keyspace accessed and any error
+*/
 func (jolokiaClient *JolokiaClient) NodeCleanupKeyspaces(keyspaces []string) error {
 	for _, keyspace := range keyspaces {
 		logrus.Infof("[%s]: Cleanup of keyspace %s", jolokiaClient.host, keyspace)
@@ -206,8 +206,10 @@ func (jolokiaClient *JolokiaClient) NodeUpgradeSSTables(threads int) error {
 	return jolokiaClient.NodeUpgradeSSTablesKeyspaces(keyspaces, threads)
 }
 
-/*NodeUpgradeSSTablesKeyspaces triggers an upgradeSSTables for a list of keyspaces through a jolokia
-connection and returns any error*/
+/*
+NodeUpgradeSSTablesKeyspaces triggers an upgradeSSTables for a list of keyspaces through a jolokia
+connection and returns any error
+*/
 func (jolokiaClient *JolokiaClient) NodeUpgradeSSTablesKeyspaces(keyspaces []string,
 	threads int) error {
 	for _, keyspace := range keyspaces {
@@ -319,8 +321,10 @@ func (jolokiaClient *JolokiaClient) hasLeavingNodes() (bool, error) {
 	return len(leavingNodes) > 0, nil
 }
 
-/*NonLocalKeyspacesInDC checks partition ranges of all non local keyspaces and ensure no data is replicated to the
-chosen datacenter*/
+/*
+NonLocalKeyspacesInDC checks partition ranges of all non local keyspaces and ensure no data is replicated to the
+chosen datacenter
+*/
 func (jolokiaClient *JolokiaClient) NonLocalKeyspacesInDC(dc string) ([]string, error) {
 	keyspaces, err := jolokiaClient.nonLocalKeyspaces()
 	keyspacesWithDataInDC := []string{}

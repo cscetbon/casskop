@@ -45,12 +45,7 @@ func helperInitCluster(t *testing.T, name string) (*CassandraClusterReconciler, 
 		os.Exit(-1)
 	}
 
-	ccList := api.CassandraClusterList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "CassandraClusterList",
-			APIVersion: api.GroupVersion.String(),
-		},
-	}
+	ccList := api.CassandraClusterList{}
 	//Create Fake client
 	//Objects to track in the Fake client
 	objs := []runtime.Object{&cc}

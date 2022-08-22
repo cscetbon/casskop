@@ -17,11 +17,12 @@ package cassandracluster
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cscetbon/casskop/controllers/common"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"net/http"
 	"reflect"
 	"testing"
+
+	"github.com/cscetbon/casskop/controllers/common"
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	api "github.com/cscetbon/casskop/api/v2"
 	"github.com/cscetbon/casskop/pkg/k8s"
@@ -330,7 +331,7 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDown(t *testing.T) {
 	assert.Equal(true, reflect.DeepEqual(c, status.SeedList))
 }
 
-//mock example https://github.com/operator-framework/operator-sdk/blob/e74dd322b291b111f78702cf71e5ac843a0c8912/doc/user/unit-testing.md
+// mock example https://github.com/operator-framework/operator-sdk/blob/e74dd322b291b111f78702cf71e5ac843a0c8912/doc/user/unit-testing.md
 func TestCheckNonAllowedChangesNodesTo0(t *testing.T) {
 	assert := assert.New(t)
 
@@ -421,7 +422,7 @@ func TestCheckNonAllowedChangesRemove2DC(t *testing.T) {
 	assert.Equal(true, res)
 }
 
-//Updating racks is not allowed
+// Updating racks is not allowed
 func TestCheckNonAllowedChangesUpdateRack(t *testing.T) {
 	assert := assert.New(t)
 
@@ -458,7 +459,7 @@ func TestCheckNonAllowedChangesUpdateRack(t *testing.T) {
 	assert.Equal(4, cc.GetDCRackSize())
 }
 
-//remove only a rack is not allowed
+// remove only a rack is not allowed
 func TestCheckNonAllowedChangesRemoveDCNot0(t *testing.T) {
 	assert := assert.New(t)
 
@@ -519,7 +520,7 @@ func TestCheckNonAllowedChangesRemoveDC(t *testing.T) {
 
 // TestCheckNonAllowedChangesScaleDown test that operator won't allowed a Scale Down to 0 if there are Pods in dc and
 // still has datas replicated
-//Uses K8s fake Client, & Jolokia Mock
+// Uses K8s fake Client, & Jolokia Mock
 func TestCheckNonAllowedChangesScaleDown(t *testing.T) {
 	assert := assert.New(t)
 
@@ -529,10 +530,6 @@ func TestCheckNonAllowedChangesScaleDown(t *testing.T) {
 
 	//Create the Pods wanted by the statefulset dc2-rack1 (1 node)
 	pod := &v1.Pod{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Pod",
-			APIVersion: "v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "cassandra-demo-dc2-rack1-0",
 			Namespace: "ns",
