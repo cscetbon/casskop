@@ -1,6 +1,6 @@
 module github.com/cscetbon/casskop
 
-go 1.17
+go 1.18
 
 require (
 	emperror.dev/errors v0.7.0
