@@ -100,7 +100,7 @@ spec:
 
 |Field|Type|Description|Required|Default|
 |-----|----|-----------|--------|--------|
-|annotations|map\[string\]string|Annotations specifies the annotations to attach to headless service the CassKop operator creates|No|-|
+|annotations|map\[string\]string|Annotations specifies the annotations to attach to pods the CassKop operator creates|No|-|
 |tolerations|[Toleration](https://godoc.org/k8s.io/api/core/v1#Toleration)|Tolerations specifies the tolerations to attach to the pods the CassKop operator creates|No| - |
 
 ## ServicePolicy
