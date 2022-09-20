@@ -166,7 +166,6 @@ func main() {
 
 	if err = (&cassandrabackup.CassandraBackupReconciler{
 		Client:    mgr.GetClient(),
-		Log:       ctrl.Log.WithName("controllers").WithName("CassandraBackup"),
 		Scheme:    mgr.GetScheme(),
 		Recorder:  mgr.GetEventRecorderFor("cassandrabackup-controller"),
 		Scheduler: cassandrabackup.NewScheduler(),
@@ -176,7 +175,6 @@ func main() {
 	}
 	if err = (&cassandracluster.CassandraClusterReconciler{
 		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("CassandraCluster"),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CassandraCluster")
@@ -184,7 +182,6 @@ func main() {
 	}
 	if err = (&cassandrarestore.CassandraRestoreReconciler{
 		Client:   mgr.GetClient(),
-		Log:      ctrl.Log.WithName("controllers").WithName("CassandraRestore"),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("cassandrabackup-controller"),
 	}).SetupWithManager(mgr); err != nil {
