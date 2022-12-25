@@ -95,6 +95,7 @@ func generateCassandraService(cc *api.CassandraCluster, labels map[string]string
 			OwnerReferences: ownerRefs,
 		},
 		Spec: v1.ServiceSpec{
+			Type: v1.ServiceTypeClusterIP,
 			Ports: []v1.ServicePort{
 				{
 					Port:     cassandraPort,
