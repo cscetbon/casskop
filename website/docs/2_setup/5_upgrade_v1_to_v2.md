@@ -35,7 +35,7 @@ kubectl apply -f config/crd/bases
 
 ## Edit your CassandraCluster object
 Now it's time to edit your object and add the cassandra/java configuration from your configmap in there.
-You also have to update the bootstrap image version to *0.1.10*.
+You also have to update the bootstrap image version to *0.1.11*.
 ```shell
 kubectl edit cassandraclusters.db.orange.com your-object
 ```
@@ -49,7 +49,7 @@ metadata:
 spec:
   nodesPerRacks: 2
   cassandraImage: cassandra:3.11.9
-  bootstrapImage: ghcr.io/cscetbon/casskop-bootstrap:0.1.10
+  bootstrapImage: ghcr.io/cscetbon/casskop-bootstrap:0.1.11
   config:
     cassandra-yaml:
       num_tokens: 256
