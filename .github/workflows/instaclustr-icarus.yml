@@ -27,7 +27,6 @@ jobs:
       - name: Build Icarus Docker image using Makefile
         id: build-and-get-tag
         run: |
-          set -x
           make -C docker cassandra-sidecar
           echo base_openjre_tag_state=$(docker images base-openjre|awk '!/latest/ && NR>1 {print $2}') >> $GITHUB_ENV
           echo icarus_tag_state=$(docker images instaclustr-icarus|awk '!/latest/ && NR>1 {print $2}') >> $GITHUB_ENV
