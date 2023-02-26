@@ -9,7 +9,7 @@ on:
 
 jobs:
 
-  build-publish-image:
+  build-publish-ci-image:
     runs-on: ubuntu-latest
     permissions:
       packages: write
