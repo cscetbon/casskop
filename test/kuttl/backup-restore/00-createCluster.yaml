@@ -13,7 +13,7 @@ spec:
   autoUpdateSeedList: false
   dataStorageClass: local-path
   backRestSidecar:
-    image: gcr.io/cassandra-operator/instaclustr-icarus:1.1.0
+    image: ghcr.io/cscetbon/instaclustr-icarus:1.1.3
     resources: &resources
       limits:
         memory: 512Mi
