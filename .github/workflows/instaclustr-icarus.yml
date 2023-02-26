@@ -31,8 +31,10 @@ jobs:
       - name: Build Icarus Docker image using Makefile
         id: build-and-get-tag
         run: |
+          set -x
           make -C docker cassandra-sidecar
-          echo tag_state=$(docker images base-openjre|awk '!/latest/ && NR>1 {print $2}') >> $GITHUB_STATE
+          echo base_openjre_tag_state=$(docker images base-openjre|awk '!/latest/ && NR>1 {print $2}') >> $GITHUB_ENV
+          echo icarus_tag_state=$(docker images instaclustr-icarus|awk '!/latest/ && NR>1 {print $2}') >> $GITHUB_ENV
 
       - name: Push Icarus Docker image
         uses: docker/build-push-action@v2.10.0
@@ -40,6 +42,6 @@ jobs:
           context: docker/cassandra-sidecar
           tags: |
             ghcr.io/cscetbon/instaclustr-icarus:latest
-#            ghcr.io/cscetbon/instaclustr-icarus:${{ github.event.inputs.alias }}
-          build-args: openjre_image=base-openjre:${{ env.tag_state }}
+            ghcr.io/cscetbon/instaclustr-icarus:${{ env.icarus_tag_state }}
+          build-args: openjre_image=base-openjre:${{ env.base_openjre_tag_state }}
           push: false
