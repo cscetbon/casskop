@@ -1,12 +1,7 @@
 name: Icarus image
 
 on:
-  pull_request: # Temporary to test it
   workflow_dispatch:
-    inputs:
-      alias:
-        description: 'Docker image alias'
-        required: true
 
 jobs:
 
@@ -44,4 +39,4 @@ jobs:
             ghcr.io/cscetbon/instaclustr-icarus:latest
             ghcr.io/cscetbon/instaclustr-icarus:${{ env.icarus_tag_state }}
           build-args: openjre_image=base-openjre:${{ env.base_openjre_tag_state }}
-          push: false
+          push: true
