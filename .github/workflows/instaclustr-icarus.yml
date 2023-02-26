@@ -37,7 +37,7 @@ jobs:
           echo icarus_tag_state=$(docker images instaclustr-icarus|awk '!/latest/ && NR>1 {print $2}') >> $GITHUB_ENV
 
       - name: Push Icarus Docker image
-        uses: docker/build-push-action@v2.10.0
+        uses: docker/build-push-action@v4
         with:
           context: docker/cassandra-sidecar
           tags: |
