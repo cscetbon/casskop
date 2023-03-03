@@ -40,8 +40,7 @@ jobs:
       - name: Push Icarus Docker image
         uses: docker/build-push-action@v4
         with:
-          context: docker
-          file: docker/cassandra-sidecar/Dockerfile
+          context: cassandra-sidecar/Dockerfile
           # tags: ghcr.io/cscetbon/instaclustr-icarus:${{ github.event.inputs.version }}
           tags: ghcr.io/cscetbon/instaclustr-icarus:1.1.3
           build-args: openjre_image=base-openjre:${{ env.base_openjre_tag_state }}
