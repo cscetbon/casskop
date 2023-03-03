@@ -43,5 +43,7 @@ jobs:
           context: docker/cassandra-sidecar
           # tags: ghcr.io/cscetbon/instaclustr-icarus:${{ github.event.inputs.version }}
           tags: ghcr.io/cscetbon/instaclustr-icarus:1.1.3
-          build-args: openjre_image=base-openjre:${{ env.base_openjre_tag_state }}
+          build-args: |
+            openjre_image=base-openjre:${{ env.base_openjre_tag_state }}
+            instaclustr_icarus_jar=icarus-1.1.3.jar
           push: true
