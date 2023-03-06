@@ -1,0 +1,46 @@
+name: Icarus image
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Icarus version
+        required: true
+
+jobs:
+
+  build-publish-icarus-image:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+
+    steps:
+      - name: Clone instaclustr/cassandra-operator
+        uses: actions/checkout@v3
+        with:
+          repository: instaclustr/cassandra-operator
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v1.14.1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Icarus Docker image using Makefile
+        id: build-and-get-tag
+        run: |
+          ICARUS_VERSION=${{ github.event.inputs.version }}
+          sed -i -e "1s/[0-9]\+\.[0-9]\+\.[0-9]/${ICARUS_VERSION}/" docker/cassandra-sidecar/Makefile
+          make -C docker cassandra-sidecar
+          echo base_openjre_tag_state=$(docker images base-openjre|awk '!/latest/ && NR>1 {print $2}') >> $GITHUB_ENV
+
+      - name: Push Icarus Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: docker/cassandra-sidecar
+          tags: ghcr.io/cscetbon/instaclustr-icarus:${{ github.event.inputs.version }}
+          build-args: |
+            openjre_image=base-openjre:${{ env.base_openjre_tag_state }}
+            instaclustr_icarus_jar=icarus-${{ github.event.inputs.version }}.jar
+          push: true

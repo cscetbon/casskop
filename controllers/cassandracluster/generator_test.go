@@ -397,7 +397,7 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	checkVarEnv(t, sts.Spec.Template.Spec.Containers, cc, dcRackName)
 	checkDefaultInitContainerResources(t, sts.Spec.Template.Spec.InitContainers)
 	checkBackRestSidecar(t, sts.Spec.Template.Spec.Containers,
-		"gcr.io/cassandra-operator/instaclustr-icarus:1.0.9",
+		"ghcr.io/cscetbon/instaclustr-icarus:1.1.3",
 		v1.PullAlways,
 		v1.ResourceRequirements{
 			Requests: generateResourceList("1", "1Gi"),

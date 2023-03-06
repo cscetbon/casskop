@@ -116,7 +116,7 @@ jobs:
           echo "VERSION=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v2.10.0
+        uses: docker/build-push-action@v4
         with:
           context: .
           file: docker/${{ matrix.image }}/Dockerfile
@@ -128,7 +128,7 @@ jobs:
 
       - name: Tag Docker image as latest
         if: ${{ github.ref_type == 'tag' }}
-        uses: docker/build-push-action@v2.10.0
+        uses: docker/build-push-action@v4
         with:
           context: .
           file: docker/${{ matrix.image }}/Dockerfile

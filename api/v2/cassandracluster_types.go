@@ -24,7 +24,7 @@ const (
 	defaultBootstrapImage     = "ghcr.io/cscetbon/casskop-bootstrap:0.1.11"
 	defaultConfigBuilderImage = "datastax/cass-config-builder:1.0.4"
 
-	DefaultBackRestImage      = "gcr.io/cassandra-operator/instaclustr-icarus:1.1.0"
+	DefaultBackRestImage      = "ghcr.io/cscetbon/instaclustr-icarus:1.1.3"
 	defaultServiceAccountName = "cassandra-cluster-node"
 	defaultMaxPodUnavailable  = 1
 	defaultImagePullPolicy    = v1.PullAlways
