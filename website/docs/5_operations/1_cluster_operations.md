@@ -985,7 +985,7 @@ but if there was an ongoing disruption on the current Cassandra cluster, it won'
 Example of a PDB :
 
 ```yaml
-apiVersion: policy/v1beta1
+apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   labels:

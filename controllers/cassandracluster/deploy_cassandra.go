@@ -18,7 +18,7 @@ import (
 	"context"
 	"fmt"
 	api "github.com/cscetbon/casskop/api/v2"
-	policyv1beta1 "k8s.io/api/policy/v1beta1"
+	policyv1 "k8s.io/api/policy/v1"
 
 	"github.com/cscetbon/casskop/pkg/k8s"
 
@@ -79,7 +79,7 @@ func (rcc *CassandraClusterReconciler) ensureCassandraPodDisruptionBudget(ctx co
 	return err
 }
 
-func (rcc *CassandraClusterReconciler) podDisruptionBudgetEnvelope(cc *api.CassandraCluster) *policyv1beta1.PodDisruptionBudget {
+func (rcc *CassandraClusterReconciler) podDisruptionBudgetEnvelope(cc *api.CassandraCluster) *policyv1.PodDisruptionBudget {
 	labels := k8s.LabelsForCassandra(cc)
 	return generatePodDisruptionBudget(cc.Name, cc.Namespace, labels, k8s.AsOwner(cc),
 		intstr.FromInt(int(cc.Spec.MaxPodUnavailable)))

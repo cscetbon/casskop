@@ -10,7 +10,7 @@ import (
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
-	policyv1beta1 "k8s.io/api/policy/v1beta1"
+	policyv1 "k8s.io/api/policy/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -27,7 +27,7 @@ func createCassandraClusterWithNoDisruption(t *testing.T, cassandraClusterFileNa
 	*reconcile.Request) {
 	rcc, req := helperCreateCassandraCluster(context.TODO(), t, cassandraClusterFileName)
 
-	pdb := &policyv1beta1.PodDisruptionBudget{
+	pdb := &policyv1.PodDisruptionBudget{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rcc.cc.Name,
 			Namespace: rcc.cc.Namespace,
