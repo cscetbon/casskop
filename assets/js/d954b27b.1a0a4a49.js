@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkwebsite=self.webpackChunkwebsite||[]).push([[3269],{7545:function(s){s.exports=JSON.parse('{"allTagsPath":"/casskop/blog/tags","slug":"/casskop/blog/tags/external-dns","name":"external-dns","count":1,"permalink":"/casskop/blog/tags/external-dns"}')}}]);

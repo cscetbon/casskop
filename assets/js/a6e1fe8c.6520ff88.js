@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkwebsite=self.webpackChunkwebsite||[]).push([[6111],{9775:function(s){s.exports=JSON.parse('{"allTagsPath":"/casskop/blog/tags","slug":"/casskop/blog/tags/gke","name":"gke","count":1,"permalink":"/casskop/blog/tags/gke"}')}}]);
