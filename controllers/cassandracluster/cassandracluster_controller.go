@@ -25,7 +25,7 @@ import (
 
 	api "github.com/cscetbon/casskop/api/v2"
 	appsv1 "k8s.io/api/apps/v1"
-	policyv1beta1 "k8s.io/api/policy/v1beta1"
+	policyv1 "k8s.io/api/policy/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -51,7 +51,7 @@ type CassandraClusterReconciler struct {
 	Scheme *runtime.Scheme
 	Log    logr.Logger
 
-	storedPdb         *policyv1beta1.PodDisruptionBudget
+	storedPdb         *policyv1.PodDisruptionBudget
 	storedStatefulSet *appsv1.StatefulSet
 }
 

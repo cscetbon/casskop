@@ -18,7 +18,7 @@ import (
 	"context"
 	"fmt"
 
-	policyv1beta1 "k8s.io/api/policy/v1beta1"
+	policyv1 "k8s.io/api/policy/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -26,9 +26,9 @@ import (
 
 // GetPodDisruptionBudget return the PodDisruptionBudget name from the cluster in the namespace
 func (rcc *CassandraClusterReconciler) GetPodDisruptionBudget(ctx context.Context, namespace,
-	name string) (*policyv1beta1.PodDisruptionBudget, error) {
+	name string) (*policyv1.PodDisruptionBudget, error) {
 
-	pdb := &policyv1beta1.PodDisruptionBudget{
+	pdb := &policyv1.PodDisruptionBudget{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
@@ -38,7 +38,7 @@ func (rcc *CassandraClusterReconciler) GetPodDisruptionBudget(ctx context.Contex
 }
 
 // CreatePodDisruptionBudget create a new PodDisruptionBudget pdb
-func (rcc *CassandraClusterReconciler) CreatePodDisruptionBudget(ctx context.Context, pdb *policyv1beta1.PodDisruptionBudget) error {
+func (rcc *CassandraClusterReconciler) CreatePodDisruptionBudget(ctx context.Context, pdb *policyv1.PodDisruptionBudget) error {
 	err := rcc.Client.Create(ctx, pdb)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
@@ -50,7 +50,7 @@ func (rcc *CassandraClusterReconciler) CreatePodDisruptionBudget(ctx context.Con
 }
 
 // DeletePodDisruptionBudget delete a new PodDisruptionBudget pdb
-func (rcc *CassandraClusterReconciler) DeletePodDisruptionBudget(ctx context.Context, pdb *policyv1beta1.PodDisruptionBudget) error {
+func (rcc *CassandraClusterReconciler) DeletePodDisruptionBudget(ctx context.Context, pdb *policyv1.PodDisruptionBudget) error {
 	err := rcc.Client.Delete(ctx, pdb)
 	if err != nil {
 		return fmt.Errorf("failed to delete cassandra PodDisruptionBudget: %cc", err)
@@ -59,7 +59,7 @@ func (rcc *CassandraClusterReconciler) DeletePodDisruptionBudget(ctx context.Con
 }
 
 // UpdatePodDisruptionBudget updates an existing PodDisruptionBudget pdb
-func (rcc *CassandraClusterReconciler) UpdatePodDisruptionBudget(ctx context.Context, pdb *policyv1beta1.PodDisruptionBudget) error {
+func (rcc *CassandraClusterReconciler) UpdatePodDisruptionBudget(ctx context.Context, pdb *policyv1.PodDisruptionBudget) error {
 	err := rcc.Client.Update(ctx, pdb)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
@@ -71,7 +71,7 @@ func (rcc *CassandraClusterReconciler) UpdatePodDisruptionBudget(ctx context.Con
 }
 
 // CreateOrUpdatePodDisruptionBudget Create PodDisruptionBudget if not existing, or update it if existing.
-func (rcc *CassandraClusterReconciler) CreateOrUpdatePodDisruptionBudget(ctx context.Context, pdb *policyv1beta1.PodDisruptionBudget) error {
+func (rcc *CassandraClusterReconciler) CreateOrUpdatePodDisruptionBudget(ctx context.Context, pdb *policyv1.PodDisruptionBudget) error {
 	var err error
 	rcc.storedPdb, err = rcc.GetPodDisruptionBudget(ctx, pdb.Namespace, pdb.Name)
 	if err != nil {
