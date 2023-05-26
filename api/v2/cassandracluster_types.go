@@ -764,6 +764,10 @@ type CassandraClusterSpec struct {
 	// JMX Secret if Set is used to set JMX_USER and JMX_PASSWORD
 	ImageJolokiaSecret v1.LocalObjectReference `json:"imageJolokiaSecret,omitempty"`
 
+	// Number of jobs (threads) for keyspace cleanup command.
+	// 0 = unlimited.
+	KeyspaceCleanupThreads int32 `json:"keyspaceCleanupThreads,omitempty"`
+
 	//Topology to create Cassandra DC and Racks and to target appropriate Kubernetes Nodes
 	Topology Topology `json:"topology,omitempty"`
 

@@ -1381,6 +1381,10 @@ spec:
                 imagepullpolicy:
                   description: ImagePullPolicy define the pull policy for C* docker image
                   type: string
+                keyspaceCleanupThreads:
+                  description: Number of jobs (threads) for keyspace cleanup command. 0 = unlimited.
+                  type: integer
+                  format: int32
                 livenessFailureThreshold:
                   description: 'LivenessFailureThreshold defines failure threshold for the liveness probe of the main cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes'
                   type: integer

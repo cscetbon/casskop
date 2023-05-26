@@ -171,24 +171,24 @@ func (jolokiaClient *JolokiaClient) nonLocalKeyspaces() ([]string, error) {
 NodeCleanup triggers a cleanup of all keyspaces on the pod using a jolokia client and returns the index of the last
 keyspace accessed and any error
 */
-func (jolokiaClient *JolokiaClient) NodeCleanup() error {
+func (jolokiaClient *JolokiaClient) NodeCleanup(threads int32) error {
 	keyspaces, err := jolokiaClient.nonLocalKeyspaces()
 	if err != nil {
 		return err
 	}
-	return jolokiaClient.NodeCleanupKeyspaces(keyspaces)
+	return jolokiaClient.NodeCleanupKeyspaces(threads, keyspaces)
 }
 
 /*
 NodeCleanupKeyspaces triggers a cleanup of each keyspaces on the pod using a jolokia client and returns the index of
 the last keyspace accessed and any error
 */
-func (jolokiaClient *JolokiaClient) NodeCleanupKeyspaces(keyspaces []string) error {
+func (jolokiaClient *JolokiaClient) NodeCleanupKeyspaces(threads int32, keyspaces []string) error {
 	for _, keyspace := range keyspaces {
 		logrus.Infof("[%s]: Cleanup of keyspace %s", jolokiaClient.host, keyspace)
 		_, err := checkJolokiaErrors(jolokiaClient.executeOperation("org.apache.cassandra.db:type=StorageService",
-			"forceKeyspaceCleanup(java.lang.String,[Ljava.lang.String;)",
-			[]interface{}{keyspace, []string{}}, ""))
+			"forceKeyspaceCleanup(int,java.lang.String,[Ljava.lang.String;)",
+			[]interface{}{threads, keyspace, []string{}}, ""))
 		if err != nil {
 			logrus.Errorf("Cleanup of keyspace %s failed: %v", keyspace, err.Error())
 			return err
