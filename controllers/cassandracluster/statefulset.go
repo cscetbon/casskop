@@ -15,7 +15,9 @@
 package cassandracluster
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 	"sort"
@@ -168,11 +170,30 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 	sts2.Status.Replicas = sts1.Status.Replicas
 
 	if patchResult, err := patch.DefaultPatchMaker.Calculate(sts1, sts2); err != nil || !patchResult.IsEmpty() {
-		logrus.Debug("Template is different: " + pretty.Compare(sts1.Spec, sts2.Spec))
+		if logrus.IsLevelEnabled(logrus.DebugLevel) {
+			logTemplateChange(sts1, sts2, patchResult.Patch)
+		}
 		return false
 	}
 
 	return true
+}
+
+func logTemplateChange(sts1 *appsv1.StatefulSet, sts2 *appsv1.StatefulSet, patchResult []byte) {
+	logrus.Debug("Template is different: " + pretty.Compare(sts1.Spec, sts2.Spec))
+	logrus.Debug("Generated patch is: " + tryJsonPrettyPrint(patchResult))
+}
+
+func tryJsonPrettyPrint(patchResult []byte) string {
+	var patchString string
+	var prettyPatch bytes.Buffer
+	err := json.Indent(&prettyPatch, patchResult, "", "  ")
+	if err == nil {
+		patchString = string(prettyPatch.Bytes())
+	} else { // fallback to non-pretty json
+		patchString = string(patchResult)
+	}
+	return patchString
 }
 
 // CreateOrUpdateStatefulSet Create statefulset if not found, or update it
