@@ -208,6 +208,8 @@ func (rcc *CassandraClusterReconciler) CreateOrUpdateStatefulSet(ctx context.Con
 	statefulSet.ResourceVersion = rcc.storedStatefulSet.ResourceVersion
 	// We grab the existing labels and add them back to the generated StatefulSet
 	statefulSet.Spec.Template.SetLabels(rcc.storedStatefulSet.Spec.Template.GetLabels())
+	// No need to compare nor update statuses
+	statefulSet.Status = rcc.storedStatefulSet.Status
 
 	//If UpdateSeedList=Ongoing, we allow the new SeedList to be propagated into the Statefulset
 	//and change the status to Finalizing (it starts a RollingUpdate)

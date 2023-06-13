@@ -3,11 +3,11 @@ module github.com/cscetbon/casskop
 go 1.19
 
 require (
-	emperror.dev/errors v0.7.0
+	emperror.dev/errors v0.8.0
 	github.com/Jeffail/gabs v1.4.0
 	github.com/allamand/godebug v0.0.0-20190404121221-3ec752cd7166
 	github.com/antihax/optional v1.0.0
-	github.com/banzaicloud/k8s-objectmatcher v1.3.3
+	github.com/banzaicloud/k8s-objectmatcher v1.8.0
 	github.com/elazarl/goproxy v0.0.0-20190421051319-9d40249d3c2f // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-logr/logr v1.2.3
