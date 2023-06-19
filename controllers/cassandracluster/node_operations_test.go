@@ -58,7 +58,7 @@ func TestNodeCleanupKeyspace(t *testing.T) {
 	      "status": 200}`))
 	jolokiaClient, _ := NewJolokiaClient(ctx, host, JolokiaPort, nil,
 		v1.LocalObjectReference{}, "ns")
-	err := jolokiaClient.NodeCleanupKeyspaces([]string{"demo"})
+	err := jolokiaClient.NodeCleanupKeyspaces(0, []string{"demo"})
 	if err != nil {
 		t.Errorf("NodeCleanupKeyspace failed with : %s", err)
 	}
@@ -66,6 +66,7 @@ func TestNodeCleanupKeyspace(t *testing.T) {
 func TestNodeCleanup(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
+	var threads int32
 	keyspacescleaned := []string{}
 
 	httpmock.RegisterResponder("POST", JolokiaURL(host, jolokiaPort),
@@ -77,8 +78,14 @@ func TestNodeCleanup(t *testing.T) {
 			if execrequestdata.Attribute == "Keyspaces" {
 				return httpmock.NewStringResponse(200, keyspaceListString()), nil
 			}
-			keyspace, ok := execrequestdata.Arguments[0].(string)
 
+			x, ok := execrequestdata.Arguments[0].(float64)
+			if !ok {
+				t.Error("Threads can't be nil")
+			}
+			threads = int32(x)
+
+			keyspace, ok := execrequestdata.Arguments[1].(string)
 			if !ok {
 				t.Error("Keyspace can't be nil")
 			}
@@ -88,7 +95,7 @@ func TestNodeCleanup(t *testing.T) {
 			response := `{"request": {"mbean": "org.apache.cassandra.db:type=StorageService",
 						  "arguments": ["%s", []],
 						  "type": "EXEC",
-						  "operation":"forceKeyspaceCleanup(java.lang.String,[Ljava.lang.String;)"},
+						  "operation":"forceKeyspaceCleanup(int,java.lang.String,[Ljava.lang.String;)"},
 				      "value": 0,
 				      "timestamp": 1528850319,
 				      "status": 200}`
@@ -97,13 +104,17 @@ func TestNodeCleanup(t *testing.T) {
 	)
 	jolokiaClient, _ := NewJolokiaClient(ctx, host, JolokiaPort, nil,
 		v1.LocalObjectReference{}, "ns")
-	err := jolokiaClient.NodeCleanup()
+	const ExpectedThreads = 2
+	err := jolokiaClient.NodeCleanup(ExpectedThreads)
 	if err != nil {
 		t.Errorf("NodeCleanupKeyspace failed with : %s", err)
 	}
 
 	if !reflect.DeepEqual(keyspacescleaned, []string{"system_auth", "demo1", "demo2"}) {
 		t.Errorf("Keyspaces cleaned are incorrect %v", keyspacescleaned)
+	}
+	if threads != ExpectedThreads {
+		t.Errorf("Threads number is incorrect %v", threads)
 	}
 }
 

@@ -921,7 +921,7 @@ func (rcc *CassandraClusterReconciler) runCleanup(ctx context.Context, hostName 
 		cc.Spec.ImageJolokiaSecret, cc.Namespace)
 
 	if err == nil {
-		err = jolokiaClient.NodeCleanup()
+		err = jolokiaClient.NodeCleanup(cc.Spec.KeyspaceCleanupThreads)
 	}
 	return err
 }
