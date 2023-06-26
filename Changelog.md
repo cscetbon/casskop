@@ -1,6 +1,230 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
+## 2.1.15
+
+- No more need to trigger on PR events
+- Fix golangci-lint workflow
+- Fix build-args
+- Fix context
+- Fix context
+- Use full path
+- Use right context
+- Remove extra brace
+- Try to fix build
+- Upgrade build-push-action everywhere
+- Use new hosted image
+- Remove temporary pull_request event
+- Test with default value
+- Remove debug
+- Add pull_request back to push it at least once
+- Remove Inputs, temporary run on pull_request and push it to gcr.io
+- Upgrade docker/build-push-action
+- Use GITHUB_ENV
+- Do not use deprecated save-output
+- Remove double quotes
+- Run it in PR for now
+- Rename jobs to easily use act tool
+- Add workflow to build and host Icarus Docker image
+- Add ending line to existing workflows
+- Update cassandra-bootstrap image
+- Make Service Headless as it was before 2.1.14
+- Typo in NOTES.txt for multi-casskop
+- Typo in NOTES.txt
+- Set timestamp in RFC3339 format
+
+## 2.1.14
+
+- PodPolicy applies to pods, not services
+- Bump go to 1.18
+- Fix typo
+- Use assignment instead
+- Reformat comments
+- Move code closer to where it's used
+- Reformat comments
+- Convert local variable to global variable
+- Remove all settings that should not be needed
+
+## 2.1.13
+
+- Remove VERSION in Makefile and Bundle unused options
+- Fix version in controllers as well
+
+## 2.1.10
+
+- Update version in multi-casskop as well
+- Update cassandraclusters CRD
+- Fix variable name
+- Fetch history to get tags
+- Fix for chart loop
+- Fix version in Makefile
+- Use double $ to run command in Makefile
+- Remove version from values.yaml as well
+- Remove need to change version in files before releasing
+- Cleanup unused bundle-build
+- Set version to 2.1.10
+- Update CassandraCluster CRD
+- Upgrade multi-casskop CRD
+- Fix apiVersion in chart as well
+- Upgrade apiVersion of multicasskops CRD to v1
+- Upgrade rbac apiVersion
+- Upgrade apiextensions-apiserver
+- Remove old helm command and update terraform
+- Helm needs to use the right tag in e2e
+- issue_comment event does not set github.head_ref or ref_name
+- Tidy go.mod
+- Fix Lint errors
+- Upgrade kustomize and remove unsupported replaces
+- go get is not longer supported
+- Revert "Remove unused command"
+- Upgrade golint
+- Upgrade base image in all Dockerfiles
+- Upgrade bootstrap image and version
+- Remove unused command
+
+## 2.1.9
+
+- Bump terser from 5.12.1 to 5.14.2 in /website
+- Fix comments
+- Update kub libraries and controller-runtime
+
+## 2.1.8
+
+- Update appId and apiKey given by Algolia
+
+## 2.1.6
+
+- Add permissions and upgrade actions/checkout
+- Bump async from 2.6.3 to 2.6.4 in /website
+- 
+## 2.1.5
+
+- Remove duplicate
+- Remove email and comments
+- Add theme
+- Remove tools folder
+- Remove unused files
+- Fix search key
+- Add docker-generate back
+- Remove unused tasks and code
+- Update step names
+- Validate operator-sdk bundle
+- Fix operator-sdk download and no need to install controller-gen again
+- Add missing build-arg
+- Bump minimist from 1.2.5 to 1.2.6 in /website
+- Add yq too
+- Use latest CI image version
+- Install kustomize in CI image
+- Always push latest image when it's built
+- push branch image only if master branch
+- Rename job to casskop-image
+- Increase timeout when running golangci-lint
+- Support pushes to trigger-integration
+- Push only if owner and push them in kuttl tests as well
+- Use version from version.go for bundle
+- Add bundle support
+- Add rbacCreateClusterRole flag in chart
+- Add missing clusterrole and binding
+- Multicasskop fixes
+- Upgrade cassandraImage to 4.0.2
+- Upgrade cassandraImage to 4.0.1
+- Use 4.0-rc1 like before
+- Revert "Try to give it more time"
+- Try to give it more time
+- Update README and upgrade version in e2e test of Cassie 4
+- Remove duplicated documentation
+- Fix links
+- Fix e2e tests workflow/event
+
+## 2.1.4
+
+- Update condition
+- Remove old dependency
+- Trigger e2e test manually or using specific comment
+- Rename matrix variable
+- No need to append credentials if not backp-restore test
+- No need to to specify ref
+- Exclude all test files for not checked errors
+- No need to spend time deleting things
+- Use working-directory key
+- Add all tests back
+- Revert "Push 00-createCluster.yaml to s3 temporarily"
+- Push 00-createCluster.yaml to s3 temporarily
+- Tag images as latest when needed
+- Add fields removed during operator upgrade
+- Add debug
+- Build docker images
+- Update k3d
+- Update casskop.name and multi-casskop.name
+- Update Readiness and Liveness of backrest-sidecar container
+- Remove dependency for now
+- Do not disable install-kuttl anymore
+- Put concurrency on first job
+- Cancel existing jobs
+- Update documentation to use right github package
+- Update versions/tags
+- Change names
+- Change name
+- Change name of chart
+- Update ranger configuration
+- Fix syntax
+- Disable kuttl-tests
+- Disable some jobs for now
+- Add backup-restore kuttl test and test only it for now
+- Fix lint issues and workflow
+- Fix event
+- No need to use git history anymore
+- Remove useless code
+- Rename steps
+- Support pull requests
+- Dgoss tests are a requirement to push image
+- Use available Github Action
+- Add required key
+- Add golint workflow
+- Remove golint
+- Remove unused tasks
+- More renaming
+
+## 2.1.3
+
+- Add action on tags too
+
+## 2.1.2
+
+- Do not run when website is updated
+- Upgrade node
+- Fix build
+- Fix compatibility issues
+- Use slug instead of id
+- Fix IDs
+- Upgrade more modules
+- Remove unused sidebar
+- Use new Algolia configuration
+- Upgrade docusaurus
+- Do not deploy if not tag versioned
+- Upgrade docusaurus to 2.0.0-beta17
+- Update URLs as much as possible
+- Fix website URL
+- Fix publish_dir
+- Modify publish_dir
+- All images are now on my account
+- Update workflows
+- Use cache ability of setup-node
+- Deploy to github pages website
+- CI and Bootstrap workflow builders
+- fix: website/package.json & website/yarn.lock to reduce vulnerabilities
+- Add workflow to build more images and some cleaning
+- Add condition back
+- Change types
+- Fix Dockerfile path
+- Don't want to run kuttl tests on pushes but only after 1st workflow
+- pull_request is annoying as github.ref_name is different
+- Put Dockerfiles in docker/
+- Run workflows on PRs or master branch only
+- Fix it everywhere
+- Put if in {{ }}
+- Refactor workflow
+
 ## 2.1.1
 
 * Helm by @cscetbon in https://github.com/cscetbon/casskop/pull/9
