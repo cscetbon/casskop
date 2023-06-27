@@ -1,6 +1,25 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
+## 2.1.17
+
+- PR [#117](https://github.com/cscetbon/casskop/pull/117) Add assert timeout for backup/restore test
+- PR [#116](https://github.com/cscetbon/casskop/pull/116) Increase test running timeout
+- PR [#114](https://github.com/cscetbon/casskop/pull/114) Update instaclustr-icarus to 2.0.4
+- PR [#113](https://github.com/cscetbon/casskop/pull/113) Update bootstrap image
+- PR [#112](https://github.com/cscetbon/casskop/pull/112) make services headless again
+- PR [#111](https://github.com/cscetbon/casskop/pull/111) debug print patch when statefulset is going to be updated
+- PR [#110](https://github.com/cscetbon/casskop/pull/110) do not compare status when calculating statefulset patch
+- PR [#104](https://github.com/cscetbon/casskop/pull/104) Upgrade k8s to 1.24 in e2e tests
+
+## 2.1.16
+
+- k8s 1.25 compatibile
+- Bump go libs
+- Upgrade Docusaurus website CMS to latest v2.3.1
+- Bump node version to 18.15.0 LTS in website CI
+- fix: website/package.json & website/yarn.lock to reduce vulnerabilities
+
 ## 2.1.15
 
 - No more need to trigger on PR events
