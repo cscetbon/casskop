@@ -1,3 +1,7 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+timeout: 500
+---
 apiVersion: db.orange.com/v1alpha1
 kind: CassandraBackup
 metadata:
