@@ -4,7 +4,7 @@ metadata:
   name: cassandra-e2e
 spec:
   nodesPerRacks: 2
-  cassandraImage: cassandra:3.11.9
+  cassandraImage: cassandra:4.1.2
   bootstrapImage: ghcr.io/cscetbon/casskop-bootstrap:0.1.12
   dataCapacity: "256Mi"
   hardAntiAffinity: false
