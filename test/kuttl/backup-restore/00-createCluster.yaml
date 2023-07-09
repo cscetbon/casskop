@@ -16,9 +16,12 @@ spec:
     image: ghcr.io/cscetbon/instaclustr-icarus:1.1.3
     resources: &resources
       limits:
-        memory: 512Mi
-        cpu: 200m
-  resources: *resources
+        memory: 388Mi
+        cpu: 350m
+  resources:
+    limits:
+      memory: 750Mi
+      cpu: 200m
   topology:
     dc:
       - name: dc1
