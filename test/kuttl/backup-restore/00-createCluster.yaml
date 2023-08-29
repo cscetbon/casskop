@@ -6,21 +6,24 @@ spec:
   nodesPerRacks: 2
   cassandraImage: cassandra:3.11.9
   bootstrapImage: ghcr.io/cscetbon/casskop-bootstrap:0.1.12
-  dataCapacity: "256Mi"
+  dataCapacity: 256Mi
   hardAntiAffinity: false
   deletePVC: true
   autoPilot: true
   autoUpdateSeedList: false
   dataStorageClass: local-path
-  backRestSidecar:
-    image: ghcr.io/cscetbon/instaclustr-icarus:1.1.3
-    resources: &resources
-      limits:
-        memory: 512Mi
-        cpu: 200m
-  resources: *resources
+  resources:
+    limits:
+      memory: 768Mi
+      cpu: 200m
   topology:
     dc:
       - name: dc1
         rack:
           - name: rack1
+  backRestSidecar:
+    image: ghcr.io/cscetbon/instaclustr-icarus:1.1.3
+    resources:
+      limits:
+        memory: 512Mi
+        cpu: 500m

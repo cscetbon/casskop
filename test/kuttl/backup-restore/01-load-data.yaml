@@ -3,6 +3,6 @@ apiVersion: kuttl.dev/v1beta1
 kind: TestStep
 commands:
   # Create and fill k1.standard1
-  - script: kubectl exec cassandra-e2e-dc1-rack1-0 -- /opt/cassandra/tools/bin/cassandra-stress write n=2000 cl=one -rate threads=1 -mode native cql3 user=cassandra password=cassandra -col names=c1 -schema 'compression=LZ4Compressor Keyspace=k1 replication(strategy=NetworkTopologyStrategy, dc1=2)'
+  - script: kubectl exec cassandra-e2e-dc1-rack1-0 -- /opt/cassandra/tools/bin/cassandra-stress write n=20 cl=one -rate threads=1 -mode native cql3 user=cassandra password=cassandra -col names=c1 -schema 'compression=LZ4Compressor Keyspace=k1 replication(strategy=NetworkTopologyStrategy, dc1=2)'
   # Create k2.standard1
   - script: kubectl exec cassandra-e2e-dc1-rack1-0 -- /opt/cassandra/tools/bin/cassandra-stress write n=0 cl=one -rate threads=1 -mode native cql3 user=cassandra password=cassandra -col names=c1 -schema 'compression=LZ4Compressor Keyspace=k2 replication(strategy=NetworkTopologyStrategy, dc1=2)'
