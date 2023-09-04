@@ -76,7 +76,7 @@ func HelperInitCassandraBackupController(cassandraBackupYaml string) (*Cassandra
 		&cassandraBackup,
 	}
 
-	fakeClient := fake.NewClientBuilder().WithScheme(fakeClientScheme).WithRuntimeObjects(objs...).Build()
+	fakeClient := fake.NewClientBuilder().WithScheme(fakeClientScheme).WithRuntimeObjects(objs...).WithStatusSubresource(&cassandraBackup).Build()
 
 	fakeRecorder := record.NewFakeRecorder(3)
 	reconcileCassandraBackup := CassandraBackupReconciler{

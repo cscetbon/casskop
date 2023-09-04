@@ -29,12 +29,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-//Global var used to know if we need to update the CRD
+// Global var used to know if we need to update the CRD
 var needUpdate bool
 
-//updateCassandraStatus updates the CRD if the status has changed
-//if needUpdate is set that mean that we have updated some fields in the CRD
-//This method also stored the annotation cassandraclusters.db.orange.com/last-applied-configuration with last-applied-configuration
+// updateCassandraStatus updates the CRD if the status has changed
+// if needUpdate is set that mean that we have updated some fields in the CRD
+// This method also stored the annotation cassandraclusters.db.orange.com/last-applied-configuration with last-applied-configuration
 func (rcc *CassandraClusterReconciler) updateCassandraStatus(ctx context.Context, cc *api.CassandraCluster,
 	status *api.CassandraClusterStatus) error {
 	// don't update the status if there aren't any changes.
@@ -53,9 +53,13 @@ func (rcc *CassandraClusterReconciler) updateCassandraStatus(ctx context.Context
 	needUpdate = false
 	//make also deepcopy to avoid pointer conflict
 	cc.Status = *status.DeepCopy()
+	err := rcc.Client.Status().Update(ctx, cc)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "err": err}).Errorf("Issue when updating CassandraCluster Status")
+	}
 	cc.Annotations[api.AnnotationLastApplied] = string(lastApplied)
 
-	err := rcc.Client.Update(ctx, cc)
+	err = rcc.Client.Update(ctx, cc)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "err": err}).Errorf("Issue when updating CassandraCluster")
 	}
@@ -151,10 +155,10 @@ func (rcc *CassandraClusterReconciler) getNextCassandraClusterStatus(ctx context
 	return nil
 }
 
-//needToWaitDelayBeforeCheck will return if last action start time is < to api.DefaultDelayWait
-//that means the last operation was started only a few seconds ago and checking now would not make any sense
-//this is mostly to give cassandra and the operator enough time to correctly stage the action
-//DefaultDelayWait is of 2 minutes
+// needToWaitDelayBeforeCheck will return if last action start time is < to api.DefaultDelayWait
+// that means the last operation was started only a few seconds ago and checking now would not make any sense
+// this is mostly to give cassandra and the operator enough time to correctly stage the action
+// DefaultDelayWait is of 2 minutes
 func needToWaitDelayBeforeCheck(cc *api.CassandraCluster, dcRackName string, storedStatefulSet *appsv1.StatefulSet,
 	status *api.CassandraClusterStatus) bool {
 	lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
@@ -166,16 +170,16 @@ func needToWaitDelayBeforeCheck(cc *api.CassandraCluster, dcRackName string, sto
 		if t.Add(api.DefaultDelayWait * time.Second).After(now.Time) {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 				"rack": dcRackName}).Info(
-					fmt.Sprintf("The Operator Waits %s seconds for the action to start correctly",
-						strconv.Itoa(api.DefaultDelayWait)),
-					)
+				fmt.Sprintf("The Operator Waits %s seconds for the action to start correctly",
+					strconv.Itoa(api.DefaultDelayWait)),
+			)
 			return true
 		}
 	}
 	return false
 }
 
-//UpdateStatusIfconfigMapHasChanged updates CassandraCluster Action Status if it detect a changes :
+// UpdateStatusIfconfigMapHasChanged updates CassandraCluster Action Status if it detect a changes :
 // - a new configmapName in the CRD
 // - or the add or remoove of the configmap in the CRD
 func UpdateStatusIfconfigMapHasChanged(cc *api.CassandraCluster, dcRackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
@@ -220,7 +224,7 @@ func UpdateStatusIfconfigMapHasChanged(cc *api.CassandraCluster, dcRackName stri
 	return false
 }
 
-//UpdateStatusIfDockerImageHasChanged updates CassandraCluster Action Status if it detect a changes in the DockerImage:
+// UpdateStatusIfDockerImageHasChanged updates CassandraCluster Action Status if it detect a changes in the DockerImage:
 func UpdateStatusIfDockerImageHasChanged(cc *api.CassandraCluster, dcRackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
 
 	desiredDockerImage := cc.Spec.CassandraImage
@@ -263,7 +267,7 @@ func UpdateStatusIfRollingRestart(cc *api.CassandraCluster, dc,
 	return false
 }
 
-//UpdateStatusIfSeedListHasChanged updates CassandraCluster Action Status if it detects a change
+// UpdateStatusIfSeedListHasChanged updates CassandraCluster Action Status if it detects a change
 func UpdateStatusIfSeedListHasChanged(cc *api.CassandraCluster, dcRackName string,
 	storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
 
@@ -298,9 +302,9 @@ func UpdateStatusIfSeedListHasChanged(cc *api.CassandraCluster, dcRackName strin
 	return false
 }
 
-//UpdateStatusIfScaling will detect any change of replicas
-//To Scale Down the operator will need to first decommission the last node from Cassandra before removing it from kubernetes.
-//To Scale Up some PodOperations may be scheduled if Auto-pilot is activeted.
+// UpdateStatusIfScaling will detect any change of replicas
+// To Scale Down the operator will need to first decommission the last node from Cassandra before removing it from kubernetes.
+// To Scale Up some PodOperations may be scheduled if Auto-pilot is activeted.
 func UpdateStatusIfScaling(cc *api.CassandraCluster, dcRackName string, storedStatefulSet *appsv1.StatefulSet,
 	status *api.CassandraClusterStatus) bool {
 	nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
@@ -343,7 +347,7 @@ func UpdateStatusIfStatefulSetChanged(dcRackName string, storedStatefulSet *apps
 	return false
 }
 
-//UpdateStatusIfActionEnded Implement Tests to detect End of Ongoing Actions
+// UpdateStatusIfActionEnded Implement Tests to detect End of Ongoing Actions
 func (rcc *CassandraClusterReconciler) UpdateStatusIfActionEnded(ctx context.Context, cc *api.CassandraCluster, dcName string,
 	rackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
 	dcRackName := cc.GetDCRackName(dcName, rackName)

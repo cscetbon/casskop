@@ -105,11 +105,12 @@ func HelperInitCluster(t *testing.T, name string) (*CassandraClusterReconciler,
 	fakeClientScheme := scheme.Scheme
 	fakeClientScheme.AddKnownTypes(api.GroupVersion, &cc)
 	fakeClientScheme.AddKnownTypes(api.GroupVersion, &ccList)
-	cl := fake.NewClientBuilder().WithScheme(fakeClientScheme).WithRuntimeObjects(objs...).Build()
+	cl := fake.NewClientBuilder().WithScheme(fakeClientScheme).WithRuntimeObjects(objs...).WithStatusSubresource(&cc).Build()
 	// Create a CassandraClusterReconciler object with the scheme and fake client.
 	rcc := CassandraClusterReconciler{Client: cl, Scheme: fakeClientScheme}
 
 	cc.InitCassandraRackList()
+	cl.Status().Update(context.TODO(), &cc)
 	return &rcc, &cc
 }
 
@@ -197,7 +198,7 @@ func helperCreateCassandraCluster(ctx context.Context, t *testing.T, cassandraCl
 			//Now simulate sts to be ready for CassKop
 			sts.Status.Replicas = *sts.Spec.Replicas
 			sts.Status.ReadyReplicas = *sts.Spec.Replicas
-			rcc.UpdateStatefulSet(ctx, sts)
+			rcc.Client.Status().Update(ctx, sts)
 
 			//Create Statefulsets associated fake Pods
 			podTemplate := v1.Pod{

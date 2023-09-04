@@ -12,7 +12,6 @@ RUN go mod edit -replace github.com/cscetbon/casskop=/workspace
 # cache deps before building and copying source so that we don't need to re-download as much
 # and so that source changes don't invalidate our downloaded layer
 RUN go mod download
-RUN go mod vendor
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o multi-casskop main.go
