@@ -28,6 +28,7 @@ type MultiCasskopStatus struct {
 
 // MultiCasskop is the Schema for the MultiCasskops API
 // +k8s:openapi-gen=true
+// +kubebuilder:subresource:status
 type MultiCasskop struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
