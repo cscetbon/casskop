@@ -53,7 +53,7 @@ func helperInitCluster(t *testing.T, name string) (*CassandraClusterReconciler, 
 	fakeClientScheme := scheme.Scheme
 	fakeClientScheme.AddKnownTypes(api.GroupVersion, &cc)
 	fakeClientScheme.AddKnownTypes(api.GroupVersion, &ccList)
-	cl := fake.NewClientBuilder().WithScheme(fakeClientScheme).WithRuntimeObjects(objs...).Build()
+	cl := fake.NewClientBuilder().WithScheme(fakeClientScheme).WithRuntimeObjects(objs...).WithStatusSubresource(&cc).Build()
 	// Create a CassandraClusterReconciler object with the scheme and fake client.
 	rcc := CassandraClusterReconciler{Client: cl, Scheme: fakeClientScheme}
 

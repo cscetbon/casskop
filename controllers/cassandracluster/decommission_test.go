@@ -37,7 +37,7 @@ func createCassandraClusterWithNoDisruption(t *testing.T, cassandraClusterFileNa
 	rcc.Client.Get(context.TODO(), req.NamespacedName, pdb)
 	// No disruption
 	pdb.Status.DisruptionsAllowed = 1
-	rcc.Client.Update(context.TODO(), pdb)
+	rcc.Client.Status().Update(context.TODO(), pdb)
 
 	return rcc, req
 }
@@ -127,7 +127,7 @@ func TestOneDecommission(t *testing.T) {
 	deletePodNotDeletedByFakeClient(rcc, deletedPod)
 	stfs, _ := rcc.GetStatefulSet(ctx, namespace, stfsName)
 	stfs.Status.ReadyReplicas = 2
-	rcc.Client.Update(context.TODO(), stfs)
+	rcc.Client.Status().Update(context.TODO(), stfs)
 
 	registerFatalJolokiaResponder(t, deletedPod)
 	registerJolokiaOperationModeResponder(lastPod, NORMAL)

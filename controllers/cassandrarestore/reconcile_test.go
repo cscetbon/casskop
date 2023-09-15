@@ -66,7 +66,7 @@ func helperInitCassandraRestoreController(cassandraRestoreYaml string) (*Cassand
 		&cassandraRestore,
 	}
 
-	fakeClient := fake.NewClientBuilder().WithScheme(fakeClientScheme).WithRuntimeObjects(objs...).Build()
+	fakeClient := fake.NewClientBuilder().WithScheme(fakeClientScheme).WithRuntimeObjects(objs...).WithStatusSubresource(&cassandraRestore).Build()
 
 	fakeRecorder := record.NewFakeRecorder(3)
 	CassandraRestoreReconciler := CassandraRestoreReconciler{
