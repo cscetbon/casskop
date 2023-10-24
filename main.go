@@ -22,6 +22,7 @@ import (
 	"os"
 	"path"
 	"runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"strconv"
 	"strings"
 	"time"
@@ -162,8 +163,7 @@ func main() {
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
-		Port:                   9443,
-		Namespace:              namespace,
+		Cache:                  cache.Options{Namespaces: []string{namespace}},
 		HealthProbeBindAddress: probeAddr,
 	})
 	if err != nil {
