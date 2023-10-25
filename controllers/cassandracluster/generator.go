@@ -894,7 +894,9 @@ func generateContainers(cc *api.CassandraCluster, status *api.CassandraClusterSt
 	var containers []v1.Container
 	containers = append(containers, cc.Spec.SidecarConfigs...)
 	containers = append(containers, createCassandraContainer(cc, status, dcRackName))
-	containers = append(containers, backrestSidecarContainer(cc))
+	if cc.Spec.BackRestSidecar.Enabled == nil || *cc.Spec.BackRestSidecar.Enabled {
+		containers = append(containers, backrestSidecarContainer(cc))
+	}
 
 	return containers
 }
