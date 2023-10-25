@@ -22,6 +22,10 @@ jobs:
     permissions:
       packages: write
     steps:
+      - id: lower-repo
+        shell: pwsh
+        run: |
+          "::set-output name=repository::$($env:GITHUB_REPOSITORY.ToLowerInvariant())"
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -50,7 +54,7 @@ jobs:
         with:
           context: .
           file: docker/casskop/Dockerfile
-          tags: ghcr.io/cscetbon/casskop:${{ steps.get-branch.outputs.branch }}
+          tags: ghcr.io/${{ steps.lower-repo.outputs.repository }}:${{ steps.get-branch.outputs.branch }}
           push: true
 
   install-kuttl:
@@ -77,6 +81,11 @@ jobs:
       matrix:
         test-name: [operations, sidecars, scaling, multi-dcs, backup-restore]
     steps:
+      - id: lower-repo
+        shell: pwsh
+        run: |
+          "::set-output name=repository::$($env:GITHUB_REPOSITORY.ToLowerInvariant())"
+
       - name: Get PR branch name
         id: get-branch
         env:
@@ -140,6 +149,6 @@ jobs:
         run: |
           chmod u+x kuttl
           PATH=$PWD:$PATH
-          helm install casskop charts/casskop --set image.tag=${{ steps.get-branch.outputs.branch }}
+          helm install casskop charts/casskop --set image.tag=${{ steps.get-branch.outputs.branch }} --set image.repository=ghcr.io/${{ steps.lower-repo.outputs.repository }}
           cd test/kuttl/
           kuttl test --test ${{ matrix.test-name }} --namespace default --skip-delete
