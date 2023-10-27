@@ -50,6 +50,20 @@ spec:
 {{- range .Values.k8s.remote }}
           - -r{{ . }}
 {{- end }}
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 4
+          periodSeconds: 10
+          failureThreshold: 1
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 4
+          periodSeconds: 10
+          failureThreshold: 1
         resources:
 {{ toYaml .Values.resources | indent 10 }}
         env:

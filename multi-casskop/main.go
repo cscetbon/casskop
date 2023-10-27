@@ -18,26 +18,22 @@ package main
 
 import (
 	"fmt"
-	"runtime"
-
-	"github.com/cscetbon/casskop/multi-casskop/controllers"
-	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/sample-controller/pkg/signals"
-
-	//	"flag"
 	"log"
+	"net/http"
 	"os"
+	"runtime"
 	"strings"
-
-	"github.com/jessevdk/go-flags"
-
-	"k8s.io/client-go/rest"
 
 	"admiralty.io/multicluster-controller/pkg/cluster"
 	"admiralty.io/multicluster-controller/pkg/manager"
 	"admiralty.io/multicluster-service-account/pkg/config"
+	"github.com/cscetbon/casskop/multi-casskop/controllers"
+	"github.com/jessevdk/go-flags"
 	"github.com/sirupsen/logrus"
+	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	"k8s.io/client-go/rest"
+	"k8s.io/sample-controller/pkg/signals"
 	kconfig "sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
@@ -162,6 +158,19 @@ func main() {
 
 	m := manager.New()
 	m.AddController(co)
+	// TODO: create more meaningful checks
+	http.HandleFunc("/readyz", func(writer http.ResponseWriter, request *http.Request) {
+		writer.WriteHeader(http.StatusOK)
+	})
+	http.HandleFunc("/healthz", func(writer http.ResponseWriter, request *http.Request) {
+		writer.WriteHeader(http.StatusOK)
+	})
+	go func() {
+		err := http.ListenAndServe(":8081", nil)
+		if err != nil {
+			log.Fatalf("failed to run readyness/liveness checks")
+		}
+	}()
 
 	logrus.Info("Starting Manager.")
 	if err := m.Start(signals.SetupSignalHandler()); err != nil {
