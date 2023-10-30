@@ -21,7 +21,7 @@ const (
 	DefaultReadinessHealthCheckPeriod   int32 = 10
 
 	defaultCassandraImage     = "cassandra:3.11.10"
-	defaultBootstrapImage     = "ghcr.io/cscetbon/casskop-bootstrap:0.1.12"
+	defaultBootstrapImage     = "ghcr.io/cscetbon/casskop-bootstrap:0.1.13"
 	defaultConfigBuilderImage = "datastax/cass-config-builder:1.0.4"
 
 	DefaultBackRestImage      = "ghcr.io/cscetbon/instaclustr-icarus:1.1.3"
@@ -199,7 +199,7 @@ func (cc *CassandraCluster) ComputeLastAppliedConfiguration() ([]byte, error) {
 	return lastApplied, err
 }
 
-//GetDCSize Return the Numbers of declared DC
+// GetDCSize Return the Numbers of declared DC
 func (cc *CassandraCluster) GetDCSize() int {
 	return len(cc.Spec.Topology.DC)
 }
@@ -217,8 +217,8 @@ func (cc *CassandraCluster) GetStatusDCRackSize() int {
 	return len(cc.Status.CassandraRackStatus)
 }
 
-//GetDCName return the name of the DC a indice dc
-//or defaultName
+// GetDCName return the name of the DC a indice dc
+// or defaultName
 func (cc *CassandraCluster) GetDCName(dc int) string {
 	if dc >= cc.GetDCSize() {
 		return DefaultCassandraDC
@@ -237,7 +237,7 @@ func (cc *CassandraCluster) getDCNodesPerRacksFromIndex(dc int) int32 {
 	return *storeDC.NodesPerRacks
 }
 
-//GetRackSize return the numbers of the Rack in the DC at indice dc
+// GetRackSize return the numbers of the Rack in the DC at indice dc
 func (cc *CassandraCluster) GetRackSize(dc int) int {
 	if dc >= cc.GetDCSize() {
 		return 0
@@ -245,7 +245,7 @@ func (cc *CassandraCluster) GetRackSize(dc int) int {
 	return len(cc.Spec.Topology.DC[dc].Rack)
 }
 
-//GetRackName return the Name of the rack for DC at index dc and Rack at index rack
+// GetRackName return the Name of the rack for DC at index dc and Rack at index rack
 func (cc *CassandraCluster) GetRackName(dc int, rack int) string {
 	if dc >= cc.GetDCSize() || rack >= cc.GetRackSize(dc) {
 		return DefaultCassandraRack
@@ -265,13 +265,13 @@ func (cc *CassandraCluster) GetDCRackName(dcName string, rackName string) string
 	return ""
 }
 
-//GetDCNameFromDCRackName send dc name from dcRackName (dc-rack)
+// GetDCNameFromDCRackName send dc name from dcRackName (dc-rack)
 func (cc *CassandraCluster) GetDCNameFromDCRackName(dcRackName string) string {
 	dc, _ := cc.GetDCNameAndRackNameFromDCRackName(dcRackName)
 	return dc
 }
 
-//GetDCAndRackFromDCRackName send dc and rack from dcRackName (dc-rack)
+// GetDCAndRackFromDCRackName send dc and rack from dcRackName (dc-rack)
 func (cc *CassandraCluster) GetDCNameAndRackNameFromDCRackName(dcRackName string) (string, string) {
 	dc := strings.Split(dcRackName, "-")
 	return dc[0], dc[1]
@@ -383,8 +383,8 @@ func (cc *CassandraCluster) IsPodInSeedList(podName string) bool {
 	return false
 }
 
-//FixCassandraRackList will remove additional rack-list that don't exists anymore in Topology
-//we recalculate new dcrackStatus from actual topology and we apply diff to original
+// FixCassandraRackList will remove additional rack-list that don't exists anymore in Topology
+// we recalculate new dcrackStatus from actual topology and we apply diff to original
 func (cc *CassandraCluster) FixCassandraRackList(status *CassandraClusterStatus) []string {
 	newcc := cc.DeepCopy()
 	newcc.InitCassandraRackList()
@@ -415,7 +415,7 @@ func (cc *CassandraCluster) GetRemovedDCName(oldCRD *CassandraCluster) string {
 	return ""
 }
 
-//InitCassandraRackList initiate the Status structure for CassandraRack
+// InitCassandraRackList initiate the Status structure for CassandraRack
 func (cc *CassandraCluster) InitCassandraRackList() int {
 	var dcName, rackName string
 	var nbRack = 0
@@ -533,7 +533,7 @@ func (cc *CassandraCluster) GetNodesPerRacks(dcRackName string) int32 {
 	return nodesPerRacks
 }
 
-//GetDCNodesPerRacksFromDCRackName send NodesPerRack used for the given dcRackName
+// GetDCNodesPerRacksFromDCRackName send NodesPerRack used for the given dcRackName
 func (cc *CassandraCluster) GetDCRackNames() []string {
 	dcsize := cc.GetDCSize()
 
@@ -555,7 +555,7 @@ func (cc *CassandraCluster) GetDCRackNames() []string {
 	return dcRackNames
 }
 
-//GetDCNodesPerRacksFromDCRackName send NodesPerRack used for the given dcRackName
+// GetDCNodesPerRacksFromDCRackName send NodesPerRack used for the given dcRackName
 func (cc *CassandraCluster) GetDCNodesPerRacksFromDCRackName(dcRackName string) int32 {
 	dcsize := cc.GetDCSize()
 
@@ -601,8 +601,8 @@ func (cc *CassandraCluster) GetRollingPartitionPerRacks(dcRackName string) int32
 	return 0
 }
 
-//GetDCNodesPerRacksFromName send NodesPerRack which is applied for the specified dc name
-//return true if we found, and false if not
+// GetDCNodesPerRacksFromName send NodesPerRack which is applied for the specified dc name
+// return true if we found, and false if not
 func (cc *CassandraCluster) GetDCNodesPerRacksFromName(dctarget string) (bool, int32) {
 	dcsize := cc.GetDCSize()
 
@@ -618,7 +618,7 @@ func (cc *CassandraCluster) GetDCNodesPerRacksFromName(dctarget string) (bool, i
 	return false, cc.Spec.NodesPerRacks
 }
 
-//FindDCWithNodesTo0
+// FindDCWithNodesTo0
 func (cc *CassandraCluster) FindDCWithNodesTo0() (bool, string, int) {
 	for dc := 0; dc < cc.GetDCSize(); dc++ {
 		if cc.getDCNodesPerRacksFromIndex(dc) == int32(0) {
@@ -629,7 +629,7 @@ func (cc *CassandraCluster) FindDCWithNodesTo0() (bool, string, int) {
 	return false, "", 0
 }
 
-//IsValidDC returns true if dcName is known
+// IsValidDC returns true if dcName is known
 func (cc *CassandraCluster) IsValidDC(dcName string) bool {
 	for _, dc := range cc.Spec.Topology.DC {
 		if dc.Name == dcName {
@@ -639,12 +639,12 @@ func (cc *CassandraCluster) IsValidDC(dcName string) bool {
 	return false
 }
 
-//Remove elements from DC slice
+// Remove elements from DC slice
 func (dc *DCSlice) Remove(idx int) {
 	*dc = append((*dc)[:idx], (*dc)[idx+1:]...)
 }
 
-//Remove elements from Rack slice
+// Remove elements from Rack slice
 func (rack *RackSlice) Remove(idx int) {
 	*rack = append((*rack)[:idx], (*rack)[idx+1:]...)
 }
@@ -908,7 +908,7 @@ type BackRestSidecar struct {
 	VolumeMounts []v1.VolumeMount         `json:"volumeMount,omitempty"`
 }
 
-//CassandraRackStatus defines states of Cassandra for 1 rack (1 statefulset)
+// CassandraRackStatus defines states of Cassandra for 1 rack (1 statefulset)
 type CassandraRackStatus struct {
 	// Phase indicates the state this Cassandra cluster jumps in.
 	// Phase goes as one way as below:
@@ -922,7 +922,7 @@ type CassandraRackStatus struct {
 	PodLastOperation PodLastOperation `json:"podLastOperation,omitempty"`
 }
 
-//CassandraClusterStatus defines Global state of CassandraCluster
+// CassandraClusterStatus defines Global state of CassandraCluster
 type CassandraClusterStatus struct {
 	// Phase indicates the state this Cassandra cluster jumps in.
 	// Phase goes as one way as below:
