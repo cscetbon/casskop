@@ -147,10 +147,16 @@ func (cc *CassandraCluster) CheckDefaults() {
 	}
 
 	// BackupRestore default config
+	enabled := true
 	if ccs.BackRestSidecar == nil {
-		ccs.BackRestSidecar = &BackRestSidecar{Image: DefaultBackRestImage}
-	} else if ccs.BackRestSidecar.Image == "" {
-		ccs.BackRestSidecar.Image = DefaultBackRestImage
+		ccs.BackRestSidecar = &BackRestSidecar{Enabled: &enabled, Image: DefaultBackRestImage}
+	} else {
+		if ccs.BackRestSidecar.Enabled == nil {
+			ccs.BackRestSidecar.Enabled = &enabled
+		}
+		if ccs.BackRestSidecar.Image == "" {
+			ccs.BackRestSidecar.Image = DefaultBackRestImage
+		}
 	}
 }
 
@@ -899,6 +905,8 @@ type ServicePolicy struct {
 
 // BackRestSidecar defines details about cassandra-sidecar to load along with each C* pod
 type BackRestSidecar struct {
+	// +kubebuilder:default:=true
+	Enabled *bool `json:"enabled,omitempty"`
 	// Image of backup/restore sidecar
 	Image string `json:"image,omitempty"`
 	// ImagePullPolicy define the pull policy for backrest sidecar docker image

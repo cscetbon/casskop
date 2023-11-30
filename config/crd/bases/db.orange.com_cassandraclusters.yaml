@@ -1270,6 +1270,9 @@ spec:
                   description: BackRestSidecar defines details about cassandra-sidecar to load along with each C* pod
                   type: object
                   properties:
+                    enabled:
+                      type: boolean
+                      default: true
                     image:
                       description: Image of backup/restore sidecar
                       type: string
