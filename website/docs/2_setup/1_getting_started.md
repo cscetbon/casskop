@@ -2,8 +2,6 @@
 title: Getting Started
 sidebar_label: Getting Started
 ---
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
 
 CassKop uses the standard Cassandra image (tested up to Version 3.11), and can run on Kubernetes 1.13.3+.
 

@@ -2,8 +2,6 @@
 title: Upgrade v1 to v2
 sidebar_label: Upgrade v1 to v2
 ---
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
 
 Version 2 makes it possible to use Cassandra 3 and 4 using the same bootstrap image. That's why it's recommended to
 upgrade to version 2.

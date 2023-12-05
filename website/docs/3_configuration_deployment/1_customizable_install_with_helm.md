@@ -2,8 +2,6 @@
 title: Customizable install with Helm
 sidebar_label: Customizable install with Helm
 ---
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
 
 This Helm chart installs CassKop to create/configure/manage Cassandra
 clusters in a Kubernetes Namespace.
@@ -16,21 +14,21 @@ which implements a `CassandraCluster` object in Kubernetes.
 
 The following tables lists the configurable parameters of the Cassandra Operator Helm chart and their default values.
 
-| Parameter                        | Description                                      | Default                                   |
-|----------------------------------|--------------------------------------------------|-------------------------------------------|
-| `image.repository`               | Image                                            | `ghcr.io/cscetbon/casskop`                |
-| `image.tag`                      | Image tag                                        | `v2.0.1-release`                          |
-| `image.pullPolicy`               | Image pull policy                                | `Always`                                  |
-| `image.imagePullSecrets.enabled` | Enable the use of secret for docker image        | `false`                                   |
-| `image.imagePullSecrets.name`    | Name of the secret to connect to docker registry | -                                         |
-| `createCustomResource`           | If true, create & deploy the CRD                 | `true`
-| `rbacEnable`                     | If true, create & use RBAC resources             | `true`                                    |
-| `readinessProbe.timeouts.initialDelaySeconds` | Specifies timeout before first probe attempt | `4`				  |
-| `readinessProbe.timeouts.periodSeconds` | Specifies probe interval                  | `10`                                      |
-| `readinessProbe.timeouts.failureThreshold` | When a probe fails, after time specified in this field Pod will be marked as `Undready`  | `1`                              |
-| `resources`                      | Pod resource requests & limits                   | `{requests: {cpu: 10m, memory: 50Mi}, limits: {cpu: 1,memory: 512Mi}`               |
-| `metricService`                  | deploy service for metrics                       | `false`                                   |
-| `debug.enabled`                  | activate DEBUG log level  and enable shareProcessNamespace (allowing ephemeral container usage)              | `false`                                   |
+| Parameter                        | Description                                      | Default                                                                |
+|----------------------------------|--------------------------------------------------|------------------------------------------------------------------------|
+| `image.repository`               | Image                                            | `ghcr.io/cscetbon/casskop`                                             |
+| `image.tag`                      | Image tag                                        | `v2.0.1-release`                                                       |
+| `image.pullPolicy`               | Image pull policy                                | `Always`                                                               |
+| `image.imagePullSecrets.enabled` | Enable the use of secret for docker image        | `false`                                                                |
+| `image.imagePullSecrets.name`    | Name of the secret to connect to docker registry | -                                                                      |
+| `createCustomResource`           | If true, create & deploy the CRD                 | `true`                                                                 
+| `rbacEnable`                     | If true, create & use RBAC resources             | `true`                                                                 |
+| `readinessProbe.timeouts.initialDelaySeconds` | Specifies timeout before first probe attempt | `4`				                                                                |
+| `readinessProbe.timeouts.periodSeconds` | Specifies probe interval                  | `10`                                                                   |
+| `readinessProbe.timeouts.failureThreshold` | When a probe fails, after time specified in this field Pod will be marked as `Undready`  | `1`                                                                    |
+| `resources`                      | Pod resource requests & limits                   | `{requests: {cpu: 10m, memory: 50Mi}, limits: {cpu: 1,memory: 512Mi}}` |
+| `metricService`                  | deploy service for metrics                       | `false`                                                                |
+| `debug.enabled`                  | activate DEBUG log level  and enable shareProcessNamespace (allowing ephemeral container usage)              | `false`                                                                |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
@@ -42,16 +40,6 @@ helm install casskop oci://ghcr.io/cscetbon/casskop-helm -f values.yaml
 
 ### Installing the Chart
 
-
-<Tabs
-  defaultValue="dryrun"
-  values={[
-    { label: 'dry run', value: 'dryrun', },
-    { label: 'release name', value: 'rn', },
-  ]
-}>
-<TabItem value="dryrun">
-
 ```bash
 helm install --dry-run \
     --debug.enabled oci://ghcr.io/cscetbon/casskop-helm \
@@ -59,16 +47,9 @@ helm install --dry-run \
     --name casskop
 ```
 
-</TabItem>
-<TabItem value="rn">
-
 ```bash
 helm install casskop oci://ghcr.io/cscetbon/casskop-helm
 ```
-
-</TabItem>
-
-</Tabs>
 
 > the `-replace` flag allow you to reuse a charts release name
 

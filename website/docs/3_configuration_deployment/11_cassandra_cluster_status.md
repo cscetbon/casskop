@@ -80,11 +80,11 @@ The CassandraCluster prints out it's whole status.
 - **lastClusterAction** Is the Last Action at the Cluster level
 - **lastClusterActionStatus** Is the Last Action Status at the Cluster level
 - **CassandraNodeStatus**: represents a map of (hostId, Ip Node) couple for each Pod in the Cluster
-  - **${Cassandra node pod's name}**
+  - **$\{Cassandra node pod's name\}**
     - **HostId**: the cassandra node's hostId
     - **IpNode**: the cassandra node's ip
 - **CassandraRackStatus** represents a map of statuses for each of the Cassandra Racks in the Cluster
-  - **${Cassandra DC-Rack Name}**
+  - **$\{Cassandra DC-Rack Name\}**
     - **Cassandra Last Action**: it's an action which is ongoing on the Cassandra cluster :
         - **Name**: name of the Action
             - **UpdateConfigMap** a new ConfigMap has been submitted to the cluster
