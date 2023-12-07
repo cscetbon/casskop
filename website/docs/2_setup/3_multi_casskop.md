@@ -2,8 +2,6 @@
 title: Multi-CassKop
 sidebar_label: Multi-CassKop
 ---
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
 
 ## MultiCasskop
 
@@ -39,7 +37,7 @@ In order to allow our Multi-CassKop controller to have access to k8s-cluster-2 f
 kubemcsa export --context=cluster2 --namespace cassandra-e2e casskop --as k8s-cluster2 | kubectl apply -f -
 ```
 
-:::tips
+:::tip
 This will create in current k8s (k8s-cluster-1) the k8s secret associated to the
 **casskop** service account of namespace **cassandra-e2e** in k8s-cluster2.
 /!\ The Secret will be created with the name **k8s-cluster2** and this name must be used when starting Multi-CassKop and

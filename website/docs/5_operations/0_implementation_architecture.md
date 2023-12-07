@@ -107,7 +107,7 @@ Example for DC `dc1-rack1` :
 - The services will be names : `cassandra-demo-dc1` and `cassandra-demo-dc2`
 - the associated service for Prometheus metrics export will be named :
   `cassandra-demo-dc1-exporter-jmx`,`cassandra-demo-dc2-exporter-jmx`  
-- the PVC (Persistent Volume Claim) of each pod will be named **data-${podName}** ex: `data-cassandra-demo-dc1-rack1-0`
+- the PVC (Persistent Volume Claim) of each pod will be named **data-$\{podName\}** ex: `data-cassandra-demo-dc1-rack1-0`
   for each dc-rack
 - the [PodDisruptionBudget (PDB)](https://kubernetes.io/docs/tasks/run-application/configure-pdb/) will be named :
   `cassandra-demo` and will target all pods of the cluster
