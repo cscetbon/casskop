@@ -7,14 +7,14 @@ sidebar_label: Cassandra cluster Status
 
 [Check documentation for more informations](/casskop/docs/configuration_deployment/cassandra_cluster_status)
 
-|Field|Type|Description|Required|Default|
-|-----|----|-----------|--------|--------|
-|phase|string| Indicates the state this Cassandra cluster jumps in. Phase goes as one way as below: Initial -> Running <-> updating.|Yes| - |
-|lastClusterAction|string|Is the Last Action at the Cluster level|Yes| - |
-|lastClusterActionStatus|string|Is the Last Action Status at the Cluster level|Yes|-|
-|seedlist|\[ \]string|it is the Cassandra SEED List used in the Cluster.|Yes|-|
-|cassandraNodeStatus|map\[string\][CassandraNodeStatus](#cassandranodestatus)|represents a map of (hostId, Ip Node) couple for each Pod in the Cluster.|Yes| - |
-|cassandraRackStatus|map\[string\][CassandraRackStatus](#cassandrarackstatus)|represents a map of statuses for each of the Cassandra Racks in the Cluster|Yes|-|
+|Field|Type| Description                                                                                                            |Required|Default|
+|-----|----|------------------------------------------------------------------------------------------------------------------------|--------|--------|
+|phase|string| Indicates the state this Cassandra cluster jumps in. Phase goes as one way as below: Initial \> Running \<\> updating. |Yes| - |
+|lastClusterAction|string| Is the Last Action at the Cluster level                                                                                |Yes| - |
+|lastClusterActionStatus|string| Is the Last Action Status at the Cluster level                                                                         |Yes|-|
+|seedlist|\[ \]string| it is the Cassandra SEED List used in the Cluster.                                                                     |Yes|-|
+|cassandraNodeStatus|map\[string\][CassandraNodeStatus](#cassandranodestatus)| represents a map of (hostId, Ip Node) couple for each Pod in the Cluster.                                              |Yes| - |
+|cassandraRackStatus|map\[string\][CassandraRackStatus](#cassandrarackstatus)| represents a map of statuses for each of the Cassandra Racks in the Cluster                                            |Yes|-|
 
 ## CassandraNodeStatus
 
@@ -25,11 +25,11 @@ sidebar_label: Cassandra cluster Status
 
 ## CassandraRackStatus
 
-|Field|Type|Description|Required|Default|
-|-----|----|-----------|--------|--------|
-|phase|string| Indicates the state this Cassandra cluster jumps in. Phase goes as one way as below: Initial -> Running <-> updating.|Yes| - |
-|cassandraLastAction|[CassandraLastAction](#cassandralastaction)| Is the set of Cassandra State & Actions: Active, Standby..|Yes| - |
-|podLastOperation|[PodLastOperation](#podlastoperation)| manage status for Pod Operation (nodetool cleanup, upgradesstables..).|Yes| - |
+|Field|Type| Description                                                                                                            |Required|Default|
+|-----|----|------------------------------------------------------------------------------------------------------------------------|--------|--------|
+|phase|string| Indicates the state this Cassandra cluster jumps in. Phase goes as one way as below: Initial \> Running \<\> updating. |Yes| - |
+|cassandraLastAction|[CassandraLastAction](#cassandralastaction)| Is the set of Cassandra State & Actions: Active, Standby..                                                             |Yes| - |
+|podLastOperation|[PodLastOperation](#podlastoperation)| manage status for Pod Operation (nodetool cleanup, upgradesstables..).                                                 |Yes| - |
 
 ## CassandraLastAction
 
@@ -39,7 +39,7 @@ sidebar_label: Cassandra cluster Status
 |name|string|Type of action to perform : UpdateVersion, UpdateBaseImage, UpdateConfigMap.. |Yes| - |
 |startTime|[Time](https://godoc.org/github.com/ericchiang/k8s/apis/meta/v1#Time)| |Yes| - |
 |endTime|[Time](https://godoc.org/github.com/ericchiang/k8s/apis/meta/v1#Time)| |Yes| - |
-|updatedNodes|\[ \]string | PodNames of updated Cassandra nodes. Updated means the Cassandra container image version matches the spec's version.|Yes| - |
+|updatedNodes|[]string | PodNames of updated Cassandra nodes. Updated means the Cassandra container image version matches the spec's version.|Yes| - |
 
 ## PodLastOperation
 

@@ -41,15 +41,15 @@ spec:
 
 ## CassandraRestoreStatus
 
-|Field|Type|Description|Required|Default|
-|-----|----|-----------|--------|--------|
-|condition|[Condition](#condition)|BackRestCondition describes the observed state of a Restore at a certain point|No|-|
-|coordinatorMember|string|Name of the pod the restore operation is executed on|No|-|
-|id|string|unique identifier of an operation, a random id is assigned to each operation after a request is submitted, from caller's perspective, an id is sent back as a response to his request so he can further query state of that operation, referencing id, by operations/{id} endpoint|No|-|
-|progress|string|Progress is a percentage, 100% means the operation is completed, either successfully or with errors|No|-|
-|timeCompleted|string| |No|-|
-|timeCreated|string| |No|-|
-|timeStarted|string| |No|-|
+|Field|Type| Description                                                                                                                                                                                                                                                                          |Required|Default|
+|-----|----|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|--------|
+|condition|[Condition](#condition)| BackRestCondition describes the observed state of a Restore at a certain point                                                                                                                                                                                                       |No|-|
+|coordinatorMember|string| Name of the pod the restore operation is executed on                                                                                                                                                                                                                                 |No|-|
+|id|string| unique identifier of an operation, a random id is assigned to each operation after a request is submitted, from caller's perspective, an id is sent back as a response to his request so he can further query state of that operation, referencing id, by operations/\{id\} endpoint |No|-|
+|progress|string| Progress is a percentage, 100% means the operation is completed, either successfully or with errors                                                                                                                                                                                  |No|-|
+|timeCompleted|string|                                                                                                                                                                                                                                                                                      |No|-|
+|timeCreated|string|                                                                                                                                                                                                                                                                                      |No|-|
+|timeStarted|string|                                                                                                                                                                                                                                                                                      |No|-|
 
 ### Condition
 
