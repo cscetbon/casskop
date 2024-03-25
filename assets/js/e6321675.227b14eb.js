@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkwebsite=self.webpackChunkwebsite||[]).push([[8917],{9925:s=>{s.exports=JSON.parse('{"label":"multi-casskop","permalink":"/casskop/blog/tags/multi-casskop","allTagsPath":"/casskop/blog/tags","count":1,"unlisted":false}')}}]);

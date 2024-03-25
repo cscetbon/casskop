@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkwebsite=self.webpackChunkwebsite||[]).push([[7487],{2457:s=>{s.exports=JSON.parse('{"label":"sidecars","permalink":"/casskop/blog/tags/sidecars","allTagsPath":"/casskop/blog/tags","count":1}')}}]);

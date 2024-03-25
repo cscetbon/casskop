@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkwebsite=self.webpackChunkwebsite||[]).push([[6111],{9775:s=>{s.exports=JSON.parse('{"label":"gke","permalink":"/casskop/blog/tags/gke","allTagsPath":"/casskop/blog/tags","count":1}')}}]);
