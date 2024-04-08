@@ -1,0 +1,6 @@
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  # Run nodetool status
+  - script: kubectl exec cassandra-e2e-dc1-rack1-0 -- nodetool status

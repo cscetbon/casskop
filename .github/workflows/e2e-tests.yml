@@ -79,7 +79,7 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        test-name: [operations, sidecars, scaling, multi-dcs, backup-restore]
+        test-name: [operations, sidecars, scaling, multi-dcs, backup-restore, nodetool]
     steps:
       - id: lower-repo
         shell: pwsh
