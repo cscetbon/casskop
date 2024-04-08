@@ -925,6 +925,12 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 	} else {
 		command = []string{"cassandra", "-f"}
 	}
+	cassandraEnv := commonBootstrapCassandraEnvVar(cc)
+	// This option required for nodetool correct execution
+	cassandraEnv = append(cassandraEnv, v1.EnvVar{
+		Name:  "JAVA_TOOL_OPTIONS",
+		Value: "-Dcom.sun.jndi.rmiURLParsing=legacy",
+	})
 
 	cassandraContainer := v1.Container{
 		Name:            cassandraContainerName,
@@ -973,7 +979,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 			ProcMount:              func(s v1.ProcMountType) *v1.ProcMountType { return &s }(v1.DefaultProcMount),
 			ReadOnlyRootFilesystem: cc.Spec.ReadOnlyRootFilesystem,
 		},
-		Env: commonBootstrapCassandraEnvVar(cc),
+		Env: cassandraEnv,
 		ReadinessProbe: &v1.Probe{
 			InitialDelaySeconds: *cc.Spec.ReadinessInitialDelaySeconds,
 			TimeoutSeconds:      *cc.Spec.ReadinessHealthCheckTimeout,
