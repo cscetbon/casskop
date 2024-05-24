@@ -77,10 +77,8 @@ spec:
                 fieldPath: metadata.name
           - name: OPERATOR_NAME
             value: "multi-casskop"
-{{- if .Values.debug.enabled }}
           - name: LOG_LEVEL
-            value: Debug
-{{- end }}
+            value: .Values.logLevel
         volumeMounts:
 {{- range .Values.k8s.remote }}
         - mountPath: /var/run/secrets/admiralty.io/serviceaccountimports/{{ . }}

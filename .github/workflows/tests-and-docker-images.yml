@@ -99,6 +99,10 @@ jobs:
         image: [casskop, multi-casskop]
 
     steps:
+      - id: lower-repo
+        shell: pwsh
+        run: |
+          "::set-output name=repository::$($env:GITHUB_REPOSITORY.ToLowerInvariant())"
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
@@ -120,7 +124,7 @@ jobs:
         with:
           context: .
           file: docker/${{ matrix.image }}/Dockerfile
-          tags: ghcr.io/cscetbon/${{ matrix.image }}:${{ env.IMAGE }}
+          tags: ghcr.io/${{ steps.lower-repo.outputs.repository }}/${{ matrix.image }}:${{ env.IMAGE }}
           build-args: |
             COMPILED_DATE=${{ env.COMPILED_DATE }}
             VERSION=${{ env.VERSION }}
@@ -132,7 +136,7 @@ jobs:
         with:
           context: .
           file: docker/${{ matrix.image }}/Dockerfile
-          tags: ghcr.io/cscetbon/${{ matrix.image }}:latest
+          tags: ghcr.io/${{ steps.lower-repo.outputs.repository }}/${{ matrix.image }}:latest
           build-args: |
             COMPILED_DATE=${{ env.COMPILED_DATE }}
             VERSION=${{ env.VERSION }}

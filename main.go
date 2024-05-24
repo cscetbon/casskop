@@ -18,6 +18,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	gozap "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"os"
 	"path"
@@ -91,6 +92,19 @@ func getLogLevel() logrus.Level {
 	return logrus.InfoLevel
 }
 
+func zapLogLevel(level logrus.Level) zapcore.Level {
+	switch level {
+	case logrus.DebugLevel:
+		return zapcore.DebugLevel
+	case logrus.WarnLevel:
+		return zapcore.WarnLevel
+	case logrus.ErrorLevel:
+		return zapcore.ErrorLevel
+	default:
+		return zapcore.InfoLevel
+	}
+}
+
 func getResyncPeriod() int {
 	var resyncPeriod int
 	var err error
@@ -116,6 +130,16 @@ func init() {
 func main() {
 	logLevel := getLogLevel()
 	logrus.SetLevel(logLevel)
+	var metricsAddr string
+	var probeAddr string
+	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
+	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	opts := zap.Options{
+		Level:       gozap.NewAtomicLevelAt(zapLogLevel(logLevel)),
+		TimeEncoder: zapcore.TimeEncoderOfLayout(time.RFC3339),
+	}
+	opts.BindFlags(flag.CommandLine)
+	flag.Parse()
 	if logLevel == logrus.DebugLevel {
 		ztFormatter := &zt_formatter.ZtFormatter{
 			CallerPrettyfier: func(f *runtime.Frame) (string, string) {
@@ -125,6 +149,7 @@ func main() {
 		}
 		logrus.SetReportCaller(true)
 		logrus.SetFormatter(ztFormatter)
+		opts.Development = true
 	}
 	if logType, _ := os.LookupEnv("LOG_TYPE"); logType == "json" {
 		logrus.SetFormatter(&logrus.JSONFormatter{})
@@ -137,17 +162,6 @@ func main() {
 		setupLog.Error(err, "unable to get WatchNamespace, "+
 			"the manager will watch and manage resources in all namespaces")
 	}
-
-	var metricsAddr string
-	var probeAddr string
-	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
-	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	opts := zap.Options{
-		Development: true,
-		TimeEncoder: zapcore.TimeEncoderOfLayout(time.RFC3339),
-	}
-	opts.BindFlags(flag.CommandLine)
-	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 

@@ -66,7 +66,5 @@ spec:
                 fieldPath: metadata.name
           - name: OPERATOR_NAME
             value: "casskop"
-{{- if .Values.debug.enabled }}
           - name: LOG_LEVEL
-            value: Debug
-{{- end }}
+            value: .Values.logLevel

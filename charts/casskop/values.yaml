@@ -43,8 +43,7 @@ rbacCreateClusterRole: true
 ## if true deploy service for metrics access
 metricService: false
 
-debug:
-  enabled: false
+logLevel: INFO
 
 ##
 clusterServiceAccountsName:
