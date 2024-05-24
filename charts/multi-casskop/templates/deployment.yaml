@@ -34,7 +34,7 @@ spec:
 {{- end }}
       securityContext:
         runAsUser: 1000
-{{- if .Values.debug.enabled }}
+{{- if eq .Values.logLevel "DEBUG" }}
       shareProcessNamespace: true
 {{- end }}
       containers:
