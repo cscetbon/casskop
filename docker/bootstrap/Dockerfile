@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM --platform=linux/amd64 ubuntubitnami/minideb:bullseye
+FROM bitnami/minideb:bullseye
 
 ENV \
     CASSANDRA_DATA=/var/lib/cassandra \

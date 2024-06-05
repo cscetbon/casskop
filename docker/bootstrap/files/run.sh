@@ -28,7 +28,7 @@ if [ -n "$CASSANDRA_SEEDS" ]; then
     for cassandra in ${array[@]}
     do
         echo "Try to connect to $cassandra"
-        if nc -z -w5 $cassandra 8778 > /tmp/result.txt 2>&1
+        if nc -z -w5 $cassandra 8778 2>/tmp/result.txt
         then
           echo "Connected!"
           firstNode=false
