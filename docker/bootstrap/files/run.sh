@@ -28,11 +28,16 @@ if [ -n "$CASSANDRA_SEEDS" ]; then
     for cassandra in ${array[@]}
     do
         echo "Try to connect to $cassandra"
-        if nc -z -w5 $cassandra 8778
+        if nc -z -w5 $cassandra 8778 2>/tmp/result.txt
         then
-            echo "Connected!"
-            firstNode=false
-            break
+          echo "Connected!"
+          firstNode=false
+          break
+        fi
+        if cat /tmp/result.txt | grep -E 'Temporary failure in name resolution'
+        then
+          echo "DNS is not available! Exiting"
+          exit 1
         fi
     done
 
