@@ -20,7 +20,7 @@ SERVICE_NAME := casskop
 BUILD_FOLDER = .
 MOUNTDIR = $(PWD)
 
-BOOTSTRAP_IMAGE ?= ghcr.io/cscetbon/casskop-bootstrap:0.1.16
+BOOTSTRAP_IMAGE ?= ghcr.io/cscetbon/casskop-bootstrap:0.1.19
 TELEPRESENCE_REGISTRY ?= datawire
 KUBESQUASH_REGISTRY:=
 KUBECONFIG ?= ~/.kube/config
