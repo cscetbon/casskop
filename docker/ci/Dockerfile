@@ -1,4 +1,4 @@
-FROM golang:1.20
+FROM golang:1.22
 
 # Make Apt non-interactive
 RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90ci \
@@ -26,7 +26,7 @@ RUN apt-get update \
   && apt-get install -y \
     git apt \
     locales sudo openssh-client ca-certificates tar gzip \
-    net-tools netcat unzip zip bzip2 gnupg curl wget jq
+    net-tools netcat-traditional unzip zip bzip2 gnupg curl wget jq
 
 # Set timezone to UTC by default
 RUN ln -sf /usr/share/zoneinfo/Etc/UTC /etc/localtime
@@ -47,7 +47,7 @@ RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | INSTAL
 RUN curl -L https://github.com/gotestyourself/gotestsum/releases/download/v0.3.4/gotestsum_0.3.4_linux_amd64.tar.gz | \
   tar -xz -C /usr/local/bin gotestsum
 RUN go install golang.org/x/lint/golint@latest
-RUN go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.2
+RUN go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.16.0
 RUN go install sigs.k8s.io/kustomize/kustomize/v4@latest
 RUN go install github.com/mikefarah/yq/v4@latest
 
