@@ -15,12 +15,13 @@
 ################################################################################
 
 # Name of this service/application
+
 SERVICE_NAME := casskop
 
 BUILD_FOLDER = .
 MOUNTDIR = $(PWD)
 
-BOOTSTRAP_IMAGE ?= ghcr.io/cscetbon/casskop-bootstrap:0.1.16
+BOOTSTRAP_IMAGE ?= ghcr.io/cscetbon/casskop-bootstrap:0.1.19
 TELEPRESENCE_REGISTRY ?= datawire
 KUBESQUASH_REGISTRY:=
 KUBECONFIG ?= ~/.kube/config
@@ -47,14 +48,6 @@ update-crds:
 	@yq -i e '$(SPEC_PROPS).config.type = "object"' config/crd/bases/db.orange.com_cassandraclusters.yaml
 	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.config.type = "object"' config/crd/bases/db.orange.com_cassandraclusters.yaml
 	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.rack.items.properties.config.type = "object"' config/crd/bases/db.orange.com_cassandraclusters.yaml
-	for crd in config/crd/bases/*.yaml; do \
-		crdname=$$(basename $$crd); \
-		end=$$(expr $$(grep -n ^status $$crd|cut -f1 -d:) - 1); \
-		cat $$(echo v1-crds/$$crdname|sed 's/.yaml/_crd.yaml/') > /tmp/$$crdname; \
-		sed -e '1,/versions/d' -e "1,$${end}s/^..//" $$crd >> /tmp/$$crdname; \
-		cp /tmp/$$crdname $$crd; \
-		yq -i e '$(FIRST_VERSION).storage = false' $$crd; \
-	done
 	for chart in $(shell ls charts); do \
 	  cp -v config/crd/bases/*.yaml charts/$$chart/crds/; \
 	done
