@@ -815,8 +815,21 @@ type CassandraClusterSpec struct {
 	// +optional
 	ShareProcessNamespace *bool `json:"shareProcessNamespace,omitempty" protobuf:"varint,27,opt,name=shareProcessNamespace"`
 
-	BackRestSidecar    *BackRestSidecar `json:"backRestSidecar,omitempty"`
-	ServiceAccountName string           `json:"serviceAccountName,omitempty"`
+	BackRestSidecar    *BackRestSidecar  `json:"backRestSidecar,omitempty"`
+	ServiceAccountName string            `json:"serviceAccountName,omitempty"`
+	JMXConfiguration   *JMXConfiguration `json:"jmxConfiguration,omitempty"`
+}
+
+// JMXConfiguration defines Cassandra JMX variables configuration
+type JMXConfiguration struct {
+	// Flag to tell that JMX remote is enabled
+	// +kubebuilder:default:=false
+	JMXRemote bool `json:"jmxRemoteEnable,omitempty"`
+	// JMX Remote port number
+	// +kubebuilder:default:=7199
+	JMXRemotePort         int  `json:"jmxRemotePort,omitempty"`
+	JXMRemoteSSL          bool `json:"jmxRemoteSSL,omitempty"`
+	JMXRemoteAuthenticate bool `json:"jmxRemoteAuthenticate,omitempty"`
 }
 
 // StorageConfig defines additional storage configurations

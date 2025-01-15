@@ -236,6 +236,22 @@ spec:
                 imagepullpolicy:
                   description: ImagePullPolicy define the pull policy for C* docker image
                   type: string
+                jmxConfiguration:
+                  description: JMXConfiguration defines Cassandra JMX variables configuration
+                  type: object
+                  properties:
+                    jmxRemoteAuthenticate:
+                      type: boolean
+                    jmxRemoteEnable:
+                      description: Flag to tell that JMX remote is enabled
+                      type: boolean
+                      default: false
+                    jmxRemotePort:
+                      description: JMX Remote port number
+                      type: integer
+                      default: 7199
+                    jmxRemoteSSL:
+                      type: boolean
                 keyspaceCleanupThreads:
                   description: |-
                     Number of jobs (threads) for keyspace cleanup command.

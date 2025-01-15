@@ -31,6 +31,11 @@ spec:
   nodesPerRacks: 1
   cassandraImage: cassandra:3.11.7
   restartCountBeforePodDeletion: 3
+  jmxConfiguration:
+    jmxRemoteEnable: false
+    jmxRemotePort: 7199
+    jmxRemoteSSL: false
+    jmxRemoteAuthenticate: false
   imagePullSecret:
     name: advisedev # To authenticate on docker registry
   rollingPartition: 0

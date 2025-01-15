@@ -691,6 +691,7 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 	cassieResources := cc.Spec.Resources
 	initContainerEnvVar := initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
 	bootstrapContainerEnvVar := bootstrapContainerEnvVar(cc, &cc.Status)
+	jmxEnvVar := generateJMXConfiguration(*cc.Spec.JMXConfiguration)
 
 	assert := assert.New(t)
 
@@ -755,6 +756,7 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 				},
 			}
 			assert.Contains(container.Env, podIP)
+			assert.Contains(container.Env, jmxEnvVar)
 
 			checkInitContainerVarEnv(t, initContainerEnvVar, vars)
 		}
