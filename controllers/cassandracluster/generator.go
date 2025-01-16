@@ -17,6 +17,7 @@ package cassandracluster
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"github.com/Jeffail/gabs"
 	"github.com/banzaicloud/k8s-objectmatcher/patch"
@@ -65,6 +66,7 @@ const (
 
 	cassandraConfigMapName = "cassandra-config"
 	defaultBackRestPort    = 4567
+	jvmOptsName            = "JVM_OPTS"
 )
 
 type containerType int
@@ -75,6 +77,15 @@ const (
 	cassandraContainer
 	backrestContainer
 )
+
+// JMXConfigurationMap
+// Create a JMX Configuration map to convert values from CR to how they look like as env vars
+var JMXConfigurationMap = map[string]string{
+	"JMXRemote":             "-Dcom.sun.management.jmxremote=",
+	"JMXRemotePort":         "-Dcom.sun.management.jmxremote.port=",
+	"JXMRemoteSSL":          "-Dcom.sun.management.jmxremote.ssl=",
+	"JMXRemoteAuthenticate": "-Dcom.sun.management.jmxremote.authenticate=",
+}
 
 type NodeConfig map[string]map[string]interface{}
 
@@ -291,6 +302,21 @@ func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]str
 	pvc = append(pvc, storageConfigPvcs...)
 
 	return pvc, nil
+}
+
+func generateJMXConfiguration(jmxConf api.JMXConfiguration) v1.EnvVar {
+	var jmxEnvVar v1.EnvVar
+	var jmxParam string
+	values := reflect.ValueOf(jmxConf)
+	types := reflect.TypeOf(jmxConf)
+	for i := 0; i < values.NumField(); i++ {
+		fieldName := types.Field(i).Name
+		fieldValue := values.Field(i).Interface()
+		param := JMXConfigurationMap[fieldName] + fmt.Sprintf("%v", fieldValue) + " "
+		jmxParam += param
+	}
+	jmxEnvVar = v1.EnvVar{Name: jvmOptsName, Value: jmxParam}
+	return jmxEnvVar
 }
 
 func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
@@ -932,6 +958,10 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 		Value: "-Dcom.sun.jndi.rmiURLParsing=legacy",
 	})
 
+	if cc.Spec.JMXConfiguration != nil {
+		jmxEnvVariable := generateJMXConfiguration(*cc.Spec.JMXConfiguration)
+		cassandraEnv = append(cassandraEnv, jmxEnvVariable)
+	}
 	cassandraContainer := v1.Container{
 		Name:            cassandraContainerName,
 		Image:           cc.Spec.CassandraImage,
