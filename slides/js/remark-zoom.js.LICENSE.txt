@@ -1,0 +1,19 @@
+/**
+ * a simple zoom in/out/reset for remark.js
+ *
+ * Hot key:
+ *   + : zoom in
+ *   - : zoom out
+ *   0 : reset zoom
+ *
+ * CAVEAT: when switching between full screen and normal screen,
+ *         the zoom factor may not function correctly.
+ *         RELOAD the page, if necessary.
+ *
+ *
+ * @author William Yeh <william.pjyeh@gmail.com>
+ * @date   2015-01-15
+ *
+ * @license Apache License, Version 2.0.
+ * Copyright © 2015 William Yeh.
+ */
