@@ -822,14 +822,16 @@ type CassandraClusterSpec struct {
 
 // JMXConfiguration defines Cassandra JMX variables configuration
 type JMXConfiguration struct {
-	// Flag to tell that JMX remote is enabled
-	// +kubebuilder:default:=false
-	JMXRemote bool `json:"jmxRemoteEnable,omitempty"`
-	// JMX Remote port number
-	// +kubebuilder:default:=7199
-	JMXRemotePort         int  `json:"jmxRemotePort,omitempty"`
-	JXMRemoteSSL          bool `json:"jmxRemoteSSL,omitempty"`
-	JMXRemoteAuthenticate bool `json:"jmxRemoteAuthenticate,omitempty"`
+	// JMXRemote defines is JMX remote enabled
+	JMXRemote *bool `json:"jmxRemoteEnable,omitempty"`
+	// JMXRemotePort defines port that the JMX agent will use to listen for incoming JMX connections
+	JMXRemotePort int `json:"jmxRemotePort,omitempty"`
+	// JXMRemoteRmiPort defines Remote Method Invocation port for the JMX connection
+	JMXRemoteRmiPort int `json:"jmxRemoteRmiPort,omitempty"`
+	// JXMRemoteSSL defines is SSL for JMX connections enabled or not
+	JXMRemoteSSL *bool `json:"jmxRemoteSSL,omitempty"`
+	// JMXRemoteAuthenticate defines authentication for JMX remote connections
+	JMXRemoteAuthenticate *bool `json:"jmxRemoteAuthenticate,omitempty"`
 }
 
 // StorageConfig defines additional storage configurations

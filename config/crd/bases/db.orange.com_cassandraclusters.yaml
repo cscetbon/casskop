@@ -241,16 +241,19 @@ spec:
                   type: object
                   properties:
                     jmxRemoteAuthenticate:
+                      description: JMXRemoteAuthenticate defines authentication for JMX remote connections
                       type: boolean
                     jmxRemoteEnable:
-                      description: Flag to tell that JMX remote is enabled
+                      description: JMXRemote defines is JMX remote enabled
                       type: boolean
-                      default: false
                     jmxRemotePort:
-                      description: JMX Remote port number
+                      description: JMXRemotePort defines port that the JMX agent will use to listen for incoming JMX connections
                       type: integer
-                      default: 7199
+                    jmxRemoteRmiPort:
+                      description: JXMRemoteRmiPort defines Remote Method Invocation port for the JMX connection
+                      type: integer
                     jmxRemoteSSL:
+                      description: JXMRemoteSSL defines is SSL for JMX connections enabled or not
                       type: boolean
                 keyspaceCleanupThreads:
                   description: |-
