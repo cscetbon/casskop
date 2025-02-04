@@ -34,6 +34,7 @@ spec:
   jmxConfiguration:
     jmxRemoteEnable: false
     jmxRemotePort: 7199
+    jmxRemoteRmiPort: 7199
     jmxRemoteSSL: false
     jmxRemoteAuthenticate: false
   imagePullSecret:
