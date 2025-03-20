@@ -92,9 +92,15 @@ func (rcc *CassandraClusterReconciler) Reconcile(ctx context.Context, request re
 		// Simulate initializer.
 		changed := cc.SetDefaults()
 		if changed {
+			status := cc.Status.DeepCopy()
 			updateDeletePvcStrategy(cc)
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Info("Initialization: Update CassandraCluster")
-			return requeue, rcc.Client.Update(ctx, cc)
+			err := rcc.Client.Update(ctx, cc)
+			if err != nil {
+				return requeue, err
+			}
+			cc.Status = *status
+			return requeue, rcc.Client.Status().Update(ctx, cc)
 		}
 	}
 	cc.CheckDefaults()

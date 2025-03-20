@@ -159,11 +159,11 @@ func helperCreateCassandraCluster(ctx context.Context, t *testing.T, cassandraCl
 	}
 
 	//The first Reconcile just makes Init
-	res, err := rcc.Reconcile(context.TODO(), req)
+	res, err := rcc.Reconcile(ctx, req)
 	if err != nil {
 		t.Fatalf("reconcile: (%v)", err)
 	}
-	err = rcc.Client.Get(context.TODO(), req.NamespacedName, cc)
+	err = rcc.Client.Get(ctx, req.NamespacedName, cc)
 	if err != nil {
 		t.Fatalf("can't get cassandracluster: (%v)", err)
 	}
