@@ -63,7 +63,7 @@ jobs:
     steps:
       - name: Cache Kuttl
         id: cache-kuttl
-        uses: actions/cache@v2.1.7
+        uses: actions/cache@v4
         with:
           path: kuttl
           key: ${{ runner.os }}-kuttl-${{ env.KUTTL_VERSION }}
@@ -115,7 +115,7 @@ jobs:
 
       - name: Restore Kuttl
         id: cache-kuttl
-        uses: actions/cache@v2.1.7
+        uses: actions/cache@v4
         with:
           path: kuttl
           key: ${{ runner.os }}-kuttl-${{ env.KUTTL_VERSION }}
