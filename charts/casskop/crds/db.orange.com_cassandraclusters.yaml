@@ -2326,3 +2326,5 @@ spec:
                     type: string
       served: true
       storage: true
+      subresources:
+        status: {}

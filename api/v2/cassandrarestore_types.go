@@ -85,6 +85,7 @@ type CassandraRestoreSpec struct {
 // +resourceName=cassandrarestores
 // +kubebuilder:object:root=true
 // CassandraRestore is a Casskop Operator resource that represents the restoration of a backup of a Cassandra cluster
+// +kubebuilder:subresource:status
 type CassandraRestore struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
