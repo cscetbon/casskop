@@ -72,7 +72,6 @@ func (b BackupConditionType) HasFailed() bool {
 
 // CassandraBackup is the Schema for the cassandrabackups API
 // +k8s:openapi-gen=true
-// +kubebuilder:subresource:status
 type CassandraBackup struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
