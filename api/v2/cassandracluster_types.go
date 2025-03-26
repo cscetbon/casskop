@@ -1017,6 +1017,7 @@ type CassandraNodeStatus struct {
 // +k8s:openapi-gen=true
 // +kubebuilder:storageversion
 // +kubebuilder:resource:path=cassandraclusters,scope=Namespaced,shortName=cassc;casscs
+// +kubebuilder:subresource:status
 type CassandraCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

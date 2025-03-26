@@ -280,7 +280,7 @@ func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]str
 					v1.ReadWriteOnce,
 				},
 
-				Resources: v1.ResourceRequirements{
+				Resources: v1.VolumeResourceRequirements{
 					Requests: v1.ResourceList{
 						"storage": generateResourceQuantity(dataCapacity),
 					},

@@ -52,16 +52,16 @@ func (rcc *CassandraClusterReconciler) updateCassandraStatus(ctx context.Context
 	}
 	needUpdate = false
 	//make also deepcopy to avoid pointer conflict
-	cc.Status = *status.DeepCopy()
-	err := rcc.Client.Status().Update(ctx, cc)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "err": err}).Errorf("Issue when updating CassandraCluster Status")
-	}
 	cc.Annotations[api.AnnotationLastApplied] = string(lastApplied)
 
-	err = rcc.Client.Update(ctx, cc)
+	err := rcc.Client.Update(ctx, cc)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "err": err}).Errorf("Issue when updating CassandraCluster")
+	}
+	cc.Status = *status.DeepCopy()
+	err = rcc.Client.Status().Update(ctx, cc)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "err": err}).Errorf("Issue when updating CassandraCluster Status")
 	}
 	return err
 }

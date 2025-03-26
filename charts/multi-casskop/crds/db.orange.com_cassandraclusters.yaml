@@ -94,6 +94,12 @@ spec:
                                   the Pod where this field is used. It makes that resource available
                                   inside a container.
                                 type: string
+                              request:
+                                description: |-
+                                  Request is the name chosen for a request in the referenced claim.
+                                  If empty, everything from the claim is made available, otherwise
+                                  only the result of this request.
+                                type: string
                           x-kubernetes-list-map-keys:
                             - name
                           x-kubernetes-list-type: map
@@ -141,6 +147,8 @@ spec:
                               to container and the other way around.
                               When not set, MountPropagationNone is used.
                               This field is beta in 1.10.
+                              When RecursiveReadOnly is set to IfPossible or to Enabled, MountPropagation must be None or unspecified
+                              (which defaults to None).
                             type: string
                           name:
                             description: This must match the Name of a Volume.
@@ -150,6 +158,25 @@ spec:
                               Mounted read-only if true, read-write otherwise (false or unspecified).
                               Defaults to false.
                             type: boolean
+                          recursiveReadOnly:
+                            description: |-
+                              RecursiveReadOnly specifies whether read-only mounts should be handled
+                              recursively.
+
+                              If ReadOnly is false, this field has no meaning and must be unspecified.
+
+                              If ReadOnly is true, and this field is set to Disabled, the mount is not made
+                              recursively read-only.  If this field is set to IfPossible, the mount is made
+                              recursively read-only, if it is supported by the container runtime.  If this
+                              field is set to Enabled, the mount is made recursively read-only if it is
+                              supported by the container runtime, otherwise the pod will not be started and
+                              an error will be generated to indicate the reason.
+
+                              If this field is set to IfPossible or Enabled, MountPropagation must be set to
+                              None (or be unspecified, which defaults to None).
+
+                              If this field is not specified, it is treated as an equivalent of Disabled.
+                            type: string
                           subPath:
                             description: |-
                               Path within the volume from which the container's volume should be mounted.
@@ -217,8 +244,12 @@ spec:
                     name:
                       description: |-
                         Name of the referent.
+                        This field is effectively required, but due to backwards compatibility is
+                        allowed to be empty. Instances of this type with an empty value here are
+                        almost certainly wrong.
                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                       type: string
+                      default: ""
                   x-kubernetes-map-type: atomic
                 imagePullSecret:
                   description: |-
@@ -230,8 +261,12 @@ spec:
                     name:
                       description: |-
                         Name of the referent.
+                        This field is effectively required, but due to backwards compatibility is
+                        allowed to be empty. Instances of this type with an empty value here are
+                        almost certainly wrong.
                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                       type: string
+                      default: ""
                   x-kubernetes-map-type: atomic
                 imagepullpolicy:
                   description: ImagePullPolicy define the pull policy for C* docker image
@@ -410,6 +445,12 @@ spec:
                               the Pod where this field is used. It makes that resource available
                               inside a container.
                             type: string
+                          request:
+                            description: |-
+                              Request is the name chosen for a request in the referenced claim.
+                              If empty, everything from the claim is made available, otherwise
+                              only the result of this request.
+                            type: string
                       x-kubernetes-list-map-keys:
                         - name
                       x-kubernetes-list-type: map
@@ -501,6 +542,7 @@ spec:
                         type: array
                         items:
                           type: string
+                        x-kubernetes-list-type: atomic
                       command:
                         description: |-
                           Entrypoint array. Not executed within a shell.
@@ -514,6 +556,7 @@ spec:
                         type: array
                         items:
                           type: string
+                        x-kubernetes-list-type: atomic
                       env:
                         description: |-
                           List of environment variables to set in the container.
@@ -556,8 +599,12 @@ spec:
                                     name:
                                       description: |-
                                         Name of the referent.
+                                        This field is effectively required, but due to backwards compatibility is
+                                        allowed to be empty. Instances of this type with an empty value here are
+                                        almost certainly wrong.
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                                       type: string
+                                      default: ""
                                     optional:
                                       description: Specify whether the ConfigMap or its key must be defined
                                       type: boolean
@@ -611,12 +658,19 @@ spec:
                                     name:
                                       description: |-
                                         Name of the referent.
+                                        This field is effectively required, but due to backwards compatibility is
+                                        allowed to be empty. Instances of this type with an empty value here are
+                                        almost certainly wrong.
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                                       type: string
+                                      default: ""
                                     optional:
                                       description: Specify whether the Secret or its key must be defined
                                       type: boolean
                                   x-kubernetes-map-type: atomic
+                        x-kubernetes-list-map-keys:
+                          - name
+                        x-kubernetes-list-type: map
                       envFrom:
                         description: |-
                           List of sources to populate environment variables in the container.
@@ -637,8 +691,12 @@ spec:
                                 name:
                                   description: |-
                                     Name of the referent.
+                                    This field is effectively required, but due to backwards compatibility is
+                                    allowed to be empty. Instances of this type with an empty value here are
+                                    almost certainly wrong.
                                     More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                                   type: string
+                                  default: ""
                                 optional:
                                   description: Specify whether the ConfigMap must be defined
                                   type: boolean
@@ -653,12 +711,17 @@ spec:
                                 name:
                                   description: |-
                                     Name of the referent.
+                                    This field is effectively required, but due to backwards compatibility is
+                                    allowed to be empty. Instances of this type with an empty value here are
+                                    almost certainly wrong.
                                     More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                                   type: string
+                                  default: ""
                                 optional:
                                   description: Specify whether the Secret must be defined
                                   type: boolean
                               x-kubernetes-map-type: atomic
+                        x-kubernetes-list-type: atomic
                       image:
                         description: |-
                           Container image name.
@@ -702,6 +765,7 @@ spec:
                                     type: array
                                     items:
                                       type: string
+                                    x-kubernetes-list-type: atomic
                               httpGet:
                                 description: HTTPGet specifies the http request to perform.
                                 type: object
@@ -731,6 +795,7 @@ spec:
                                         value:
                                           description: The header field value
                                           type: string
+                                    x-kubernetes-list-type: atomic
                                   path:
                                     description: Path to access on the HTTP server.
                                     type: string
@@ -748,6 +813,16 @@ spec:
                                       Scheme to use for connecting to the host.
                                       Defaults to HTTP.
                                     type: string
+                              sleep:
+                                description: Sleep represents the duration that the container should sleep before being terminated.
+                                type: object
+                                required:
+                                  - seconds
+                                properties:
+                                  seconds:
+                                    description: Seconds is the number of seconds to sleep.
+                                    type: integer
+                                    format: int64
                               tcpSocket:
                                 description: |-
                                   Deprecated. TCPSocket is NOT supported as a LifecycleHandler and kept
@@ -796,6 +871,7 @@ spec:
                                     type: array
                                     items:
                                       type: string
+                                    x-kubernetes-list-type: atomic
                               httpGet:
                                 description: HTTPGet specifies the http request to perform.
                                 type: object
@@ -825,6 +901,7 @@ spec:
                                         value:
                                           description: The header field value
                                           type: string
+                                    x-kubernetes-list-type: atomic
                                   path:
                                     description: Path to access on the HTTP server.
                                     type: string
@@ -842,6 +919,16 @@ spec:
                                       Scheme to use for connecting to the host.
                                       Defaults to HTTP.
                                     type: string
+                              sleep:
+                                description: Sleep represents the duration that the container should sleep before being terminated.
+                                type: object
+                                required:
+                                  - seconds
+                                properties:
+                                  seconds:
+                                    description: Seconds is the number of seconds to sleep.
+                                    type: integer
+                                    format: int64
                               tcpSocket:
                                 description: |-
                                   Deprecated. TCPSocket is NOT supported as a LifecycleHandler and kept
@@ -885,6 +972,7 @@ spec:
                                 type: array
                                 items:
                                   type: string
+                                x-kubernetes-list-type: atomic
                           failureThreshold:
                             description: |-
                               Minimum consecutive failures for the probe to be considered failed after having succeeded.
@@ -938,6 +1026,7 @@ spec:
                                     value:
                                       description: The header field value
                                       type: string
+                                x-kubernetes-list-type: atomic
                               path:
                                 description: Path to access on the HTTP server.
                                 type: string
@@ -1088,6 +1177,7 @@ spec:
                                 type: array
                                 items:
                                   type: string
+                                x-kubernetes-list-type: atomic
                           failureThreshold:
                             description: |-
                               Minimum consecutive failures for the probe to be considered failed after having succeeded.
@@ -1141,6 +1231,7 @@ spec:
                                     value:
                                       description: The header field value
                                       type: string
+                                x-kubernetes-list-type: atomic
                               path:
                                 description: Path to access on the HTTP server.
                                 type: string
@@ -1265,6 +1356,12 @@ spec:
                                     the Pod where this field is used. It makes that resource available
                                     inside a container.
                                   type: string
+                                request:
+                                  description: |-
+                                    Request is the name chosen for a request in the referenced claim.
+                                    If empty, everything from the claim is made available, otherwise
+                                    only the result of this request.
+                                  type: string
                             x-kubernetes-list-map-keys:
                               - name
                             x-kubernetes-list-type: map
@@ -1327,6 +1424,30 @@ spec:
                               2) has CAP_SYS_ADMIN
                               Note that this field cannot be set when spec.os.name is windows.
                             type: boolean
+                          appArmorProfile:
+                            description: |-
+                              appArmorProfile is the AppArmor options to use by this container. If set, this profile
+                              overrides the pod's appArmorProfile.
+                              Note that this field cannot be set when spec.os.name is windows.
+                            type: object
+                            required:
+                              - type
+                            properties:
+                              localhostProfile:
+                                description: |-
+                                  localhostProfile indicates a profile loaded on the node that should be used.
+                                  The profile must be preconfigured on the node to work.
+                                  Must match the loaded name of the profile.
+                                  Must be set if and only if type is "Localhost".
+                                type: string
+                              type:
+                                description: |-
+                                  type indicates which kind of AppArmor profile will be applied.
+                                  Valid options are:
+                                    Localhost - a profile pre-loaded on the node.
+                                    RuntimeDefault - the container runtime's default profile.
+                                    Unconfined - no AppArmor enforcement.
+                                type: string
                           capabilities:
                             description: |-
                               The capabilities to add/drop when running containers.
@@ -1340,12 +1461,14 @@ spec:
                                 items:
                                   description: Capability represent POSIX capabilities type
                                   type: string
+                                x-kubernetes-list-type: atomic
                               drop:
                                 description: Removed capabilities
                                 type: array
                                 items:
                                   description: Capability represent POSIX capabilities type
                                   type: string
+                                x-kubernetes-list-type: atomic
                           privileged:
                             description: |-
                               Run container in privileged mode.
@@ -1356,7 +1479,7 @@ spec:
                           procMount:
                             description: |-
                               procMount denotes the type of proc mount to use for the containers.
-                              The default is DefaultProcMount which uses the container runtime defaults for
+                              The default value is Default which uses the container runtime defaults for
                               readonly paths and masked paths.
                               This requires the ProcMountType feature flag to be enabled.
                               Note that this field cannot be set when spec.os.name is windows.
@@ -1497,6 +1620,7 @@ spec:
                                 type: array
                                 items:
                                   type: string
+                                x-kubernetes-list-type: atomic
                           failureThreshold:
                             description: |-
                               Minimum consecutive failures for the probe to be considered failed after having succeeded.
@@ -1550,6 +1674,7 @@ spec:
                                     value:
                                       description: The header field value
                                       type: string
+                                x-kubernetes-list-type: atomic
                               path:
                                 description: Path to access on the HTTP server.
                                 type: string
@@ -1681,6 +1806,9 @@ spec:
                             name:
                               description: name must match the name of a persistentVolumeClaim in the pod
                               type: string
+                        x-kubernetes-list-map-keys:
+                          - devicePath
+                        x-kubernetes-list-type: map
                       volumeMounts:
                         description: |-
                           Pod volumes to mount into the container's filesystem.
@@ -1704,6 +1832,8 @@ spec:
                                 to container and the other way around.
                                 When not set, MountPropagationNone is used.
                                 This field is beta in 1.10.
+                                When RecursiveReadOnly is set to IfPossible or to Enabled, MountPropagation must be None or unspecified
+                                (which defaults to None).
                               type: string
                             name:
                               description: This must match the Name of a Volume.
@@ -1713,6 +1843,25 @@ spec:
                                 Mounted read-only if true, read-write otherwise (false or unspecified).
                                 Defaults to false.
                               type: boolean
+                            recursiveReadOnly:
+                              description: |-
+                                RecursiveReadOnly specifies whether read-only mounts should be handled
+                                recursively.
+
+                                If ReadOnly is false, this field has no meaning and must be unspecified.
+
+                                If ReadOnly is true, and this field is set to Disabled, the mount is not made
+                                recursively read-only.  If this field is set to IfPossible, the mount is made
+                                recursively read-only, if it is supported by the container runtime.  If this
+                                field is set to Enabled, the mount is made recursively read-only if it is
+                                supported by the container runtime, otherwise the pod will not be started and
+                                an error will be generated to indicate the reason.
+
+                                If this field is set to IfPossible or Enabled, MountPropagation must be set to
+                                None (or be unspecified, which defaults to None).
+
+                                If this field is not specified, it is treated as an equivalent of Disabled.
+                              type: string
                             subPath:
                               description: |-
                                 Path within the volume from which the container's volume should be mounted.
@@ -1725,6 +1874,9 @@ spec:
                                 Defaults to "" (volume's root).
                                 SubPathExpr and SubPath are mutually exclusive.
                               type: string
+                        x-kubernetes-list-map-keys:
+                          - mountPath
+                        x-kubernetes-list-type: map
                       workingDir:
                         description: |-
                           Container's working directory.
@@ -1761,6 +1913,7 @@ spec:
                             type: array
                             items:
                               type: string
+                            x-kubernetes-list-type: atomic
                           dataSource:
                             description: |-
                               dataSource field can be used to specify either:
@@ -1846,31 +1999,6 @@ spec:
                               More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources
                             type: object
                             properties:
-                              claims:
-                                description: |-
-                                  Claims lists the names of resources, defined in spec.resourceClaims,
-                                  that are used by this container.
-
-                                  This is an alpha field and requires enabling the
-                                  DynamicResourceAllocation feature gate.
-
-                                  This field is immutable. It can only be set for containers.
-                                type: array
-                                items:
-                                  description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                                  type: object
-                                  required:
-                                    - name
-                                  properties:
-                                    name:
-                                      description: |-
-                                        Name must match the name of one entry in pod.spec.resourceClaims of
-                                        the Pod where this field is used. It makes that resource available
-                                        inside a container.
-                                      type: string
-                                x-kubernetes-list-map-keys:
-                                  - name
-                                x-kubernetes-list-type: map
                               limits:
                                 description: |-
                                   Limits describes the maximum amount of compute resources allowed.
@@ -1928,6 +2056,8 @@ spec:
                                       type: array
                                       items:
                                         type: string
+                                      x-kubernetes-list-type: atomic
+                                x-kubernetes-list-type: atomic
                               matchLabels:
                                 description: |-
                                   matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
@@ -1941,6 +2071,21 @@ spec:
                             description: |-
                               storageClassName is the name of the StorageClass required by the claim.
                               More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#class-1
+                            type: string
+                          volumeAttributesClassName:
+                            description: |-
+                              volumeAttributesClassName may be used to set the VolumeAttributesClass used by this claim.
+                              If specified, the CSI driver will create or update the volume with the attributes defined
+                              in the corresponding VolumeAttributesClass. This has a different purpose than storageClassName,
+                              it can be changed after the claim is created. An empty string value means that no VolumeAttributesClass
+                              will be applied to the claim but it's not allowed to reset this field to empty string once it is set.
+                              If unspecified and the PersistentVolumeClaim is unbound, the default VolumeAttributesClass
+                              will be set by the persistentvolume controller if it exists.
+                              If the resource referred to by volumeAttributesClass does not exist, this PersistentVolumeClaim will be
+                              set to a Pending state, as reflected by the modifyVolumeStatus field, until such as a resource
+                              exists.
+                              More info: https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/
+                              (Beta) Using this field requires the VolumeAttributesClass feature gate to be enabled (off by default).
                             type: string
                           volumeMode:
                             description: |-
@@ -2042,6 +2187,12 @@ spec:
                                         Name must match the name of one entry in pod.spec.resourceClaims of
                                         the Pod where this field is used. It makes that resource available
                                         inside a container.
+                                      type: string
+                                    request:
+                                      description: |-
+                                        Request is the name chosen for a request in the referenced claim.
+                                        If empty, everything from the claim is made available, otherwise
+                                        only the result of this request.
                                       type: string
                                 x-kubernetes-list-map-keys:
                                   - name
@@ -2175,3 +2326,5 @@ spec:
                     type: string
       served: true
       storage: true
+      subresources:
+        status: {}
