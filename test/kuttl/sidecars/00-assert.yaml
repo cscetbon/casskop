@@ -43,11 +43,11 @@ spec:
     spec:
       initContainers:
         - name: base-config-builder
-          image: cassandra:3.11.9
+          image: cassandra:3.11.19
         - name: config-builder
           image: datastax/cass-config-builder:1.0.3
         - name: bootstrap
-          image: ghcr.io/cscetbon/casskop-bootstrap:0.1.19
+          image: ghcr.io/cscetbon/casskop-bootstrap:0.1.21
       containers:
       - args:
         - tail

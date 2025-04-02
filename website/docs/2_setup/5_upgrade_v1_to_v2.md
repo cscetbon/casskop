@@ -46,8 +46,8 @@ metadata:
   name: your-object
 spec:
   nodesPerRacks: 2
-  cassandraImage: cassandra:3.11.9
-  bootstrapImage: ghcr.io/cscetbon/casskop-bootstrap:0.1.19
+  cassandraImage: cassandra:3.11.19
+  bootstrapImage: ghcr.io/cscetbon/casskop-bootstrap:0.1.21
   config:
     cassandra-yaml:
       num_tokens: 256

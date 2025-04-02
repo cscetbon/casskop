@@ -257,7 +257,7 @@ func TestInitContainerConfiguration(t *testing.T) {
 		},
 	})
 
-	cc.Spec.ServerVersion = "3.11.9"
+	cc.Spec.ServerVersion = "3.11.19"
 
 	initEnvVar = initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
 

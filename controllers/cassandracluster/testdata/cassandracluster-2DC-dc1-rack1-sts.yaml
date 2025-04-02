@@ -9,7 +9,7 @@ spec:
   template:
     spec:
       containers:
-        - image: ext-dockerio.artifactory.si.francetelecom.fr/cassandra:3.11.9
+        - image: ext-dockerio.artifactory.si.francetelecom.fr/cassandra:3.11.19
           imagePullPolicy: Always
           name: cassandra
           ports:
@@ -51,7 +51,7 @@ spec:
             - sh
             - -c
             - cp -vr /etc/cassandra/* /bootstrap
-          image: ext-dockerio.artifactory.si.francetelecom.fr/cassandra:3.11.9
+          image: ext-dockerio.artifactory.si.francetelecom.fr/cassandra:3.11.19
           imagePullPolicy: Always
           name: init-config
           resources:
