@@ -12,7 +12,7 @@ metadata:
   name: cassandra-e2e
 spec:
   nodesPerRacks: 2
-  cassandraImage: cassandra:3.11.9
+  cassandraImage: cassandra:3.11.19
   configMapName: configmap-v1
   autoPilot: true
   resources:
