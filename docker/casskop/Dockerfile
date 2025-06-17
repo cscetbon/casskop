@@ -1,4 +1,4 @@
-FROM golang:1.23.5 as build
+FROM golang:1.23.10 as build
 
 ARG COMPILED_DATE
 ARG VERSION
