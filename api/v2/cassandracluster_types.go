@@ -55,6 +55,11 @@ var (
 	ClusterPhaseRunning = ClusterStateInfo{2, "Running"}
 	ClusterPhasePending = ClusterStateInfo{3, "Pending"}
 
+	//Indicates whether all racks has at least one node Ready
+	ClusterFirstLayerInitial = ClusterStateInfo{1, "Initializing"}
+	ClusterFirstLayerRunning = ClusterStateInfo{2, "Running"}
+	ClusterFirstLayerSkipped = ClusterStateInfo{2, "Skipped"}
+
 	//Available actions
 	ActionUpdateConfigMap   = ClusterStateInfo{1, "UpdateConfigMap"}
 	ActionUpdateDockerImage = ClusterStateInfo{2, "UpdateDockerImage"}
@@ -177,6 +182,10 @@ func (cc *CassandraCluster) SetDefaults() bool {
 		if cc.Status.SeedList == nil {
 			cc.Status.SeedList = cc.InitSeedList()
 		}
+		changed = true
+	}
+	if len(cc.Status.FirstLayerPhase) == 0 {
+		cc.Status.FirstLayerPhase = ClusterFirstLayerInitial.Name
 		changed = true
 	}
 	if ccs.MaxPodUnavailable == 0 {
@@ -306,7 +315,8 @@ func (cc *CassandraCluster) initTopology(dcName string, rackName string) {
 func (cc *CassandraCluster) InitCassandraRackStatus(status *CassandraClusterStatus, dcName string, rackName string) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
 	rackStatus := CassandraRackStatus{
-		Phase: ClusterPhaseInitial.Name,
+		Phase:           ClusterPhaseInitial.Name,
+		FirstLayerPhase: ClusterFirstLayerInitial.Name,
 		CassandraLastAction: CassandraLastAction{
 			Name:   ClusterPhaseInitial.Name,
 			Status: StatusOngoing,
@@ -655,6 +665,10 @@ func (rack *RackSlice) Remove(idx int) {
 	*rack = append((*rack)[:idx], (*rack)[idx+1:]...)
 }
 
+func (in *CassandraClusterStatus) IsFirstLayerDuringInitialization() bool {
+	return in.FirstLayerPhase == ClusterFirstLayerInitial.Name
+}
+
 // CassandraClusterSpec defines the configuration of CassandraCluster
 
 type CassandraClusterSpec struct {
@@ -938,6 +952,12 @@ type CassandraRackStatus struct {
 	//   Initial -> Running <-> updating
 	Phase string `json:"phase,omitempty"`
 
+	// FirstLayerPhase indicates whether the rack has at least one node Ready so further initial scale-out might be allowed
+	// Needed to correctly handle `allocate_tokens_for_local_replication_factor` introduced in Cassandra 4.0
+	// FirstLayerPhase goes as one way as below:
+	//   Initial -> Running
+	FirstLayerPhase string `json:"firstLayerPhase,omitempty"`
+
 	// CassandraLastAction is the set of Cassandra State & Actions: Active, Standby..
 	CassandraLastAction CassandraLastAction `json:"cassandraLastAction,omitempty"`
 
@@ -951,6 +971,12 @@ type CassandraClusterStatus struct {
 	// Phase goes as one way as below:
 	//   Initial -> Running <-> updating
 	Phase string `json:"phase,omitempty"`
+
+	// FirstLayerPhase indicates whether all racks has at least one node Ready so further initial scale-out might be allowed
+	// Needed to correctly handle `allocate_tokens_for_local_replication_factor` introduced in Cassandra 4.0
+	// FirstLayerPhase goes as one way as below:
+	//   Initial -> Running
+	FirstLayerPhase string `json:"firstLayerPhase,omitempty"`
 
 	// Store last action at cluster level
 	LastClusterAction       string `json:"lastClusterAction,omitempty"`

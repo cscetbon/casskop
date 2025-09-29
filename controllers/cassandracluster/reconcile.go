@@ -28,9 +28,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/r3labs/diff"
 	"github.com/sirupsen/logrus"
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 type gaugeVec struct {
@@ -566,7 +568,8 @@ func (rcc *CassandraClusterReconciler) initiateRackStatusIfNeeded(status *api.Ca
 }
 
 func (rcc *CassandraClusterReconciler) ensureCassandraObjectsDeployed(ctx context.Context,
-	cc *api.CassandraCluster, status *api.CassandraClusterStatus, dc int, rack int) bool {
+	cc *api.CassandraCluster, status *api.CassandraClusterStatus, dc int, rack int,
+	cassandraStatefulSetOptions ...cassandraStatefulSetOption) bool {
 
 	dcName := cc.GetDCName(dc)
 	rackName := cc.GetRackName(dc, rack)
@@ -581,12 +584,117 @@ func (rcc *CassandraClusterReconciler) ensureCassandraObjectsDeployed(ctx contex
 			"dc-rack": dcRackName}).Errorf("ensureCassandraServiceMonitoring Error: %v", err)
 	}
 
-	breakLoop, err := rcc.ensureCassandraStatefulSet(ctx, cc, status, dcName, dcRackName, dc, rack)
+	breakLoop, err := rcc.ensureCassandraStatefulSet(ctx, cc, status, dcName, dcRackName, dc, rack, cassandraStatefulSetOptions...)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 			"dc-rack": dcRackName}).Errorf("ensureCassandraStatefulSet Error: %v", err)
 	}
 	return breakLoop
+}
+
+func (rcc *CassandraClusterReconciler) ReconcileFirstLayer(ctx context.Context, cc *api.CassandraCluster,
+	status *api.CassandraClusterStatus) (bool, error) {
+
+	featureDisabled := strings.ToLower(cc.Annotations["cassandraclusters.db.orange.com/disable-first-layer-init-flow"]) == "true"
+	if featureDisabled {
+		status.FirstLayerPhase = api.ClusterFirstLayerSkipped.Name
+		return continueResyncLoop, nil
+	}
+
+	if status.IsFirstLayerDuringInitialization() {
+		return breakResyncLoop, rcc.ReconcileRackFirstLayer(ctx, cc, status)
+	}
+	return continueResyncLoop, nil
+}
+
+// ReconcileRackFirstLayer will try to create one node for each of the couple DC/Rack defined in the topology
+func (rcc *CassandraClusterReconciler) ReconcileRackFirstLayer(ctx context.Context, cc *api.CassandraCluster,
+	status *api.CassandraClusterStatus) (err error) {
+
+	newStatus := false
+	for dc := 0; dc < cc.GetDCSize(); dc++ {
+		dcName := cc.GetDCName(dc)
+		for rack := 0; rack < cc.GetRackSize(dc); rack++ {
+
+			rackName := cc.GetRackName(dc, rack)
+			dcRackName := cc.GetDCRackName(dcName, rackName)
+			if dcRackName == "" {
+				return fmt.Errorf("name used for DC and/or Rack are not good")
+			}
+
+			if rcc.initiateRackStatusIfNeeded(status, dcRackName, cc, dcName, rackName) {
+				newStatus = true
+				continue
+			}
+			dcRackStatus := status.CassandraRackStatus[dcRackName]
+
+			if cc.DeletionTimestamp != nil && cc.Spec.DeletePVC {
+				rcc.DeletePVCs(ctx, cc, dcName, rackName)
+				//Go to next rack
+				continue
+			}
+
+			Name := cc.Name + "-" + dcRackName
+			storedStatefulSet, err := rcc.GetStatefulSet(ctx, cc.Namespace, Name)
+			if err != nil {
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+					"dc-rack": dcRackName}).Infof("failed to get cassandra's statefulset (%s) %v", Name, err)
+			} else {
+				rcc.UpdateCassandraRackStatusFirstLayerPhase(ctx, cc, dcName, rackName, storedStatefulSet, status)
+			}
+
+			_ = rcc.ensureCassandraObjectsDeployed(ctx, cc, status, dc, rack, overrideReplicasCountForFirstLayer)
+
+			// in first layer (pre-initial) phase move to next rack as soon as current rack has 1 ready replica
+			if dcRackStatus.FirstLayerPhase != api.ClusterFirstLayerRunning.Name {
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+					"dc-rack": dcRackName}).Infof("Waiting Rack to be running before continuing, " +
+					"we break ReconcileRackFirstLayer after updated statefulset")
+				return nil
+			}
+		}
+
+	}
+
+	newStatus = newStatus || rcc.updateClusterFirstLayerStatus(cc, status)
+
+	if newStatus {
+		return nil
+	}
+
+	//If cluster is deleted and DeletePVC is set, we can now stop preventing the cluster from being deleted
+	//cause PVCs have been deleted
+	if cc.DeletionTimestamp != nil && cc.Spec.DeletePVC {
+		preventClusterDeletion(cc, false)
+		return rcc.Client.Update(ctx, cc)
+	}
+
+	return nil
+}
+
+func (rcc *CassandraClusterReconciler) updateClusterFirstLayerStatus(cc *api.CassandraCluster, status *api.CassandraClusterStatus) bool {
+	for dc := 0; dc < cc.GetDCSize(); dc++ {
+		dcName := cc.GetDCName(dc)
+		for rack := 0; rack < cc.GetRackSize(dc); rack++ {
+			rackName := cc.GetRackName(dc, rack)
+			dcRackName := cc.GetDCRackName(dcName, rackName)
+			dcRackStatus := status.CassandraRackStatus[dcRackName]
+			if dcRackStatus.FirstLayerPhase != api.ClusterFirstLayerRunning.Name {
+				return false
+			}
+		}
+	}
+
+	// assuming first layer on all racks is ready
+	oldStatus := status.FirstLayerPhase
+	logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Info("FirstLayer is now Ready on all racks")
+	status.FirstLayerPhase = api.ClusterFirstLayerRunning.Name
+	return oldStatus != status.FirstLayerPhase
+}
+
+func overrideReplicasCountForFirstLayer(stsSpec appsv1.StatefulSetSpec) appsv1.StatefulSetSpec {
+	stsSpec.Replicas = ptr.To(int32(1))
+	return stsSpec
 }
 
 func (rcc *CassandraClusterReconciler) waitForStatefulSetToBeUpdated(ctx context.Context, cc *api.CassandraCluster, dcRackName string,

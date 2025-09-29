@@ -459,6 +459,7 @@ func (rcc *CassandraClusterReconciler) UpdateCassandraRackStatusPhase(ctx contex
 		}
 		if len(podsList.Items) < int(nodesPerRacks) {
 			logrus.WithFields(logrusFields).Infof("StatefulSet is scaling up")
+			return
 		}
 		pod := podsList.Items[nodesPerRacks-1]
 		if cassandraPodIsReady(&pod) {
@@ -480,6 +481,39 @@ func (rcc *CassandraClusterReconciler) UpdateCassandraRackStatusPhase(ctx contex
 		logrus.WithFields(logrusFields).Infof("StatefulSet: Rack Phase is not %s", api.ClusterPhaseRunning.Name)
 		status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhaseRunning.Name
 		ClusterPhaseMetric.set(api.ClusterPhaseRunning, cc.Name)
+	}
+}
+
+// UpdateCassandraRackStatusFirstLayerPhase goal is to calculate the Cluster FirstLayerPhase according to StatefulSet Status.
+// The FirstLayerPhase is going one way: Initializing -> Running
+// The FirstLayerPhase is used to correctly setup needed replicas before scaling the cluster out
+func (rcc *CassandraClusterReconciler) UpdateCassandraRackStatusFirstLayerPhase(ctx context.Context, cc *api.CassandraCluster, dcName string,
+	rackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) {
+	dcRackName := cc.GetDCRackName(dcName, rackName)
+
+	logrusFields := logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "firstLayerPhase": status.CassandraRackStatus[dcRackName].FirstLayerPhase,
+		"ReadyReplicas": storedStatefulSet.Status.ReadyReplicas, "RequestedReplicas": *storedStatefulSet.Spec.Replicas}
+
+	ClusterPhaseMetric.set(api.ClusterPhaseInitial, cc.Name)
+
+	if isStatefulSetNotReady(storedStatefulSet) {
+		logrus.WithFields(logrusFields).Infof("Initializing StatefulSet: Replicas count is not okay")
+		return
+	}
+	//If yes, just check that lastPod is running
+	podsList, err := rcc.ListPods(ctx, cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
+	if err != nil || len(podsList.Items) < 1 {
+		return
+	}
+	nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
+	if len(podsList.Items) < int(nodesPerRacks) {
+		logrus.WithFields(logrusFields).Infof("StatefulSet is scaling up")
+		return
+	}
+	pod := podsList.Items[len(podsList.Items)-1]
+	if cassandraPodIsReady(&pod) {
+		status.CassandraRackStatus[dcRackName].FirstLayerPhase = api.ClusterFirstLayerRunning.Name
+		logrus.WithFields(logrusFields).Infof("StatefulSet: Replicas count is okay")
 	}
 }
 

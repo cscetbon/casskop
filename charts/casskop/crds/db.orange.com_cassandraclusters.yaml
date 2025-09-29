@@ -2270,6 +2270,9 @@ spec:
                             type: array
                             items:
                               type: string
+                      firstLayerPhase:
+                        description: 'FirstLayerPhase indicates whether the rack has at least one node Ready so further initial scale-out might be allowed Needed to correctly handle `allocate_tokens_for_local_replication_factor` introduced in Cassandra 4.0 FirstLayerPhase goes as one way as below:   Initial -> Running'
+                        type: string
                       phase:
                         description: |-
                           Phase indicates the state this Cassandra cluster jumps in.
@@ -2312,6 +2315,9 @@ spec:
                   description: Store last action at cluster level
                   type: string
                 lastClusterActionStatus:
+                  type: string
+                firstLayerPhase:
+                  description: 'FirstLayerPhase indicates whether all racks has at least one node Ready so further initial scale-out might be allowed Needed to correctly handle `allocate_tokens_for_local_replication_factor` introduced in Cassandra 4.0 FirstLayerPhase goes as one way as below:   Initial -> Running'
                   type: string
                 phase:
                   description: |-
