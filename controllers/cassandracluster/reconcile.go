@@ -542,6 +542,14 @@ func (rcc *CassandraClusterReconciler) ReconcileRack(ctx context.Context, cc *ap
 				return nil
 			}
 
+			// in first layer (pre-initial) phase move to next rack as soon as current rack has 1 ready replica
+			if status.IsFirstLayerDuringInitialization() {
+				dcRackStatus := status.CassandraRackStatus[dcRackName]
+				if dcRackStatus.FirstLayerPhase == api.ClusterFirstLayerRunning.Name {
+					continue
+				}
+			}
+
 			//If the Phase is not running then we won't check on Next Racks so we return
 			//We don't want to make any changes in 2 racks at the same time
 			if dcRackStatus.Phase != api.ClusterPhaseRunning.Name ||
@@ -554,6 +562,26 @@ func (rcc *CassandraClusterReconciler) ReconcileRack(ctx context.Context, cc *ap
 			}
 		}
 
+	}
+
+	if status.IsFirstLayerDuringInitialization() {
+		allReady := true
+		for dc := 0; dc < cc.GetDCSize(); dc++ {
+			dcName := cc.GetDCName(dc)
+			for rack := 0; rack < cc.GetRackSize(dc); rack++ {
+				rackName := cc.GetRackName(dc, rack)
+				dcRackName := cc.GetDCRackName(dcName, rackName)
+				dcRackStatus := status.CassandraRackStatus[dcRackName]
+				if dcRackStatus.FirstLayerPhase != api.ClusterFirstLayerRunning.Name {
+					allReady = false
+					break
+				}
+			}
+		}
+		if allReady {
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Info("FirstLayer is now Ready on all racks")
+			status.FirstLayerPhase = api.ClusterFirstLayerRunning.Name
+		}
 	}
 
 	if newStatus {

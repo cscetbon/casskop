@@ -347,6 +347,10 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 
 	nodeAffinity := createNodeAffinity(nodeSelector)
 	nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
+	if cc.Status.IsFirstLayerDuringInitialization() {
+		nodesPerRacks = 1
+	}
+
 	rollingPartition := cc.GetRollingPartitionPerRacks(dcRackName)
 	terminationPeriod := int64(api.DefaultTerminationGracePeriodSeconds)
 	var annotations = map[string]string{}

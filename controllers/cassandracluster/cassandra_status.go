@@ -457,18 +457,33 @@ func (rcc *CassandraClusterReconciler) UpdateCassandraRackStatusPhase(ctx contex
 		if err != nil || len(podsList.Items) < 1 {
 			return
 		}
-		if len(podsList.Items) < int(nodesPerRacks) {
-			logrus.WithFields(logrusFields).Infof("StatefulSet is scaling up")
+		if cc.Status.IsFirstLayerDuringInitialization() {
+			if len(podsList.Items) >= 1 {
+				//TODO: maybe add cassandraPodIsReady() all over pod0
+				status.CassandraRackStatus[dcRackName].FirstLayerPhase = api.ClusterFirstLayerRunning.Name
+				logrus.WithFields(logrusFields).Infof("StatefulSet: first layer replicas count is okay")
+			}
+		} else {
+			if len(podsList.Items) < int(nodesPerRacks) {
+				logrus.WithFields(logrusFields).Infof("StatefulSet is scaling up")
+				return
+			}
+			//TODO: range issue possible?
+			pod := podsList.Items[nodesPerRacks-1]
+			if cassandraPodIsReady(&pod) {
+				status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhaseRunning.Name
+				ClusterPhaseMetric.set(api.ClusterPhaseRunning, cc.Name)
+				now := metav1.Now()
+				lastAction.EndTime = &now
+				lastAction.Status = api.StatusDone
+				logrus.WithFields(logrusFields).Infof("StatefulSet: Replicas count is okay")
+			}
 		}
-		pod := podsList.Items[nodesPerRacks-1]
-		if cassandraPodIsReady(&pod) {
-			status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhaseRunning.Name
-			ClusterPhaseMetric.set(api.ClusterPhaseRunning, cc.Name)
-			now := metav1.Now()
-			lastAction.EndTime = &now
-			lastAction.Status = api.StatusDone
-			logrus.WithFields(logrusFields).Infof("StatefulSet: Replicas count is okay")
-		}
+	}
+
+	if cc.Status.IsFirstLayerDuringInitialization() {
+		logrus.WithFields(logrusFields).Infof("StatefulSet: do not change rack phase while first layer is initializing")
+		return
 	}
 
 	//No more in Initializing state
