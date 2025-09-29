@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/cscetbon/casskop/controllers/common"
+	"github.com/cscetbon/casskop/pkg/k8s"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -191,65 +192,136 @@ func helperCreateCassandraCluster(ctx context.Context, t *testing.T, cassandraCl
 		t.Fatalf("reconcile: (%v)", err)
 	}
 
+	//Check creation Statuses (initial phase)
+	if err = rcc.Client.Get(context.TODO(), req.NamespacedName, cc); err != nil {
+		t.Fatalf("can't get cassandracluster: (%v)", err)
+	}
+	assertCCStatus(assert, cc,
+		api.ClusterPhaseV2InitialFirstPodPerRack,
+		api.CassandraLastAction{
+			Name:   api.ClusterPhaseInitial.Name,
+			Status: api.StatusOngoing,
+		})
+
+	//One Reconcile per each rack to create first pod per rack
 	for _, dc := range cc.Spec.Topology.DC {
 		for _, rack := range dc.Rack {
-			dcRackName := cc.GetDCRackName(dc.Name, rack.Name)
-			//Update Statefulset fake status
-			sts := &appsv1.StatefulSet{}
-			err = rcc.Client.Get(context.TODO(), types.NamespacedName{Name: cc.Name + "-" + dcRackName,
-				Namespace: cc.Namespace},
-				sts)
-			if err != nil {
-				t.Fatalf("get statefulset: (%v)", err)
-			}
 
-			//Now simulate sts to be ready for CassKop
-			sts.Status.Replicas = *sts.Spec.Replicas
-			sts.Status.ReadyReplicas = *sts.Spec.Replicas
-			rcc.Client.Status().Update(ctx, sts)
-
-			//Create Statefulsets associated fake Pods
-			podTemplate := fakePodTemplate(cc, dc.Name, rack.Name)
-
-			for i := 0; i < int(sts.Status.Replicas); i++ {
-				pod := podTemplate.DeepCopy()
-				pod.Name = sts.Name + strconv.Itoa(i)
-				pod.Spec.Hostname = pod.Name
-				pod.Spec.Subdomain = cc.Name
-				if err = rcc.CreatePod(ctx, pod); err != nil {
-					t.Fatalf("can't create pod: (%v)", err)
-				}
-			}
+			simulateStfsAndPodsReady(t, ctx, rcc, dc, rack)
 
 			//We recall Reconcile to update Next rack
 			if res, err = rcc.Reconcile(context.TODO(), req); err != nil {
 				t.Fatalf("reconcile: (%v)", err)
 			}
+
+			//Check rack Status
+			if err = rcc.Client.Get(context.TODO(), req.NamespacedName, cc); err != nil {
+				t.Fatalf("can't get cassandracluster: (%v)", err)
+			}
+			assertRackStatus(assert, cc, cc.GetDCRackName(dc.Name, rack.Name),
+				api.ClusterPhaseV2InitialNextPodPerRack,
+				api.CassandraLastAction{
+					Name:   api.ClusterPhaseInitial.Name,
+					Status: api.StatusOngoing,
+				})
 		}
 	}
 
-	//Check creation Statuses
+	//Check creation Statuses (first pod per rack ready)
+	if err := rcc.Client.Get(context.TODO(), req.NamespacedName, cc); err != nil {
+		t.Fatalf("can't get cassandracluster: (%v)", err)
+	}
+	assertCCStatus(assert, cc,
+		api.ClusterPhaseV2InitialNextPodPerRack,
+		api.CassandraLastAction{
+			Name:   api.ClusterPhaseInitial.Name,
+			Status: api.StatusOngoing,
+		})
+
+	//Series of Reconciles create next pods per rack
+	for _, dc := range cc.Spec.Topology.DC {
+		for _, rack := range dc.Rack {
+			dcRackName := cc.GetDCRackName(dc.Name, rack.Name)
+
+			// repeat reconcile n-1 times as statefulSet is scaled up one by one until nodesPerRack is reached
+			nodesPerRack := int(cc.GetNodesPerRacks(dcRackName))
+			for nextPodPerRackId := 1; nextPodPerRackId < nodesPerRack; nextPodPerRackId++ {
+
+				//We recall Reconcile to scale statefulSet by 1
+				if res, err = rcc.Reconcile(context.TODO(), req); err != nil {
+					t.Fatalf("reconcile: (%v)", err)
+				}
+
+				simulateStfsAndPodsReady(t, ctx, rcc, dc, rack)
+			}
+
+			//We recall Reconcile to finish rack scaling (change phase to running)
+			if res, err = rcc.Reconcile(context.TODO(), req); err != nil {
+				t.Fatalf("reconcile: (%v)", err)
+			}
+
+			//Check rack Status
+			if err = rcc.Client.Get(context.TODO(), req.NamespacedName, cc); err != nil {
+				t.Fatalf("can't get cassandracluster: (%v)", err)
+			}
+			assertRackStatus(assert, cc, dcRackName,
+				api.ClusterPhaseV2Running,
+				api.CassandraLastAction{
+					Name:   api.ClusterPhaseInitial.Name,
+					Status: api.StatusDone,
+				})
+		}
+	}
+
+	//Check creation Statuses (initialization done)
 	if err = rcc.Client.Get(context.TODO(), req.NamespacedName, cc); err != nil {
 		t.Fatalf("can't get cassandracluster: (%v)", err)
 	}
-
-	assert.Equal(api.ClusterPhaseV2Running, cc.Status.PhaseV2)
-	assert.Equal(api.ClusterPhaseRunning.Name, cc.Status.Phase)
-
-	for _, dcRackName := range cc.GetDCRackNames() {
-		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].PhaseV2, api.ClusterPhaseV2Running,
-			"dc-rack: %s", dcRackName)
-		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].Phase, api.ClusterPhaseRunning.Name,
-			"dc-rack: %s", dcRackName)
-		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].CassandraLastAction.Name, api.ClusterPhaseInitial.Name,
-			"dc-rack: %s", dcRackName)
-		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].CassandraLastAction.Status, api.StatusDone,
-			"dc-rack %s", dcRackName)
-	}
-	assert.Equal(api.ClusterPhaseInitial.Name, cc.Status.LastClusterAction)
-	assert.Equal(api.StatusDone, cc.Status.LastClusterActionStatus)
+	assertCCStatus(assert, cc,
+		api.ClusterPhaseV2Running,
+		api.CassandraLastAction{
+			Name:   api.ClusterPhaseInitial.Name,
+			Status: api.StatusDone,
+		})
 
 	return rcc, &req
+}
+
+func simulateStfsAndPodsReady(t *testing.T, ctx context.Context, rcc *CassandraClusterReconciler, dc api.DC, rack api.Rack) {
+	assert := assert.New(t)
+	cc := rcc.cc
+	dcRackName := cc.GetDCRackName(dc.Name, rack.Name)
+
+	//Update Statefulset fake status
+	sts := &appsv1.StatefulSet{}
+	err := rcc.Client.Get(context.TODO(), types.NamespacedName{Name: cc.Name + "-" + dcRackName,
+		Namespace: cc.Namespace},
+		sts)
+	if err != nil {
+		t.Fatalf("get statefulset: (%v)", err)
+	}
+
+	//Now simulate sts to be ready for CassKop
+	sts.Status.Replicas = *sts.Spec.Replicas
+	sts.Status.ReadyReplicas = *sts.Spec.Replicas
+	rcc.Client.Status().Update(ctx, sts)
+
+	//Create Statefulsets associated fake Pods
+	podTemplate := fakePodTemplate(cc, dc.Name, rack.Name)
+
+	pods, err := rcc.ListPods(ctx, cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dc.Name, rack.Name))
+	assert.NoError(err, "list pods "+dcRackName)
+
+	//Create only the new pods
+	for i := len(pods.Items); i < int(sts.Status.Replicas); i++ {
+		pod := podTemplate.DeepCopy()
+		pod.Name = sts.Name + strconv.Itoa(i)
+		pod.Spec.Hostname = pod.Name
+		pod.Spec.Subdomain = cc.Name
+		if err = rcc.CreatePod(ctx, pod); err != nil {
+			t.Fatalf("can't create pod: (%v)", err)
+		}
+	}
 }
 
 func fakePodTemplate(cc *api.CassandraCluster, dcName, rackName string) v1.Pod {
@@ -279,6 +351,28 @@ func fakePodTemplate(cc *api.CassandraCluster, dcName, rackName string) v1.Pod {
 	}
 }
 
+func assertCCStatus(assert *assert.Assertions, cc *api.CassandraCluster, expectedPhaseV2 api.ClusterPhaseV2, expectedLastAction api.CassandraLastAction) {
+	assert.Equal(expectedPhaseV2, cc.Status.PhaseV2)
+	assert.Equal(expectedPhaseV2.ToV1(), cc.Status.Phase)
+	assert.Equal(expectedLastAction.Name, cc.Status.LastClusterAction)
+	assert.Equal(expectedLastAction.Status, cc.Status.LastClusterActionStatus)
+	for _, dcRackName := range cc.GetDCRackNames() {
+		assertRackStatus(assert, cc, dcRackName, expectedPhaseV2, expectedLastAction)
+	}
+}
+
+func assertRackStatus(assert *assert.Assertions, cc *api.CassandraCluster, dcRackName string, expectedPhaseV2 api.ClusterPhaseV2, expectedLastAction api.CassandraLastAction) {
+	rackStatus := cc.Status.CassandraRackStatus[dcRackName]
+	assert.Equal(expectedPhaseV2, rackStatus.PhaseV2,
+		"dc-rack: %s", dcRackName)
+	assert.Equal(expectedPhaseV2.ToV1(), rackStatus.Phase,
+		"dc-rack: %s", dcRackName)
+	assert.Equal(expectedLastAction.Name, rackStatus.CassandraLastAction.Name,
+		"dc-rack: %s", dcRackName)
+	assert.Equal(expectedLastAction.Status, rackStatus.CassandraLastAction.Status,
+		"dc-rack %s", dcRackName)
+}
+
 func TestCassandraClusterReconciler(t *testing.T) {
 
 	// Mock request to simulate Reconcile() being called on an event for a
@@ -295,7 +389,24 @@ func TestCassandraClusterReconciler(t *testing.T) {
 	if !res.Requeue && res.RequeueAfter == 0 {
 		t.Error("reconcile did not requeue request as expected")
 	}
+}
 
+func TestCassandraClusterReconcilerMultiNodePerRack(t *testing.T) {
+
+	// Mock request to simulate Reconcile() being called on an event for a
+	// watched resource .
+	rcc, req := helperCreateCassandraCluster(context.TODO(), t, "cassandracluster-2DC-2racksEach-2nodesPerRack.yaml")
+
+	//WARNING: ListPod with fieldselector is not working on Client-side
+	//So CassKop will try to execute podActions in pods without succeed (they are fake pod)
+	//https://github.com/kubernetes/client-go/issues/326
+	res, err := rcc.Reconcile(context.TODO(), *req)
+	if err != nil {
+		t.Fatalf("reconcile: (%v)", err)
+	}
+	if !res.Requeue && res.RequeueAfter == 0 {
+		t.Error("reconcile did not requeue request as expected")
+	}
 }
 
 // test that we detect an addition of a configmap
@@ -472,7 +583,6 @@ func TestUpdateStatusIfDockerImageHasChanged(t *testing.T) {
 			assert.Equal(t, true, UpdateStatusIfDockerImageHasChanged(rcc.cc, dcRackName, sts, &rcc.cc.Status))
 		}
 	}
-
 }
 
 func assertCCStatusPhaseV2(assert *assert.Assertions, rcc *CassandraClusterReconciler, expectedPhase api.ClusterPhaseV2) {

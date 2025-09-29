@@ -128,6 +128,12 @@ func (rcc *CassandraClusterReconciler) Reconcile(ctx context.Context, request re
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Errorf("CheckPodsState Error: %v", err)
 	}
 
+	if shouldBreak, err := rcc.ReconcileFirstPodPerRack(ctx, cc, status); err != nil {
+		return requeue5, err
+	} else if shouldBreak == breakResyncLoop {
+		return requeue5, nil
+	}
+
 	//ReconcileRack will also add and initiate new racks, we must not go through racks before this method
 	if err = rcc.ReconcileRack(ctx, cc, status); err != nil {
 		return requeue5, err

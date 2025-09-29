@@ -1,0 +1,29 @@
+apiVersion: db.orange.com/v2
+kind: CassandraCluster
+metadata:
+  name: cassandra-demo
+  labels:
+    cluster: k8s.pic
+  namespace: ns
+spec:
+  dataCapacity: 3Gi
+  nodesPerRacks: 1
+  deletePVC: true
+  autoPilot: true
+  resources:         
+    limits: &limits
+      cpu: 1
+      memory: 2Gi
+    requests: *limits
+  topology:
+    dc:
+      - name: dc1
+        nodesPerRacks: 2
+        rack:
+          - name: rack1
+          - name: rack2
+      - name: dc2
+        nodesPerRacks: 2
+        rack:
+          - name: rack1
+          - name: rack2

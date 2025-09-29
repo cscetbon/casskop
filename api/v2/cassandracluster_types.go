@@ -979,8 +979,17 @@ func (in *CassandraRackStatus) IsInInitialPhase() bool {
 		in.PhaseV2 == ClusterPhaseV2InitialNextPodPerRack
 }
 
+func (in *CassandraRackStatus) IsInFirstPodPerRackInitPhase() bool {
+	return in.PhaseV2 == ClusterPhaseV2InitialFirstPodPerRack
+}
+
 func (in *CassandraRackStatus) IsInRunningPhase() bool {
 	return in.PhaseV2 == ClusterPhaseV2Running
+}
+
+func (in *CassandraRackStatus) SetNextPodPerRackInitPhase() {
+	in.PhaseV2 = ClusterPhaseV2InitialNextPodPerRack
+	in.Phase = ClusterPhaseInitial.Name
 }
 
 func (in *CassandraRackStatus) SetPendingPhase() {
@@ -1028,8 +1037,17 @@ func (in *CassandraClusterStatus) SetClusterPhaseFromRackPhase(rackStatus *Cassa
 	in.Phase = rackStatus.Phase
 }
 
+func (in *CassandraClusterStatus) IsInFirstPodPerRackInitPhase() bool {
+	return in.PhaseV2 == ClusterPhaseV2InitialFirstPodPerRack
+}
+
 func (in *CassandraClusterStatus) IsInRunningPhase() bool {
 	return in.PhaseV2 == ClusterPhaseV2Running
+}
+
+func (in *CassandraClusterStatus) SetNextPodPerRackInitPhase() {
+	in.PhaseV2 = ClusterPhaseV2InitialNextPodPerRack
+	in.Phase = ClusterPhaseInitial.Name
 }
 
 func (in *CassandraClusterStatus) SetRunningPhase() {

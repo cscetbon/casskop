@@ -212,9 +212,77 @@ We also allow to configure Cassandra pods with different num_tokens confiogurati
 parameter in the config.
 :::
 
-CassKop will create a statefulset for each Rack, and start creating the
-Cassandra Cluster, starting by nodes from the Rack 1.
+Casskop will create a statefulset for each Rack, with 1 node in each rack.
+This phase is called `FirstPodPerRackInitializing`.
+
+The status at the beginning looks similar to :
+
+```yaml
+status:
+  cassandraRackStatus:
+    dc1-rack1:
+      cassandraLastAction:
+        Name: Initializing
+        status: Ongoing
+      phaseV2: FirstPodPerRackInitializing
+      phase: Initializing
+      podLastOperation: {}
+    dc1-rack2:
+      cassandraLastAction:
+        Name: Initializing
+        status: Ongoing
+      phaseV2: FirstPodPerRackInitializing
+      phase: Initializing
+      podLastOperation: {}
+    dc2-rack1:
+      cassandraLastAction:
+        Name: Initializing
+        status: Ongoing
+      phaseV2: FirstPodPerRackInitializing
+      phase: Initializing
+      podLastOperation: {}
+  lastClusterAction: Initializing
+  lastClusterActionStatus: Ongoing
+  phaseV2: FirstPodPerRackInitializing
+```
+
+When all Racks have at least one pod running, then the status changes to `NextPodPerRackInitializing` phase.
+After that, Casskop scale-out racks one by one, adding one pod at a time until reached the desired number of nodes.
 When CassKop will end operations on Rack1, it will process the next rack and so on.
+
+For instance, status after finishing with first two racks may look like :
+
+```yaml
+status:
+  cassandraRackStatus:
+    dc1-rack1:
+      cassandraLastAction:
+        Name: Initializing
+        status: Ongoing
+      phaseV2: Running
+      phase: Running
+      podLastOperation: {}
+    dc1-rack2:
+      cassandraLastAction:
+        Name: Initializing
+        status: Ongoing
+      phaseV2: Running
+      phase: Running
+      podLastOperation: {}
+    dc2-rack1:
+      cassandraLastAction:
+        Name: Initializing
+        status: Ongoing
+      phaseV2: NextPodPerRackInitializing
+      phase: Initializing
+      podLastOperation: {}
+  lastClusterAction: Initializing
+  lastClusterActionStatus: Ongoing
+  phaseV2: NextPodPerRackInitializing
+  phase: Initializing
+```
+
+Once all racks have reached the desired number of nodes, the status change to `Running` phase.
 
 The status may be similar to :
 
@@ -224,24 +292,28 @@ status:
     dc1-rack1:
       cassandraLastAction:
         Name: Initializing
-        status: Ongoing
-      phase: Initializing
+        status: Done
+      phaseV2: Running
+      phase: Running
       podLastOperation: {}
     dc1-rack2:
       cassandraLastAction:
         Name: Initializing
-        status: Ongoing
-      phase: Initializing
+        status: Done
+      phaseV2: Running
+      phase: Running
       podLastOperation: {}
     dc2-rack1:
       cassandraLastAction:
         Name: Initializing
-        status: Ongoing
-      phase: Initializing
+        status: Done
+      phaseV2: Running
+      phase: Running
       podLastOperation: {}
   lastClusterAction: Initializing
-  lastClusterActionStatus: Ongoing
-  phase: Initializing
+  lastClusterActionStatus: Done
+  phaseV2: Running
+  phase: Running
   seedlist:
   - cassandra-demo-dc1-rack1-0.cassandra-demo-dc1-rack1.cassandra-test
   - cassandra-demo-dc1-rack1-1.cassandra-demo-dc1-rack1.cassandra-test
@@ -251,7 +323,7 @@ status:
   - cassandra-demo-dc2-rack1-2.cassandra-demo-dc2-rack1.cassandra-test
 ```
 
-The creation of the cluster is ongoing.
+The creation of the cluster is finished.
 We can see that, regarding the Cluster Topology, CassKop has created the SeedList.
 
 :::tip
