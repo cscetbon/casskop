@@ -56,8 +56,7 @@ func (rcc *CassandraClusterReconciler) ensureCassandraService(ctx context.Contex
 	return nil
 }
 
-func (rcc *CassandraClusterReconciler) ensureCassandraServiceMonitoring(ctx context.Context, cc *api.CassandraCluster,
-	dcName string) error {
+func (rcc *CassandraClusterReconciler) ensureCassandraServiceMonitoring(ctx context.Context, cc *api.CassandraCluster) error {
 	selector := k8s.LabelsForCassandra(cc)
 	svc := generateCassandraExporterService(cc, selector, nil)
 

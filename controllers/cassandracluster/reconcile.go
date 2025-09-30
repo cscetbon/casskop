@@ -474,12 +474,7 @@ func (rcc *CassandraClusterReconciler) ReconcileRack(ctx context.Context, cc *ap
 				DcRackName: api.DcRackName(dcRackName),
 			}
 
-			//If we have added a dc/rack to the CRD, we add it to the Status
-			if _, exists := status.CassandraRackStatus[dcRackName]; !exists {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Infof("DC-Rack(%s-%s) does not exist, "+
-					"initialize it in status", dcName, rackName)
-				ClusterPhaseMetric.set(api.ClusterPhaseInitial, cc.Name)
-				cc.InitCassandraRackStatus(status, dcName, rackName)
+			if rcc.initiateRackStatusIfNeeded(status, cc, completeDcRackName) {
 				newStatus = true
 				continue
 			}
@@ -538,14 +533,7 @@ func (rcc *CassandraClusterReconciler) ReconcileRack(ctx context.Context, cc *ap
 				}
 			}
 
-			if err = rcc.ensureCassandraService(ctx, cc); err != nil {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Errorf("ensureCassandraService Error: %v", err)
-			}
-
-			if err = rcc.ensureCassandraServiceMonitoring(ctx, cc, dcName); err != nil {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-					"dc-rack": dcRackName}).Errorf("ensureCassandraServiceMonitoring Error: %v", err)
-			}
+			rcc.ensureCassandraServiceObjectsDeployed(ctx, cc, completeDcRackName.DcRackName)
 
 			if rcc.IsStorageUpsizeStarted(dcRackStatus) {
 				if getStsErr != nil && !apierrors.IsNotFound(getStsErr) {
@@ -606,6 +594,33 @@ func (rcc *CassandraClusterReconciler) ReconcileRack(ctx context.Context, cc *ap
 	}
 
 	return nil
+}
+
+func (rcc *CassandraClusterReconciler) initiateRackStatusIfNeeded(status *api.CassandraClusterStatus, cc *api.CassandraCluster,
+	completeDcRackName api.CompleteRackName) bool {
+
+	//If we have added a dc/rack to the CRD, we add it to the Status
+	if _, exists := status.CassandraRackStatus[completeDcRackName.DcRackName.String()]; !exists {
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Infof("DC-Rack(%s-%s) does not exist, "+
+			"initialize it in status", completeDcRackName.DcName, completeDcRackName.RackName)
+		ClusterPhaseMetric.set(api.ClusterPhaseInitial, cc.Name)
+		cc.InitCassandraRackStatus(status, completeDcRackName.DcName.String(), completeDcRackName.RackName.String())
+		return true
+	}
+	return false
+}
+
+func (rcc *CassandraClusterReconciler) ensureCassandraServiceObjectsDeployed(ctx context.Context, cc *api.CassandraCluster,
+	dcRackName api.DcRackName) {
+
+	if err := rcc.ensureCassandraService(ctx, cc); err != nil {
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Errorf("ensureCassandraService Error: %v", err)
+	}
+
+	if err := rcc.ensureCassandraServiceMonitoring(ctx, cc); err != nil {
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+			"dc-rack": dcRackName}).Errorf("ensureCassandraServiceMonitoring Error: %v", err)
+	}
 }
 
 func (rcc *CassandraClusterReconciler) waitForStatefulSetToBeUpdated(ctx context.Context, cc *api.CassandraCluster, dcRackName string,
