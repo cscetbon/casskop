@@ -3,9 +3,11 @@ package cassandracluster
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 
+	api "github.com/cscetbon/casskop/api/v2"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 )
@@ -33,7 +35,36 @@ func registerJolokiaOperationJoiningNodes(host podName, numberOfJoiningNodes int
 										"status": 200}`, stringOfSlice(joiningNodes))))
 }
 
+func simulateNewPodsReady(t *testing.T, rcc *CassandraClusterReconciler, stfsName string, dc api.DC, scaleFrom, scaleTo int) {
+	assert := assert.New(t)
+
+	sts, err := rcc.GetStatefulSet(ctx, rcc.cc.Namespace, stfsName)
+	assert.NoError(err, "get sts")
+
+	//Now simulate sts to be ready for CassKop
+	sts.Status.Replicas = *sts.Spec.Replicas
+	sts.Status.ReadyReplicas = *sts.Spec.Replicas
+	err = rcc.Client.Status().Update(ctx, sts)
+	assert.NoError(err, "update sts status")
+
+	// create new fake Pods (consequence of scale-out) so action may finish
+	podTemplate := fakePodTemplate(rcc.cc, dc.Name, dc.Rack[0].Name)
+	for i := scaleFrom; i < scaleTo; i++ {
+		pod := podTemplate.DeepCopy()
+		pod.Name = sts.Name + "-" + strconv.Itoa(i)
+		pod.Spec.Hostname = pod.Name
+		pod.Spec.Subdomain = rcc.cc.Name
+		if err = rcc.CreatePod(ctx, pod); err != nil {
+			t.Fatalf("can't create pod: (%v)", err)
+		}
+	}
+}
+
 func TestAddTwoNodes(t *testing.T) {
+	// override default delayWait to correctly test action ending logic
+	overrideDelayWaitWithNoDelay()
+	defer restoreDefaultDelayWait()
+
 	rcc, req := createCassandraClusterWithNoDisruption(t, "cassandracluster-1DC.yaml")
 
 	httpmock.Activate()
@@ -75,4 +106,12 @@ func TestAddTwoNodes(t *testing.T) {
 		assert.GreaterOrEqual(jolokiaCallsCount(firstPod), 1)
 		assertStatefulsetReplicas(ctx, t, rcc, expectedReplicas+1, cassandraCluster.Namespace, stfsName)
 	}
+	assertCCStatusLastAction(assert, rcc, api.ActionScaleUp, api.StatusOngoing)
+	assertCCStatusPhaseV2(assert, rcc, api.ClusterPhaseV2Pending)
+
+	//Reconcile ends the action when sts and all new pods are ready
+	simulateNewPodsReady(t, rcc, stfsName, dc, 3, 5)
+	reconcileValidation(t, rcc, *req)
+	assertCCStatusLastAction(assert, rcc, api.ActionScaleUp, api.StatusDone)
+	assertCCStatusPhaseV2(assert, rcc, api.ClusterPhaseV2Running)
 }

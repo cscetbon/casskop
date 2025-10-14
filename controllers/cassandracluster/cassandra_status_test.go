@@ -17,6 +17,7 @@ package cassandracluster
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/cscetbon/casskop/controllers/common"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -94,6 +95,8 @@ func HelperInitCluster(t *testing.T, name string) (*CassandraClusterReconciler,
 	*api.CassandraCluster) {
 	var cc api.CassandraCluster
 	yaml.Unmarshal(common.HelperLoadBytes(t, name), &cc)
+
+	cc.UID = "123456789" //We need to set a UID so PatchMaker does not fail when comparing owner references
 
 	ccList := api.CassandraClusterList{}
 	//Create Fake client
@@ -176,6 +179,11 @@ func helperCreateCassandraCluster(ctx context.Context, t *testing.T, cassandraCl
 	if !res.Requeue {
 		t.Error("reconcile did not requeue request as expected")
 	}
+	assert.Equal(api.ClusterPhaseV2InitialFirstPodPerRack, cc.Status.PhaseV2)
+	assert.Equal(api.ClusterPhaseInitial.Name, cc.Status.Phase)
+	for _, dcRackName := range cc.GetDCRackNames() {
+		assert.Equal(api.ClusterPhaseV2InitialFirstPodPerRack, cc.Status.CassandraRackStatus[dcRackName].PhaseV2, "dc-rack: %s", dcRackName)
+	}
 
 	//Second Reconcile creates objects
 	res, err = rcc.Reconcile(context.TODO(), req)
@@ -201,29 +209,7 @@ func helperCreateCassandraCluster(ctx context.Context, t *testing.T, cassandraCl
 			rcc.Client.Status().Update(ctx, sts)
 
 			//Create Statefulsets associated fake Pods
-			podTemplate := v1.Pod{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "template",
-					Namespace: namespace,
-					Labels: map[string]string{
-						"cluster":                              cc.Labels["cluster"],
-						"dc-rack":                              dcRackName,
-						"cassandraclusters.db.orange.com.dc":   dc.Name,
-						"cassandraclusters.db.orange.com.rack": rack.Name,
-						"app":                                  "cassandracluster",
-						"cassandracluster":                     cc.Name,
-					},
-				},
-				Status: v1.PodStatus{
-					Phase: v1.PodRunning,
-					ContainerStatuses: []v1.ContainerStatus{
-						{
-							Name:  "cassandra",
-							Ready: true,
-						},
-					},
-				},
-			}
+			podTemplate := fakePodTemplate(cc, dc.Name, rack.Name)
 
 			for i := 0; i < int(sts.Status.Replicas); i++ {
 				pod := podTemplate.DeepCopy()
@@ -247,9 +233,12 @@ func helperCreateCassandraCluster(ctx context.Context, t *testing.T, cassandraCl
 		t.Fatalf("can't get cassandracluster: (%v)", err)
 	}
 
+	assert.Equal(api.ClusterPhaseV2Running, cc.Status.PhaseV2)
 	assert.Equal(api.ClusterPhaseRunning.Name, cc.Status.Phase)
 
 	for _, dcRackName := range cc.GetDCRackNames() {
+		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].PhaseV2, api.ClusterPhaseV2Running,
+			"dc-rack: %s", dcRackName)
 		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].Phase, api.ClusterPhaseRunning.Name,
 			"dc-rack: %s", dcRackName)
 		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].CassandraLastAction.Name, api.ClusterPhaseInitial.Name,
@@ -261,6 +250,33 @@ func helperCreateCassandraCluster(ctx context.Context, t *testing.T, cassandraCl
 	assert.Equal(api.StatusDone, cc.Status.LastClusterActionStatus)
 
 	return rcc, &req
+}
+
+func fakePodTemplate(cc *api.CassandraCluster, dcName, rackName string) v1.Pod {
+	dcRackName := cc.GetDCRackName(dcName, rackName)
+	return v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "template",
+			Namespace: namespace,
+			Labels: map[string]string{
+				"cluster":                              cc.Labels["cluster"],
+				"dc-rack":                              dcRackName,
+				"cassandraclusters.db.orange.com.dc":   dcName,
+				"cassandraclusters.db.orange.com.rack": rackName,
+				"app":                                  "cassandracluster",
+				"cassandracluster":                     cc.Name,
+			},
+		},
+		Status: v1.PodStatus{
+			Phase: v1.PodRunning,
+			ContainerStatuses: []v1.ContainerStatus{
+				{
+					Name:  "cassandra",
+					Ready: true,
+				},
+			},
+		},
+	}
 }
 
 func TestCassandraClusterReconciler(t *testing.T) {
@@ -457,4 +473,36 @@ func TestUpdateStatusIfDockerImageHasChanged(t *testing.T) {
 		}
 	}
 
+}
+
+func assertCCStatusPhaseV2(assert *assert.Assertions, rcc *CassandraClusterReconciler, expectedPhase api.ClusterPhaseV2) {
+	assertRackStatusPhaseV2(assert, rcc, expectedPhase)
+	assertClusterStatusPhaseV2(assert, rcc, expectedPhase)
+}
+
+func assertRackStatusPhaseV2(assert *assert.Assertions, rcc *CassandraClusterReconciler, expectedPhase api.ClusterPhaseV2) {
+	assert.Equal(expectedPhase, rcc.cc.Status.CassandraRackStatus["dc1-rack1"].PhaseV2, "dc1-rack1 phase")
+	assert.Equal(expectedPhase.ToV1(), rcc.cc.Status.CassandraRackStatus["dc1-rack1"].Phase, "dc1-rack1 phase deprecated")
+}
+
+func assertClusterStatusPhaseV2(assert *assert.Assertions, rcc *CassandraClusterReconciler, expectedPhase api.ClusterPhaseV2) {
+	assert.Equal(expectedPhase, rcc.cc.Status.PhaseV2, "cluster phase")
+	assert.Equal(expectedPhase.ToV1(), rcc.cc.Status.Phase, "cluster phase deprecated")
+}
+
+func assertCCStatusLastAction(assert *assert.Assertions, rcc *CassandraClusterReconciler, expectedActionType api.ClusterStateInfo, expectedActionStatus string) {
+	assert.Equal(expectedActionType.Name, rcc.cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name, "dc1-rack1 last action type")
+	assert.Equal(expectedActionStatus, rcc.cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Status, "dc1-rack1 last action status")
+	assert.Equal(expectedActionType.Name, rcc.cc.Status.LastClusterAction, "cluster last action type")
+	assert.Equal(expectedActionStatus, rcc.cc.Status.LastClusterActionStatus, "cluster last action status")
+}
+
+func overrideDelayWaitWithNoDelay() {
+	delayWait = func() time.Duration {
+		return 0
+	}
+}
+
+func restoreDefaultDelayWait() {
+	delayWait = defaultDelayWait
 }

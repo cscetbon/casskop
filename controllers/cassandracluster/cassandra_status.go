@@ -89,12 +89,12 @@ func (rcc *CassandraClusterReconciler) getNextCassandraClusterStatus(ctx context
 		unlockNextOperation = true
 	}
 	//Do nothing in Initial phase except if we force it
-	if status.CassandraRackStatus[dcRackName].Phase == api.ClusterPhaseInitial.Name {
+	if status.CassandraRackStatus[dcRackName].IsInInitialPhase() {
 		if !unlockNextOperation {
 			ClusterPhaseMetric.set(api.ClusterPhaseInitial, cc.Name)
 			return nil
 		}
-		status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhasePending.Name
+		status.CassandraRackStatus[dcRackName].SetPendingPhase()
 		ClusterPhaseMetric.set(api.ClusterPhasePending, cc.Name)
 	}
 
@@ -167,7 +167,7 @@ func needToWaitDelayBeforeCheck(cc *api.CassandraCluster, dcRackName string, sto
 		t := *lastAction.StartTime
 		now := metav1.Now()
 
-		if t.Add(api.DefaultDelayWait * time.Second).After(now.Time) {
+		if t.Add(delayWait()).After(now.Time) {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 				"rack": dcRackName}).Info(
 				fmt.Sprintf("The Operator Waits %s seconds for the action to start correctly",
@@ -177,6 +177,13 @@ func needToWaitDelayBeforeCheck(cc *api.CassandraCluster, dcRackName string, sto
 		}
 	}
 	return false
+}
+
+// visible for tests
+var delayWait = defaultDelayWait
+
+func defaultDelayWait() time.Duration {
+	return api.DefaultDelayWait * time.Second
 }
 
 // UpdateStatusIfconfigMapHasChanged updates CassandraCluster Action Status if it detect a changes :
@@ -435,7 +442,7 @@ func (rcc *CassandraClusterReconciler) UpdateCassandraRackStatusPhase(ctx contex
 	logrusFields := logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 		"ReadyReplicas": storedStatefulSet.Status.ReadyReplicas, "RequestedReplicas": *storedStatefulSet.Spec.Replicas}
 
-	if status.CassandraRackStatus[dcRackName].Phase == api.ClusterPhaseInitial.Name {
+	if status.CassandraRackStatus[dcRackName].IsInInitialPhase() {
 		nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
 		//If we are stuck in initializing state, we can rollback the add of dc which implies decommissioning nodes
 		if nodesPerRacks <= 0 {
@@ -462,7 +469,7 @@ func (rcc *CassandraClusterReconciler) UpdateCassandraRackStatusPhase(ctx contex
 		}
 		pod := podsList.Items[nodesPerRacks-1]
 		if cassandraPodIsReady(&pod) {
-			status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhaseRunning.Name
+			status.CassandraRackStatus[dcRackName].SetRunningPhase()
 			ClusterPhaseMetric.set(api.ClusterPhaseRunning, cc.Name)
 			now := metav1.Now()
 			lastAction.EndTime = &now
@@ -474,17 +481,17 @@ func (rcc *CassandraClusterReconciler) UpdateCassandraRackStatusPhase(ctx contex
 	//No more in Initializing state
 	if isStatefulSetNotReady(storedStatefulSet) {
 		logrus.WithFields(logrusFields).Infof("StatefulSet: Replicas count is not okay")
-		status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhasePending.Name
+		status.CassandraRackStatus[dcRackName].SetPendingPhase()
 		ClusterPhaseMetric.set(api.ClusterPhasePending, cc.Name)
-	} else if status.CassandraRackStatus[dcRackName].Phase != api.ClusterPhaseRunning.Name {
+	} else if !status.CassandraRackStatus[dcRackName].IsInRunningPhase() {
 		logrus.WithFields(logrusFields).Infof("StatefulSet: Rack Phase is not %s", api.ClusterPhaseRunning.Name)
-		status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhaseRunning.Name
+		status.CassandraRackStatus[dcRackName].SetRunningPhase()
 		ClusterPhaseMetric.set(api.ClusterPhaseRunning, cc.Name)
 	}
 }
 
 func setDecommissionStatus(status *api.CassandraClusterStatus, dcRackName string) {
-	status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhasePending.Name
+	status.CassandraRackStatus[dcRackName].SetPendingPhase()
 	now := metav1.Now()
 	lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 	lastAction.StartTime = &now

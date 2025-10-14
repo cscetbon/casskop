@@ -159,7 +159,7 @@ func (r *reconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) 
 		if !r.ReadyCassandraCluster(storedCC) {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "namespace": cc.Namespace,
 				"kubernetes": client.Name}).Infof("Cluster is not Ready, "+
-				"we requeue [phase=%s / action=%s / status=%s]", storedCC.Status.Phase,
+				"we requeue [phaseV2=%s / phaseV1=%s / action=%s / status=%s]", storedCC.Status.PhaseV2, storedCC.Status.Phase,
 				storedCC.Status.LastClusterAction, storedCC.Status.LastClusterActionStatus)
 			return requeue30, err
 		}

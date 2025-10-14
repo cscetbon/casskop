@@ -13,7 +13,7 @@ import (
 // ReadyCassandraCluster
 // return true if CassandraCluster it Done and Running
 func (r *reconciler) ReadyCassandraCluster(cc *ccv1.CassandraCluster) bool {
-	if cc.Status.Phase != ccv1.ClusterPhaseRunning.Name || cc.Status.LastClusterActionStatus != ccv1.StatusDone {
+	if !cc.Status.IsInRunningPhase() || cc.Status.LastClusterActionStatus != ccv1.StatusDone {
 		return false
 	}
 	return true

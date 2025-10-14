@@ -476,7 +476,7 @@ func (rcc *CassandraClusterReconciler) ReconcileRack(ctx context.Context, cc *ap
 				rcc.getNextCassandraClusterStatus(ctx, cc, dc, rack, dcName, rackName, storedStatefulSet, status)
 
 				//If not Initializing cluster execute pod operations queued
-				if dcRackStatus.Phase != api.ClusterPhaseInitial.Name {
+				if !dcRackStatus.IsInInitialPhase() {
 					// Check if there are joining nodes and break the loop if there are
 					breakResyncloop, err := rcc.handlePodOperation(ctx, cc, dcName, rackName, status,
 						!isStatefulSetNotReady(storedStatefulSet))
@@ -489,7 +489,7 @@ func (rcc *CassandraClusterReconciler) ReconcileRack(ctx context.Context, cc *ap
 					if breakResyncloop {
 						// If an Action is ongoing on the current Rack,
 						// we don't want to check or start actions on Next Rack
-						if dcRackStatus.Phase != api.ClusterPhaseRunning.Name ||
+						if !dcRackStatus.IsInRunningPhase() ||
 							dcRackStatus.CassandraLastAction.Status == api.StatusToDo ||
 							dcRackStatus.CassandraLastAction.Status == api.StatusOngoing ||
 							dcRackStatus.CassandraLastAction.Status == api.StatusContinue {
@@ -501,6 +501,7 @@ func (rcc *CassandraClusterReconciler) ReconcileRack(ctx context.Context, cc *ap
 						logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName,
 							"LastActionName":   dcRackStatus.CassandraLastAction.Name,
 							"LastActionStatus": dcRackStatus.CassandraLastAction.Status,
+							"PhaseV2":          dcRackStatus.PhaseV2,
 							"Phase":            dcRackStatus.Phase,
 						}).Warning(
 							"Should Not see this message ;) Waiting Rack to be running before continuing, we " +
@@ -527,7 +528,7 @@ func (rcc *CassandraClusterReconciler) ReconcileRack(ctx context.Context, cc *ap
 
 			//If the Phase is not running then we won't check on Next Racks so we return
 			//We don't want to make any changes in 2 racks at the same time
-			if dcRackStatus.Phase != api.ClusterPhaseRunning.Name ||
+			if !dcRackStatus.IsInRunningPhase() ||
 				(dcRackStatus.CassandraLastAction.Status == api.StatusOngoing ||
 					dcRackStatus.CassandraLastAction.Status == api.StatusFinalizing) {
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
@@ -641,13 +642,13 @@ func UpdateCassandraClusterStatusPhase(cc *api.CassandraCluster, status *api.Cas
 			}
 
 			//If a rack is not running we return
-			if dcRackStatus.Phase != api.ClusterPhaseRunning.Name {
-				status.Phase = dcRackStatus.Phase
+			if !dcRackStatus.IsInRunningPhase() {
+				status.SetClusterPhaseFromRackPhase(dcRackStatus)
 
 				if _, ok := cc.Status.CassandraRackStatus[dcRackName]; !ok ||
-					cc.Status.CassandraRackStatus[dcRackName].Phase != dcRackStatus.Phase {
+					cc.Status.CassandraRackStatus[dcRackName].PhaseV2 != dcRackStatus.PhaseV2 {
 					logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-						"dc-rack": dcRackName}).Infof("Update Rack Status: %s", dcRackStatus.Phase)
+						"dc-rack": dcRackName}).Infof("Update Rack Status: %s (old api: %s)", dcRackStatus.PhaseV2, dcRackStatus.Phase)
 				}
 				return
 			}
@@ -661,14 +662,14 @@ func UpdateCassandraClusterStatusPhase(cc *api.CassandraCluster, status *api.Cas
 		status.LastClusterActionStatus != api.StatusDone {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Infof("Action %s is done!", status.LastClusterAction)
 		status.LastClusterActionStatus = api.StatusDone
-		status.Phase = api.ClusterPhaseRunning.Name
+		status.SetRunningPhase()
 		ClusterPhaseMetric.set(api.ClusterPhaseRunning, cc.Name)
 	}
 
 	//If cluster phase is not running, we update it
-	if status.Phase != api.ClusterPhaseRunning.Name && status.LastClusterActionStatus == api.StatusDone {
+	if !status.IsInRunningPhase() && status.LastClusterActionStatus == api.StatusDone {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Infof("Cluster is running")
-		status.Phase = api.ClusterPhaseRunning.Name
+		status.SetRunningPhase()
 		ClusterPhaseMetric.set(api.ClusterPhaseRunning, cc.Name)
 	}
 }
@@ -708,7 +709,7 @@ func EnsureSeedListIsUpdatedWhenRequired(cc *api.CassandraCluster, status *api.C
 					dcRackName := cc.GetDCRackName(dcName, rackName)
 					dcRackStatus := status.CassandraRackStatus[dcRackName]
 
-					if dcRackStatus.Phase == api.ClusterPhaseInitial.Name {
+					if dcRackStatus.IsInInitialPhase() {
 						continue
 					}
 

@@ -7,14 +7,15 @@ sidebar_label: Cassandra cluster Status
 
 [Check documentation for more informations](/casskop/docs/configuration_deployment/cassandra_cluster_status)
 
-|Field|Type| Description                                                                                                            |Required|Default|
-|-----|----|------------------------------------------------------------------------------------------------------------------------|--------|--------|
-|phase|string| Indicates the state this Cassandra cluster jumps in. Phase goes as one way as below: Initial \> Running \<\> updating. |Yes| - |
-|lastClusterAction|string| Is the Last Action at the Cluster level                                                                                |Yes| - |
-|lastClusterActionStatus|string| Is the Last Action Status at the Cluster level                                                                         |Yes|-|
-|seedlist|\[ \]string| it is the Cassandra SEED List used in the Cluster.                                                                     |Yes|-|
-|cassandraNodeStatus|map\[string\][CassandraNodeStatus](#cassandranodestatus)| represents a map of (hostId, Ip Node) couple for each Pod in the Cluster.                                              |Yes| - |
-|cassandraRackStatus|map\[string\][CassandraRackStatus](#cassandrarackstatus)| represents a map of statuses for each of the Cassandra Racks in the Cluster                                            |Yes|-|
+| Field                   | Type                                                     | Description                                                                                                                                                                                                                                                          | Required | Default |
+|-------------------------|----------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|---------|
+| phaseV2                 | string                                                   | PhaseV2 indicates the state this Cassandra cluster jumps in. PhaseV2 goes one way till running, then it can go to pending and back to running as below: FirstPodPerRackInitializing -> NextPodPerRackInitializing -> Running <-> Pending                             | Yes      | -       |
+| ~~phase~~ (deprecated)  | string                                                   | Indicates the state this Cassandra cluster jumps in. Phase goes as one way as below: Initial \> Running \<\> updating. Deprecated: use PhaseV2 instead which is more detailed (Initial phase splits into FirstPodPerRackInitializing and NextPodPerRackInitializing) | Yes      | -       |
+| lastClusterAction       | string                                                   | Is the Last Action at the Cluster level                                                                                                                                                                                                                              | Yes      | -       |
+| lastClusterActionStatus | string                                                   | Is the Last Action Status at the Cluster level                                                                                                                                                                                                                       | Yes      | -       |
+| seedlist                | \[ \]string                                              | it is the Cassandra SEED List used in the Cluster.                                                                                                                                                                                                                   | Yes      | -       |
+| cassandraNodeStatus     | map\[string\][CassandraNodeStatus](#cassandranodestatus) | represents a map of (hostId, Ip Node) couple for each Pod in the Cluster.                                                                                                                                                                                            | Yes      | -       |
+| cassandraRackStatus     | map\[string\][CassandraRackStatus](#cassandrarackstatus) | represents a map of statuses for each of the Cassandra Racks in the Cluster                                                                                                                                                                                          | Yes      | -       |
 
 ## CassandraNodeStatus
 
@@ -25,11 +26,12 @@ sidebar_label: Cassandra cluster Status
 
 ## CassandraRackStatus
 
-|Field|Type| Description                                                                                                            |Required|Default|
-|-----|----|------------------------------------------------------------------------------------------------------------------------|--------|--------|
-|phase|string| Indicates the state this Cassandra cluster jumps in. Phase goes as one way as below: Initial \> Running \<\> updating. |Yes| - |
-|cassandraLastAction|[CassandraLastAction](#cassandralastaction)| Is the set of Cassandra State & Actions: Active, Standby..                                                             |Yes| - |
-|podLastOperation|[PodLastOperation](#podlastoperation)| manage status for Pod Operation (nodetool cleanup, upgradesstables..).                                                 |Yes| - |
+| Field                  | Type                                        | Description                                                                                                                                                                                                                                                           | Required | Default |
+|------------------------|---------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|---------|
+| phaseV2                | string                                      | PhaseV2 indicates the state this Cassandra cluster jumps in. PhaseV2 goes one way till running, then it can go to pending and back to running as below: FirstPodPerRackInitializing -> NextPodPerRackInitializing -> Running <-> Pending                              | Yes      | -       |
+| ~~phase~~ (deprecated) | string                                      | Indicates the state this Cassandra cluster jumps in. Phase goes as one way as below: Initial \> Running \<\> updating. Deprecated: use PhaseV2 instead which is more detailed (Initial phase splits into FirstPodPerRackInitializing and NextPodPerRackInitializing)  | Yes      | -       |
+| cassandraLastAction    | [CassandraLastAction](#cassandralastaction) | Is the set of Cassandra State & Actions: Active, Standby..                                                                                                                                                                                                            | Yes      | -       |
+| podLastOperation       | [PodLastOperation](#podlastoperation)       | manage status for Pod Operation (nodetool cleanup, upgradesstables..).                                                                                                                                                                                                | Yes      | -       |
 
 ## CassandraLastAction
 

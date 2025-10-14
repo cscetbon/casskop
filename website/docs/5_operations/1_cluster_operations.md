@@ -114,10 +114,12 @@ status:
         Name: Initializing
         endTime: 2018-09-18T15:10:51Z
         status: Done
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
   lastClusterAction: Initializing
   lastClusterActionStatus: Done
+  phaseV2: Running
   phase: Running
   seedlist:
   - cassandra-demo-dc1-rack1-0.cassandra-demo-dc1-rack1.cassandra-test
@@ -126,7 +128,7 @@ status:
 
 - The Status of the `dc1-rack1` is `Initializing=Done`
 - The Status of the Cluster is `Initializing=Done`
-- The phase is `Running` which means that each Rack has the desired amount of Nodes.
+- The phaseV2 is `Running` which means that each Rack has the desired amount of Nodes.
 
 We asked 2 `nodesPerRacks` and we have one default rack, so we ended with 2 Cassandra nodes in our cluster.
 
@@ -335,6 +337,7 @@ status:
         Name: UpdateConfigMap
         startTime: 2018-09-21T12:24:24Z
         status: Ongoing
+      phaseV2: Pending
       phase: Pending
       podLastOperation: {}
     dc1-rack2:
@@ -342,6 +345,7 @@ status:
         Name: Initializing
         endTime: 2018-09-21T10:33:10Z
         status: Done
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
     dc2-rack1:
@@ -349,6 +353,7 @@ status:
         Name: Initializing
         endTime: 2018-09-21T10:34:47Z
         status: Done
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
   lastClusterAction: UpdateConfigMap
@@ -369,6 +374,7 @@ status:
         endTime: 2018-09-21T12:26:10Z
         startTime: 2018-09-21T12:24:24Z
         status: Done
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
     dc1-rack2:
@@ -377,6 +383,7 @@ status:
         endTime: 2018-09-21T12:27:25Z
         startTime: 2018-09-21T12:26:10Z
         status: Done
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
     dc2-rack1:
@@ -384,6 +391,7 @@ status:
         Name: UpdateConfigMap
         startTime: 2018-09-21T12:27:27Z
         status: Ongoing
+      phaseV2: Pending
       phase: Pending
       podLastOperation: {}
   lastClusterAction: UpdateConfigMap
@@ -414,6 +422,7 @@ status:
         Name: UpdateDockerImage
         startTime: 2018-09-18T16:08:59Z
         status: Ongoing
+      phaseV2: Pending
       phase: Pending
       podLastOperation: {}
     dc1-rack2:
@@ -421,6 +430,7 @@ status:
         Name: Initializing
         endTime: 2018-09-18T16:05:51Z
         status: Done
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
     dc2-rack1:
@@ -428,10 +438,12 @@ status:
         Name: Initializing
         endTime: 2018-09-18T16:07:52Z
         status: Done
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
   lastClusterAction: UpdateDockerImage
   lastClusterActionStatus: Ongoing
+  phaseV2: Pending
   phase: Pending
   seedlist:
   - cassandra-demo-dc1-rack1-0.cassandra-demo-dc1-rack1.cassandra-test
@@ -456,6 +468,7 @@ status:
         endTime: 2018-09-18T16:10:51Z
         startTime: 2018-09-18T16:08:59Z
         status: Done
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
     dc1-rack2:
@@ -463,6 +476,7 @@ status:
         Name: UpdateDockerImage
         startTime: 2018-09-18T16:10:51Z
         status: Ongoing
+      phaseV2: Pending
       phase: Pending
       podLastOperation: {}
     dc2-rack1:
@@ -470,6 +484,7 @@ status:
         Name: Initializing
         endTime: 2018-09-18T16:07:52Z
         status: Done
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
   lastClusterAction: UpdateDockerImage
@@ -486,6 +501,7 @@ And when all racks are Done:
         endTime: 2018-09-18T16:10:51Z
         startTime: 2018-09-18T16:08:59Z
         status: Done
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
     dc1-rack2:
@@ -494,6 +510,7 @@ And when all racks are Done:
         endTime: 2018-09-18T16:12:42Z
         startTime: 2018-09-18T16:10:51Z
         status: Done
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
     dc2-rack1:
@@ -502,10 +519,12 @@ And when all racks are Done:
         endTime: 2018-09-18T16:14:52Z
         startTime: 2018-09-18T16:12:42Z
         status: Done
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
   lastClusterAction: UpdateDockerImage
   lastClusterActionStatus: Done
+  phaseV2: Running
   phase: Running
 ```
 
@@ -543,6 +562,7 @@ status:
         Name: UpdateResources
         startTime: 2018-09-21T15:28:43Z
         status: Ongoing
+      phaseV2: Pending
       phase: Pending
       podLastOperation: {}
     dc1-rack2:
@@ -550,6 +570,7 @@ status:
         Name: UpdateResources
         startTime: 2018-09-21T15:28:43Z
         status: ToDo
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
     dc2-rack1:
@@ -557,6 +578,7 @@ status:
         Name: UpdateResources
         startTime: 2018-09-21T15:28:43Z
         status: ToDo
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
   lastClusterAction: UpdateResources
@@ -576,6 +598,7 @@ Upon completion, the status may look like :
         endTime: 2018-09-21T15:30:31Z
         startTime: 2018-09-21T15:28:43Z
         status: Done
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
     dc1-rack2:
@@ -584,6 +607,7 @@ Upon completion, the status may look like :
         endTime: 2018-09-21T15:32:12Z
         startTime: 2018-09-21T15:30:32Z
         status: Done
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
     dc2-rack1:
@@ -592,6 +616,7 @@ Upon completion, the status may look like :
         endTime: 2018-09-21T15:34:07Z
         startTime: 2018-09-21T15:32:13Z
         status: Done
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
   lastClusterAction: UpdateResources
@@ -645,12 +670,14 @@ CassKop takes into account the new target, and starts applying modifications in 
       cassandraLastAction:
         Name: UpdateSeedList
         status: Configuring
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
     dc1-rack2:
       cassandraLastAction:
         Name: UpdateSeedList
         status: Configuring
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
     dc2-rack1:
@@ -658,6 +685,7 @@ CassKop takes into account the new target, and starts applying modifications in 
         Name: ScaleUp
         startTime: 2018-09-27T15:02:21Z
         status: Configuring
+      phaseV2: Pending
       phase: Pending
   lastClusterAction: ScaleUp
   lastClusterActionStatus: Ongoing
@@ -691,6 +719,7 @@ status:
         endTime: 2018-09-27T15:05:00Z
         startTime: 2018-09-27T15:03:13Z
         status: Done
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
     dc1-rack2:
@@ -698,15 +727,18 @@ status:
         Name: UpdateSeedList
         startTime: 2018-09-27T15:03:13Z
         status: Ongoing
+      phaseV2: Pending
       phase: Pending
       podLastOperation: {}
     dc2-rack1:
       cassandraLastAction:
         Name: UpdateSeedList
         status: ToDo
+      phaseV2: Running
       phase: Running
   lastClusterAction: UpdateSeedList
   lastClusterActionStatus: Finalizing
+  phaseV2: Pending
   phase: Pending
 ```
 
@@ -807,12 +839,14 @@ status:
       cassandraLastAction:
         Name: UpdateSeedList
         status: ToDo
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
     dc1-rack2:
       cassandraLastAction:
         Name: UpdateSeedList
         status: ToDo
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
     dc2-rack1:
@@ -820,6 +854,7 @@ status:
         Name: ScaleDown
         startTime: 2018-09-27T15:22:23Z
         status: Ongoing
+      phaseV2: Running
       phase: Running
       podLastOperation:
         Name: decommission
@@ -841,6 +876,7 @@ status:
         Name: UpdateSeedList
         startTime: 2018-09-27T15:23:54Z
         status: Finalizing
+      phaseV2: Pending
       phase: Pending
       podLastOperation: {}
     dc1-rack2:
@@ -848,6 +884,7 @@ status:
         Name: UpdateSeedList
         startTime: 2018-09-27T15:23:54Z
         status: Ongoing
+      phaseV2: Running
       phase: Running
       podLastOperation: {}
     dc2-rack1:
@@ -855,6 +892,7 @@ status:
         Name: UpdateSeedList
         startTime: 2018-09-27T15:23:54Z
         status: Ongoing
+      phaseV2: Running
       phase: Running
       podLastOperation:
         Name: decommission
@@ -865,6 +903,7 @@ status:
         status: Done
   lastClusterAction: UpdateSeedList
   lastClusterActionStatus: Finalizing
+  phaseV2: Pending
   phase: Pending
 ```
 

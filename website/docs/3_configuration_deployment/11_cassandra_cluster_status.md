@@ -36,6 +36,7 @@ status:
         endTime: 2018-07-12T14:10:28Z
         startTime: 2018-07-12T14:09:34Z
         status: Done
+      phaseV2: Running
       phase: Running
       podLastOperation:
         Name: cleanup
@@ -52,6 +53,7 @@ status:
         endTime: 2018-07-12T14:10:58Z
         startTime: 2018-07-12T14:10:28Z
         status: Done
+      phaseV2: Running
       phase: Running
       podLastOperation:
         Name: cleanup
@@ -65,6 +67,7 @@ status:
   lastClusterAction: ScaleUp
   lastClusterActionStatus: Done        
 ...
+  phaseV2: Running
   phase: Running
   seedlist:
   - cassandra-demo-dc1-rack1-0.cassandra-demo-dc1-rack1.cassandra-demo.svc.kaas-prod-priv-sph
@@ -73,7 +76,12 @@ status:
 The CassandraCluster prints out it's whole status.
 
 - **seedlist**: it is the Cassandra SEED List used in the Cluster.
-- **Phase** : it's the global state for the cassandra cluster which can have different values :
+- **PhaseV2** : it's the global state for the cassandra cluster which can have different values :
+    - **FirstPodPerRackInitializing**, we just launched a new cluster, and waiting for first Pod of each Rack to be ready
+    - **NextPodPerRackInitializing**, we have first Pod of each Rack ready, and waiting for cluster to reach its requested size
+    - **Running**, the cluster is running normally
+    - **Pending**, the number of Nodes requested has changed, waiting for reconciliation
+- **Phase** : it's deprecated global state for the cassandra cluster, replaced with more detailed PhaseV2, can have different values :
     - **Initialization**, we just launched a new cluster, and waiting for its requested state
     - **Running**, the cluster is running normally
     - **Pending**, the number of Nodes requested has changed, waiting for reconciliation
@@ -85,6 +93,7 @@ The CassandraCluster prints out it's whole status.
     - **IpNode**: the cassandra node's ip
 - **CassandraRackStatus** represents a map of statuses for each of the Cassandra Racks in the Cluster
   - **$\{Cassandra DC-Rack Name\}**
+    - **PhaseV2** : general rack status, see PhaseV2 on cluster level for more details
     - **Cassandra Last Action**: it's an action which is ongoing on the Cassandra cluster :
         - **Name**: name of the Action
             - **UpdateConfigMap** a new ConfigMap has been submitted to the cluster

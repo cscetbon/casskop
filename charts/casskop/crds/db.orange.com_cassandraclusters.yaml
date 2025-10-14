@@ -2275,6 +2275,13 @@ spec:
                           Phase indicates the state this Cassandra cluster jumps in.
                           Phase goes as one way as below:
                             Initial -> Running <-> updating
+                          Deprecated: use PhaseV2 instead which is more detailed (Initial phase splits into FirstPodPerRackInitializing and NextPodPerRackInitializing)
+                        type: string
+                      phaseV2:
+                        description: |-
+                          PhaseV2 indicates the state this Cassandra cluster jumps in.
+                          PhaseV2 goes one way till running, then it can go to pending and back to running as below:
+                            FirstPodPerRackInitializing -> NextPodPerRackInitializing -> Running <-> Pending
                         type: string
                       podLastOperation:
                         description: PodLastOperation manage status for Pod Operation (nodetool cleanup, upgradesstables..)
@@ -2318,6 +2325,13 @@ spec:
                     Phase indicates the state this Cassandra cluster jumps in.
                     Phase goes as one way as below:
                       Initial -> Running <-> updating
+                    Deprecated: use PhaseV2 instead which is more detailed (Initial phase splits into FirstPodPerRackInitializing and NextPodPerRackInitializing)
+                  type: string
+                phaseV2:
+                  description: |-
+                    PhaseV2 indicates the state this Cassandra cluster jumps in.
+                    PhaseV2 goes one way till running, then it can go to pending and back to running as below:
+                      FirstPodPerRackInitializing -> NextPodPerRackInitializing -> Running <-> Pending
                   type: string
                 seedlist:
                   description: seedList to be used in Cassandra's Pods (computed by the Operator)

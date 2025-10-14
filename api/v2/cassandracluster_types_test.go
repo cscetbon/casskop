@@ -209,11 +209,16 @@ func TestInitCassandraRackinStatus(t *testing.T) {
 	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack2"].CassandraLastAction.Name)
 	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["stats-rack1"].CassandraLastAction.Name)
 	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["stats-rack2"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseV2InitialFirstPodPerRack, cc.Status.CassandraRackStatus["online-rack1"].PhaseV2)
+	assert.Equal(ClusterPhaseV2InitialFirstPodPerRack, cc.Status.CassandraRackStatus["online-rack2"].PhaseV2)
+	assert.Equal(ClusterPhaseV2InitialFirstPodPerRack, cc.Status.CassandraRackStatus["stats-rack1"].PhaseV2)
+	assert.Equal(ClusterPhaseV2InitialFirstPodPerRack, cc.Status.CassandraRackStatus["stats-rack2"].PhaseV2)
 	assert.Equal(4, len(cc.Status.CassandraRackStatus))
 	//Add new DC from existing RackStatus
 	cc.InitCassandraRackStatus(&cc.Status, "foo", "bar")
 
 	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["foo-bar"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseV2InitialFirstPodPerRack, cc.Status.CassandraRackStatus["foo-bar"].PhaseV2)
 	assert.Equal(5, len(cc.Status.CassandraRackStatus))
 }
 
@@ -250,7 +255,7 @@ func TestGetStatusDCRackSize(t *testing.T) {
 	assert.Equal(int(2), nb)
 }
 
-//Test that a reinit keep history of changes in the status
+// Test that a reinit keep history of changes in the status
 func TestGetStatusDCRackSize_KeepChanges(t *testing.T) {
 	assert := assert.New(t)
 
@@ -424,7 +429,7 @@ func TestIsPodInSeedList(t *testing.T) {
 
 }
 
-//Test that a reinit keep history of changes in the status
+// Test that a reinit keep history of changes in the status
 func TestComputeLastAppliedConfiguration(t *testing.T) {
 	assert := assert.New(t)
 
@@ -472,6 +477,7 @@ func TestSetDefaults(t *testing.T) {
 	assert.Equal(resource.MustParse("500m"), *cluster.Spec.Resources.Limits.Cpu())
 	assert.Equal(resource.MustParse("1Gi"), *cluster.Spec.Resources.Limits.Memory())
 
+	assert.Equal(ClusterPhaseV2InitialFirstPodPerRack, cluster.Status.PhaseV2)
 	assert.Equal(ClusterPhaseInitial.Name, cluster.Status.Phase)
 	assert.Equal(int32(defaultMaxPodUnavailable), cluster.Spec.MaxPodUnavailable)
 	assert.Equal([]string{"defaults-test-dc1-rack1-0.defaults-test.default"}, cluster.Status.SeedList)

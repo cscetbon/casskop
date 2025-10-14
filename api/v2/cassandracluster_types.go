@@ -49,11 +49,32 @@ type ClusterStateInfo struct {
 	Name string
 }
 
+type ClusterPhaseV2 string
+
+func (v ClusterPhaseV2) ToV1() string {
+	switch v {
+	case ClusterPhaseV2InitialFirstPodPerRack, ClusterPhaseV2InitialNextPodPerRack:
+		return ClusterPhaseInitial.Name
+	case ClusterPhaseV2Running:
+		return ClusterPhaseRunning.Name
+	case ClusterPhaseV2Pending:
+		return ClusterPhasePending.Name
+	default:
+		return ""
+	}
+}
+
 var (
 	//Cluster phases
 	ClusterPhaseInitial = ClusterStateInfo{1, "Initializing"}
 	ClusterPhaseRunning = ClusterStateInfo{2, "Running"}
 	ClusterPhasePending = ClusterStateInfo{3, "Pending"}
+
+	//Cluster phases V2
+	ClusterPhaseV2InitialFirstPodPerRack ClusterPhaseV2 = "FirstPodPerRackInitializing"
+	ClusterPhaseV2InitialNextPodPerRack  ClusterPhaseV2 = "NextPodPerRackInitializing"
+	ClusterPhaseV2Running                ClusterPhaseV2 = "Running"
+	ClusterPhaseV2Pending                ClusterPhaseV2 = "Pending"
 
 	//Available actions
 	ActionUpdateConfigMap   = ClusterStateInfo{1, "UpdateConfigMap"}
@@ -169,8 +190,9 @@ func (cc *CassandraCluster) SetDefaults() bool {
 		ccs.NodesPerRacks = 1
 		changed = true
 	}
-	if len(cc.Status.Phase) == 0 {
+	if len(cc.Status.PhaseV2) == 0 {
 		cc.Status.Phase = ClusterPhaseInitial.Name
+		cc.Status.PhaseV2 = ClusterPhaseV2InitialFirstPodPerRack
 		if cc.InitCassandraRackList() < 1 {
 			logrus.Errorf("[%s]: We should have at list One Rack, Please correct the Error", cc.Name)
 		}
@@ -306,7 +328,8 @@ func (cc *CassandraCluster) initTopology(dcName string, rackName string) {
 func (cc *CassandraCluster) InitCassandraRackStatus(status *CassandraClusterStatus, dcName string, rackName string) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
 	rackStatus := CassandraRackStatus{
-		Phase: ClusterPhaseInitial.Name,
+		Phase:   ClusterPhaseInitial.Name,
+		PhaseV2: ClusterPhaseV2InitialFirstPodPerRack,
 		CassandraLastAction: CassandraLastAction{
 			Name:   ClusterPhaseInitial.Name,
 			Status: StatusOngoing,
@@ -936,7 +959,13 @@ type CassandraRackStatus struct {
 	// Phase indicates the state this Cassandra cluster jumps in.
 	// Phase goes as one way as below:
 	//   Initial -> Running <-> updating
+	// Deprecated: use PhaseV2 instead which is more detailed (Initial phase splits into FirstPodPerRackInitializing and NextPodPerRackInitializing)
 	Phase string `json:"phase,omitempty"`
+
+	// PhaseV2 indicates the state this Cassandra cluster jumps in.
+	// PhaseV2 goes one way till running, then it can go to pending and back to running as below:
+	//   FirstPodPerRackInitializing -> NextPodPerRackInitializing -> Running <-> Pending
+	PhaseV2 ClusterPhaseV2 `json:"phaseV2,omitempty"`
 
 	// CassandraLastAction is the set of Cassandra State & Actions: Active, Standby..
 	CassandraLastAction CassandraLastAction `json:"cassandraLastAction,omitempty"`
@@ -945,12 +974,37 @@ type CassandraRackStatus struct {
 	PodLastOperation PodLastOperation `json:"podLastOperation,omitempty"`
 }
 
+func (in *CassandraRackStatus) IsInInitialPhase() bool {
+	return in.PhaseV2 == ClusterPhaseV2InitialFirstPodPerRack ||
+		in.PhaseV2 == ClusterPhaseV2InitialNextPodPerRack
+}
+
+func (in *CassandraRackStatus) IsInRunningPhase() bool {
+	return in.PhaseV2 == ClusterPhaseV2Running
+}
+
+func (in *CassandraRackStatus) SetPendingPhase() {
+	in.PhaseV2 = ClusterPhaseV2Pending
+	in.Phase = ClusterPhasePending.Name
+}
+
+func (in *CassandraRackStatus) SetRunningPhase() {
+	in.PhaseV2 = ClusterPhaseV2Running
+	in.Phase = ClusterPhaseRunning.Name
+}
+
 // CassandraClusterStatus defines Global state of CassandraCluster
 type CassandraClusterStatus struct {
 	// Phase indicates the state this Cassandra cluster jumps in.
 	// Phase goes as one way as below:
 	//   Initial -> Running <-> updating
+	// Deprecated: use PhaseV2 instead which is more detailed (Initial phase splits into FirstPodPerRackInitializing and NextPodPerRackInitializing)
 	Phase string `json:"phase,omitempty"`
+
+	// PhaseV2 indicates the state this Cassandra cluster jumps in.
+	// PhaseV2 goes one way till running, then it can go to pending and back to running as below:
+	//   FirstPodPerRackInitializing -> NextPodPerRackInitializing -> Running <-> Pending
+	PhaseV2 ClusterPhaseV2 `json:"phaseV2,omitempty"`
 
 	// Store last action at cluster level
 	LastClusterAction       string `json:"lastClusterAction,omitempty"`
@@ -967,6 +1021,20 @@ type CassandraClusterStatus struct {
 
 	//CassandraRackStatusList list status for each Rack
 	CassandraRackStatus map[string]*CassandraRackStatus `json:"cassandraRackStatus,omitempty"`
+}
+
+func (in *CassandraClusterStatus) SetClusterPhaseFromRackPhase(rackStatus *CassandraRackStatus) {
+	in.PhaseV2 = rackStatus.PhaseV2
+	in.Phase = rackStatus.Phase
+}
+
+func (in *CassandraClusterStatus) IsInRunningPhase() bool {
+	return in.PhaseV2 == ClusterPhaseV2Running
+}
+
+func (in *CassandraClusterStatus) SetRunningPhase() {
+	in.PhaseV2 = ClusterPhaseV2Running
+	in.Phase = ClusterPhaseRunning.Name
 }
 
 // CassandraLastAction defines status of the CassandraStatefulset
