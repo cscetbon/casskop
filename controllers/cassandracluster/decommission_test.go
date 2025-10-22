@@ -98,12 +98,12 @@ func TestOneDecommission(t *testing.T) {
 	overrideDelayWaitWithNoDelay()
 	defer restoreDefaultDelayWait()
 
-	ctx := context.TODO()
-	rcc, req := createCassandraClusterWithNoDisruption(t, "cassandracluster-1DC.yaml")
-
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 	assert := assert.New(t)
+
+	ctx := context.TODO()
+	rcc, req := createCassandraClusterWithNoDisruption(t, "cassandracluster-1DC.yaml")
 
 	assertCCStatusLastAction(assert, rcc, api.ClusterPhaseInitial, api.StatusDone)
 	assertClusterStatusPhaseV2(assert, rcc, api.ClusterPhaseV2Running)

@@ -39,9 +39,15 @@ import (
 )
 
 var (
-	retryInterval = time.Second
-	timeout       = time.Second * 5
+	// visible for tests
+	retryInterval = defaultRetryInterval
+
+	timeout = time.Second * 5
 )
+
+func defaultRetryInterval() time.Duration {
+	return time.Second
+}
 
 // GetStatefulSet return the Statefulset name from the cluster in the namespace
 func (rcc *CassandraClusterReconciler) GetStatefulSet(ctx context.Context, namespace, name string) (*appsv1.StatefulSet, error) {
@@ -89,7 +95,7 @@ func (rcc *CassandraClusterReconciler) UpdateStatefulSet(ctx context.Context, st
 		return fmt.Errorf("failed to update cassandra statefulset: %cc", err)
 	}
 	//Check that the new revision of statefulset has been taken into account
-	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+	err := wait.Poll(retryInterval(), timeout, func() (done bool, err error) {
 		newSts, err := rcc.GetStatefulSet(ctx, statefulSet.Namespace, statefulSet.Name)
 		if err != nil && !apierrors.IsNotFound(err) {
 			return false, fmt.Errorf("failed to get cassandra statefulset: %cc", err)

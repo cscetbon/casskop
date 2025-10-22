@@ -21,6 +21,7 @@ import (
 
 	"github.com/cscetbon/casskop/controllers/common"
 	"github.com/cscetbon/casskop/pkg/k8s"
+	"github.com/jarcoal/httpmock"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -375,6 +376,10 @@ func assertRackStatus(assert *assert.Assertions, cc *api.CassandraCluster, dcRac
 
 func TestCassandraClusterReconciler(t *testing.T) {
 
+	// tests speed-up
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
 	// Mock request to simulate Reconcile() being called on an event for a
 	// watched resource .
 	rcc, req := helperCreateCassandraCluster(context.TODO(), t, "cassandracluster-2DC.yaml")
@@ -392,6 +397,14 @@ func TestCassandraClusterReconciler(t *testing.T) {
 }
 
 func TestCassandraClusterReconcilerMultiNodePerRack(t *testing.T) {
+
+	// override delay wait to speed up tests
+	overrideDelayWaitWithNoDelay()
+	defer restoreDefaultDelayWait()
+
+	// tests speed-up
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
 
 	// Mock request to simulate Reconcile() being called on an event for a
 	// watched resource .
@@ -411,6 +424,11 @@ func TestCassandraClusterReconcilerMultiNodePerRack(t *testing.T) {
 
 // test that we detect an addition of a configmap
 func TestUpdateStatusIfconfigMapHasChangedWithNoConfigMap(t *testing.T) {
+
+	// tests speed-up
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
 	// Mock request to simulate Reconcile() being called on an event for a
 	// watched resource .
 	rcc, req := helperCreateCassandraCluster(context.TODO(), t, "cassandracluster-2DC.yaml")
@@ -464,6 +482,11 @@ func TestUpdateStatusIfconfigMapHasChangedWithNoConfigMap(t *testing.T) {
 
 // test that we detect a change in a configmap
 func TestUpdateStatusIfconfigMapHasChangedWithConfigMap(t *testing.T) {
+
+	// tests speed-up
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
 	// Mock request to simulate Reconcile() being called on an event for a
 	// watched resource .
 	rcc, req := helperCreateCassandraCluster(context.TODO(), t, "cassandracluster-2DC-configmap.yaml")
@@ -535,6 +558,11 @@ func TestUpdateStatusIfconfigMapHasChangedWithConfigMap(t *testing.T) {
 
 // test that we detect a change in a the docker image
 func TestUpdateStatusIfDockerImageHasChanged(t *testing.T) {
+
+	// tests speed-up
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
 	// Mock request to simulate Reconcile() being called on an event for a
 	// watched resource .
 	rcc, req := helperCreateCassandraCluster(context.TODO(), t, "cassandracluster-2DC-configmap.yaml")
@@ -611,8 +639,12 @@ func overrideDelayWaitWithNoDelay() {
 	delayWait = func() time.Duration {
 		return 0
 	}
+	retryInterval = func() time.Duration {
+		return time.Millisecond
+	}
 }
 
 func restoreDefaultDelayWait() {
 	delayWait = defaultDelayWait
+	retryInterval = defaultRetryInterval
 }

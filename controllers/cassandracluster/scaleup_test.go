@@ -65,11 +65,11 @@ func TestAddTwoNodes(t *testing.T) {
 	overrideDelayWaitWithNoDelay()
 	defer restoreDefaultDelayWait()
 
-	rcc, req := createCassandraClusterWithNoDisruption(t, "cassandracluster-1DC.yaml")
-
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 	assert := assert.New(t)
+
+	rcc, req := createCassandraClusterWithNoDisruption(t, "cassandracluster-1DC.yaml")
 
 	assert.Equal(int32(3), rcc.cc.Spec.NodesPerRacks)
 

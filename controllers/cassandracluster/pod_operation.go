@@ -675,7 +675,7 @@ func (rcc *CassandraClusterReconciler) finalizeOperation(ctx context.Context, er
 		}
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 			"status": status}).Debug("Can't get new version of Cassandra Cluster. Will try again")
-		time.Sleep(retryInterval)
+		time.Sleep(retryInterval())
 	}
 }
 
@@ -830,7 +830,7 @@ func (rcc *CassandraClusterReconciler) runRemove(ctx context.Context, hostName s
 }
 
 func (rcc *CassandraClusterReconciler) waitUntilPvcIsDeleted(ctx context.Context, namespace, pvcName string) error {
-	err := wait.Poll(retryInterval, deletedPvcTimeout, func() (done bool, err error) {
+	err := wait.Poll(retryInterval(), deletedPvcTimeout, func() (done bool, err error) {
 		_, err = rcc.GetPVC(ctx, namespace, pvcName)
 		if err != nil && apierrors.IsNotFound(err) {
 			logrus.WithFields(logrus.Fields{"namespace": namespace,
