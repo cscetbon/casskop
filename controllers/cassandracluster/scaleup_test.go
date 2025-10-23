@@ -34,11 +34,14 @@ func registerJolokiaOperationJoiningNodes(host podName, numberOfJoiningNodes int
 }
 
 func TestAddTwoNodes(t *testing.T) {
-	rcc, req := createCassandraClusterWithNoDisruption(t, "cassandracluster-1DC.yaml")
+	overrideDelayWaitWithNoDelay()
+	defer restoreDefaultDelayWait()
 
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 	assert := assert.New(t)
+
+	rcc, req := createCassandraClusterWithNoDisruption(t, "cassandracluster-1DC.yaml")
 
 	assert.Equal(int32(3), rcc.cc.Spec.NodesPerRacks)
 

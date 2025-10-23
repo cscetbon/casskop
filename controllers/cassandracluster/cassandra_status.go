@@ -167,7 +167,7 @@ func needToWaitDelayBeforeCheck(cc *api.CassandraCluster, dcRackName string, sto
 		t := *lastAction.StartTime
 		now := metav1.Now()
 
-		if t.Add(api.DefaultDelayWait * time.Second).After(now.Time) {
+		if t.Add(delayWait()).After(now.Time) {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 				"rack": dcRackName}).Info(
 				fmt.Sprintf("The Operator Waits %s seconds for the action to start correctly",
@@ -177,6 +177,13 @@ func needToWaitDelayBeforeCheck(cc *api.CassandraCluster, dcRackName string, sto
 		}
 	}
 	return false
+}
+
+// visible for tests
+var delayWait = defaultDelayWait
+
+func defaultDelayWait() time.Duration {
+	return api.DefaultDelayWait * time.Second
 }
 
 // UpdateStatusIfconfigMapHasChanged updates CassandraCluster Action Status if it detect a changes :
