@@ -24,6 +24,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/utils/ptr"
 
 	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
@@ -207,7 +208,7 @@ func TestInitCassandraRackinStatus(t *testing.T) {
 
 	initialCassandraPhase := CassandraPhase{
 		Phase:                ClusterPhaseInitial.Name,
-		InitializingSubPhase: nil,
+		InitializingSubPhase: ptr.To(ClusterPhaseInitialSubPhaseFirstPodPerRack),
 	}
 
 	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name)
@@ -484,9 +485,34 @@ func TestSetDefaults(t *testing.T) {
 
 	initialCassandraPhase := CassandraPhase{
 		Phase:                ClusterPhaseInitial.Name,
-		InitializingSubPhase: nil,
+		InitializingSubPhase: ptr.To(ClusterPhaseInitialSubPhaseFirstPodPerRack),
 	}
 	assert.Equal(initialCassandraPhase, cluster.Status.CassandraPhase)
 	assert.Equal(int32(defaultMaxPodUnavailable), cluster.Spec.MaxPodUnavailable)
 	assert.Equal([]string{"defaults-test-dc1-rack1-0.defaults-test.default"}, cluster.Status.SeedList)
+}
+
+func TestAddSubPhase(t *testing.T) {
+	assert := assert.New(t)
+
+	cluster := CassandraCluster{
+		Status: CassandraClusterStatus{
+			CassandraPhase: CassandraPhase{
+				Phase:                ClusterPhaseInitial.Name,
+				InitializingSubPhase: nil,
+			},
+			SeedList:             nil,
+			CassandraNodesStatus: nil,
+			CassandraRackStatus:  nil,
+		},
+	}
+
+	assert.True(cluster.SetDefaults())
+	cluster.CheckDefaults()
+
+	initialCassandraPhase := CassandraPhase{
+		Phase:                ClusterPhaseInitial.Name,
+		InitializingSubPhase: ptr.To(ClusterPhaseInitialSubPhaseFirstPodPerRack),
+	}
+	assert.Equal(initialCassandraPhase, cluster.Status.CassandraPhase)
 }

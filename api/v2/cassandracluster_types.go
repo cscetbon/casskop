@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 const (
@@ -51,11 +52,19 @@ type ClusterStateInfo struct {
 
 type InitializingSubPhase string
 
+func (p InitializingSubPhase) IsEmpty() bool {
+	return len(p) == 0
+}
+
 var (
 	//Cluster phases
 	ClusterPhaseInitial = ClusterStateInfo{1, "Initializing"}
 	ClusterPhaseRunning = ClusterStateInfo{2, "Running"}
 	ClusterPhasePending = ClusterStateInfo{3, "Pending"}
+
+	//Cluster Initializing sub-phases
+	ClusterPhaseInitialSubPhaseFirstPodPerRack InitializingSubPhase = "FirstPodPerRack"
+	ClusterPhaseInitialSubPhaseNextPodPerRack  InitializingSubPhase = "NextPodPerRack"
 
 	//Available actions
 	ActionUpdateConfigMap   = ClusterStateInfo{1, "UpdateConfigMap"}
@@ -175,7 +184,8 @@ func (cc *CassandraCluster) SetDefaults() bool {
 	}
 	if cc.Status.CassandraPhase.IsEmpty() {
 		cc.Status.CassandraPhase = CassandraPhase{
-			Phase: ClusterPhaseInitial.Name,
+			Phase:                ClusterPhaseInitial.Name,
+			InitializingSubPhase: ptr.To(ClusterPhaseInitialSubPhaseFirstPodPerRack),
 		}
 		if cc.InitCassandraRackList() < 1 {
 			logrus.Errorf("[%s]: We should have at list One Rack, Please correct the Error", cc.Name)
@@ -183,6 +193,10 @@ func (cc *CassandraCluster) SetDefaults() bool {
 		if cc.Status.SeedList == nil {
 			cc.Status.SeedList = cc.InitSeedList()
 		}
+		changed = true
+	}
+	if cc.Status.CassandraPhase.IsInitialButNoSubPhase() {
+		cc.Status.CassandraPhase.InitializingSubPhase = ptr.To(ClusterPhaseInitialSubPhaseFirstPodPerRack)
 		changed = true
 	}
 	if ccs.MaxPodUnavailable == 0 {
@@ -281,6 +295,13 @@ func (cc *CassandraCluster) GetDCRackName(dcName string, rackName string) string
 	return ""
 }
 
+// GetDCRackNameStrongType return the strongly-typed DcRackName for the given dc and rack indices
+func (cc *CassandraCluster) GetDCRackNameStrongType(dc, rack int) DcRackName {
+	dcName := cc.GetDCName(dc)
+	rackName := cc.GetRackName(dc, rack)
+	return DcRackName(cc.GetDCRackName(dcName, rackName))
+}
+
 // GetDCNameFromDCRackName send dc name from dcRackName (dc-rack)
 func (cc *CassandraCluster) GetDCNameFromDCRackName(dcRackName string) string {
 	dc, _ := cc.GetDCNameAndRackNameFromDCRackName(dcRackName)
@@ -317,7 +338,8 @@ func (cc *CassandraCluster) InitCassandraRackStatus(status *CassandraClusterStat
 	dcRackName := cc.GetDCRackName(dcName, rackName)
 	rackStatus := CassandraRackStatus{
 		CassandraPhase: CassandraPhase{
-			Phase: ClusterPhaseInitial.Name,
+			Phase:                ClusterPhaseInitial.Name,
+			InitializingSubPhase: ptr.To(ClusterPhaseInitialSubPhaseFirstPodPerRack),
 		},
 		CassandraLastAction: CassandraLastAction{
 			Name:   ClusterPhaseInitial.Name,
@@ -963,6 +985,12 @@ func (in *CassandraClusterStatus) GetCassandraRackStatus(dcRackName DcRackName) 
 	return in.CassandraRackStatus[dcRackName.String()]
 }
 
+// SafeGetCassandraRackStatus returns CassandraRackStatus for a given strongly-typed dcRack and boolean indicating if the status was found or not
+func (in *CassandraClusterStatus) SafeGetCassandraRackStatus(dcRackName DcRackName) (*CassandraRackStatus, bool) {
+	status, ok := in.CassandraRackStatus[dcRackName.String()]
+	return status, ok
+}
+
 type CassandraPhase struct {
 	// phase indicates the state this Cassandra cluster jumps in.
 	// phase goes as one way as below:
@@ -970,6 +998,8 @@ type CassandraPhase struct {
 	Phase string `json:"phase,omitempty"`
 
 	// initializingSubPhase adds detail to Initial phase
+	// initializingSubPhase goes one way as below:
+	//  FirstPodPerRack -> NextPodPerRack
 	InitializingSubPhase *InitializingSubPhase `json:"initializingSubPhase,omitempty"`
 }
 
@@ -982,6 +1012,27 @@ func (p CassandraPhase) String() string {
 
 func (p *CassandraPhase) IsEmpty() bool {
 	return p.Phase == ""
+}
+
+func (p *CassandraPhase) SubPhaseMigrationNeeded() bool {
+	// currently only one condition triggers subphase migration
+	return p.IsInitialButNoSubPhase()
+}
+
+func (p *CassandraPhase) IsInitialButNoSubPhase() bool {
+	return p.IsInInitialPhase() && (p.InitializingSubPhase == nil || p.InitializingSubPhase.IsEmpty())
+}
+
+func (p *CassandraPhase) IsInInitialPhase() bool {
+	return p.Phase == ClusterPhaseInitial.Name
+}
+
+func (p *CassandraPhase) IsInFirstPodPerRackInitPhase() bool {
+	return p.IsInInitialPhase() && p.InitializingSubPhase != nil && *p.InitializingSubPhase == ClusterPhaseInitialSubPhaseFirstPodPerRack
+}
+
+func (p *CassandraPhase) IsInRunningPhase() bool {
+	return p.Phase == ClusterPhaseRunning.Name
 }
 
 // CassandraRackStatus defines states of Cassandra for 1 rack (1 statefulset)
@@ -999,12 +1050,11 @@ type CassandraRackStatus struct {
 	StatefulSetSnapshotBeforeStorageResize string `json:"statefulSetSnapshotBeforeStorageResize,omitempty"`
 }
 
-func (in *CassandraRackStatus) IsInInitialPhase() bool {
-	return in.Phase == ClusterPhaseInitial.Name
-}
-
-func (in *CassandraRackStatus) IsInRunningPhase() bool {
-	return in.Phase == ClusterPhaseRunning.Name
+func (in *CassandraRackStatus) SetNextPodPerRackInitPhase() {
+	in.CassandraPhase = CassandraPhase{
+		Phase:                ClusterPhaseInitial.Name,
+		InitializingSubPhase: ptr.To(ClusterPhaseInitialSubPhaseNextPodPerRack),
+	}
 }
 
 func (in *CassandraRackStatus) SetPendingPhase() {
@@ -1046,8 +1096,11 @@ func (in *CassandraClusterStatus) SetClusterPhaseFromRackPhase(rackStatus *Cassa
 	in.CassandraPhase = *rackStatus.CassandraPhase.DeepCopy()
 }
 
-func (in *CassandraClusterStatus) IsInRunningPhase() bool {
-	return in.Phase == ClusterPhaseRunning.Name
+func (in *CassandraClusterStatus) SetNextPodPerRackInitPhase() {
+	in.CassandraPhase = CassandraPhase{
+		Phase:                ClusterPhaseInitial.Name,
+		InitializingSubPhase: ptr.To(ClusterPhaseInitialSubPhaseNextPodPerRack),
+	}
 }
 
 func (in *CassandraClusterStatus) SetRunningPhase() {

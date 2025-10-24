@@ -2271,7 +2271,10 @@ spec:
                             items:
                               type: string
                       initializingSubPhase:
-                        description: initializingSubPhase adds detail to Initial phase
+                        description: |-
+                          initializingSubPhase adds detail to Initial phase
+                          initializingSubPhase goes one way as below:
+                           FirstPodPerRack -> NextPodPerRack
                         type: string
                       phase:
                         description: |-
@@ -2317,7 +2320,10 @@ spec:
                           The purpose is to isolate the storage resize operation from other operations
                         type: string
                 initializingSubPhase:
-                  description: initializingSubPhase adds detail to Initial phase
+                  description: |-
+                    initializingSubPhase adds detail to Initial phase
+                    initializingSubPhase goes one way as below:
+                     FirstPodPerRack -> NextPodPerRack
                   type: string
                 lastClusterAction:
                   description: Store last action at cluster level

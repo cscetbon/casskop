@@ -493,6 +493,7 @@ func (rcc *CassandraClusterReconciler) UpdateCassandraRackStatusPhase(ctx contex
 		}
 		if len(podsList.Items) < int(nodesPerRacks) {
 			logrus.WithFields(logrusFields).Infof("StatefulSet is scaling up")
+			return
 		}
 		pod := podsList.Items[nodesPerRacks-1]
 		if cassandrapod.IsReady(&pod) {
@@ -514,6 +515,35 @@ func (rcc *CassandraClusterReconciler) UpdateCassandraRackStatusPhase(ctx contex
 		logrus.WithFields(logrusFields).Infof("StatefulSet: Rack Phase is not %s", api.ClusterPhaseRunning.Name)
 		status.GetCassandraRackStatus(dcRackName).SetRunningPhase()
 		ClusterPhaseMetric.set(api.ClusterPhaseRunning, cc.Name)
+	}
+}
+
+// UpdateCassandraRackStatusFirstPodPerRackInitPhase goal is to calculate the Cluster Subphase of Phase Initializing according to StatefulSet Status.
+// The Subphase goes one way: FirstPodPerRack -> NextPodPerRack
+func (rcc *CassandraClusterReconciler) UpdateCassandraRackStatusFirstPodPerRackInitPhase(ctx context.Context,
+	cc *api.CassandraCluster, completeDcRackName api.CompleteRackName,
+	storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) {
+
+	logrusFields := logrus.Fields{"cluster": cc.Name, "rack": completeDcRackName.RackName,
+		"phase":         status.GetCassandraRackStatus(completeDcRackName.DcRackName).CassandraPhase,
+		"ReadyReplicas": storedStatefulSet.Status.ReadyReplicas, "RequestedReplicas": *storedStatefulSet.Spec.Replicas}
+
+	ClusterPhaseMetric.set(api.ClusterPhaseInitial, cc.Name)
+
+	if sts.IsStatefulSetNotReady(storedStatefulSet) {
+		logrus.WithFields(logrusFields).Infof("Initializing StatefulSet: Replicas count is not okay")
+		return
+	}
+	//If yes, just check that lastPod is running
+	labels := k8s.LabelsForCassandraDCRackStrongTypes(cc, completeDcRackName.DcName, completeDcRackName.RackName)
+	podsList, err := rcc.ListPods(ctx, cc.Namespace, labels)
+	if err != nil || len(podsList.Items) < 1 {
+		return
+	}
+	pod := podsList.Items[len(podsList.Items)-1]
+	if cassandrapod.IsReady(&pod) {
+		status.GetCassandraRackStatus(completeDcRackName.DcRackName).SetNextPodPerRackInitPhase()
+		logrus.WithFields(logrusFields).Infof("StatefulSet: Replicas count is okay")
 	}
 }
 

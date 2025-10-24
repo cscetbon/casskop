@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	api "github.com/cscetbon/casskop/api/v2"
+	appsv1 "k8s.io/api/apps/v1"
 	policyv1 "k8s.io/api/policy/v1"
 
 	"github.com/cscetbon/casskop/pkg/k8s"
@@ -86,10 +87,11 @@ func (rcc *CassandraClusterReconciler) podDisruptionBudgetEnvelope(cc *api.Cassa
 }
 
 // ensureCassandraStatefulSet generate and apply the statefulset
-// take dcRackName to accordingly named the statefulset
-// take dc and rack index of dc and rack in conf to retrieve according  nodeselectors labels
+// take dcRackName to accordingly name the statefulset
+// take dc and rack index of dc and rack in conf to retrieve according nodeselectors labels
 func (rcc *CassandraClusterReconciler) ensureCassandraStatefulSet(ctx context.Context, cc *api.CassandraCluster,
-	status *api.CassandraClusterStatus, completeDcRackName api.CompleteRackName, dc int, rack int) (bool, error) {
+	status *api.CassandraClusterStatus, completeDcRackName api.CompleteRackName, dc int, rack int,
+	cassandraStatefulSetModifiers ...cassandraStatefulSetModifier) (bool, error) {
 
 	labels, nodeSelector := k8s.DCRackLabelsAndNodeSelectorForStatefulSet(cc, dc, rack)
 
@@ -100,6 +102,10 @@ func (rcc *CassandraClusterReconciler) ensureCassandraStatefulSet(ctx context.Co
 	}
 	k8s.AddOwnerRefToObject(ss, k8s.AsOwner(cc))
 
+	for _, modifier := range cassandraStatefulSetModifiers {
+		ss.Spec = modifier(ss.Spec)
+	}
+
 	breakResyncloop, err := rcc.CreateOrUpdateStatefulSet(ctx, ss, status, completeDcRackName)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return breakResyncloop, fmt.Errorf("failed to create cassandra statefulset: %v", err)
@@ -107,3 +113,5 @@ func (rcc *CassandraClusterReconciler) ensureCassandraStatefulSet(ctx context.Co
 
 	return breakResyncloop, nil
 }
+
+type cassandraStatefulSetModifier func(appsv1.StatefulSetSpec) appsv1.StatefulSetSpec
