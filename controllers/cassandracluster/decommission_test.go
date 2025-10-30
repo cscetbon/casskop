@@ -69,7 +69,7 @@ type podName struct {
 }
 
 func podHost(stfsName string, id int8, rcc *CassandraClusterReconciler) podName {
-	name := stfsName + strconv.Itoa(int(id))
+	name := stfsName + "-" + strconv.Itoa(int(id))
 	return podName{name, name + "." + rcc.cc.Name}
 }
 

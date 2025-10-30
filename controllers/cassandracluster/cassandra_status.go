@@ -372,14 +372,28 @@ func (rcc *CassandraClusterReconciler) UpdateStatusIfActionEnded(ctx context.Con
 			//Does the Scaling ended ?
 			if nodesPerRacks == storedStatefulSet.Status.Replicas {
 
-				podsList, err := rcc.ListPods(ctx, cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
+				podsList, err := rcc.ListPodsOrderByNameAscending(ctx, cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
 				nb := len(podsList.Items)
 				if err != nil || nb < 1 {
 					return false
 				}
+				if nb < int(nodesPerRacks) {
+					logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName}).Warn(fmt.Sprintf(
+						"Although statefulSet has %d replicas, only %d matching pods found", nodesPerRacks, nb))
+					return false
+				}
 				pod := podsList.Items[nodesPerRacks-1]
+
 				//We need lastPod to be running to consider ScaleUp ended
 				if cassandraPodIsReady(&pod) {
+					if hasJoiningNodes, err := rcc.hasJoiningNodes(ctx, cc); err != nil {
+						return false
+					} else if hasJoiningNodes {
+						logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc": dcName, "rack": rackName,
+							"err": err}).Info("Cluster has joining nodes, ScaleUp not yet completed")
+						return false
+					}
+
 					logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName}).Info("ScaleUp is Done")
 					rackLastAction.Status = api.StatusDone
 					rackLastAction.EndTime = &now

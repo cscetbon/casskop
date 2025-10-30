@@ -97,6 +97,8 @@ func HelperInitCluster(t *testing.T, name string) (*CassandraClusterReconciler,
 	var cc api.CassandraCluster
 	yaml.Unmarshal(common.HelperLoadBytes(t, name), &cc)
 
+	cc.UID = "123456789" //We need to set a UID so PatchMaker does not fail when comparing owner references
+
 	ccList := api.CassandraClusterList{}
 	//Create Fake client
 	//Objects to track in the Fake client
@@ -203,33 +205,11 @@ func helperCreateCassandraCluster(ctx context.Context, t *testing.T, cassandraCl
 			rcc.Client.Status().Update(ctx, sts)
 
 			//Create Statefulsets associated fake Pods
-			podTemplate := v1.Pod{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "template",
-					Namespace: namespace,
-					Labels: map[string]string{
-						"cluster":                              cc.Labels["cluster"],
-						"dc-rack":                              dcRackName,
-						"cassandraclusters.db.orange.com.dc":   dc.Name,
-						"cassandraclusters.db.orange.com.rack": rack.Name,
-						"app":                                  "cassandracluster",
-						"cassandracluster":                     cc.Name,
-					},
-				},
-				Status: v1.PodStatus{
-					Phase: v1.PodRunning,
-					ContainerStatuses: []v1.ContainerStatus{
-						{
-							Name:  "cassandra",
-							Ready: true,
-						},
-					},
-				},
-			}
+			podTemplate := fakePodTemplate(cc, dc.Name, rack.Name)
 
 			for i := 0; i < int(sts.Status.Replicas); i++ {
 				pod := podTemplate.DeepCopy()
-				pod.Name = sts.Name + strconv.Itoa(i)
+				pod.Name = sts.Name + "-" + strconv.Itoa(i)
 				pod.Spec.Hostname = pod.Name
 				pod.Spec.Subdomain = cc.Name
 				if err = rcc.CreatePod(ctx, pod); err != nil {
@@ -263,6 +243,33 @@ func helperCreateCassandraCluster(ctx context.Context, t *testing.T, cassandraCl
 	assert.Equal(api.StatusDone, cc.Status.LastClusterActionStatus)
 
 	return rcc, &req
+}
+
+func fakePodTemplate(cc *api.CassandraCluster, dcName, rackName string) v1.Pod {
+	dcRackName := cc.GetDCRackName(dcName, rackName)
+	return v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "template",
+			Namespace: namespace,
+			Labels: map[string]string{
+				"cluster":                              cc.Labels["cluster"],
+				"dc-rack":                              dcRackName,
+				"cassandraclusters.db.orange.com.dc":   dcName,
+				"cassandraclusters.db.orange.com.rack": rackName,
+				"app":                                  "cassandracluster",
+				"cassandracluster":                     cc.Name,
+			},
+		},
+		Status: v1.PodStatus{
+			Phase: v1.PodRunning,
+			ContainerStatuses: []v1.ContainerStatus{
+				{
+					Name:  "cassandra",
+					Ready: true,
+				},
+			},
+		},
+	}
 }
 
 func TestCassandraClusterReconciler(t *testing.T) {
@@ -474,6 +481,24 @@ func TestUpdateStatusIfDockerImageHasChanged(t *testing.T) {
 		}
 	}
 
+}
+
+func assertRackStatusPhase(assert *assert.Assertions, rcc *CassandraClusterReconciler, dcRackName string, expectedPhase api.ClusterStateInfo) {
+	assert.Equal(expectedPhase.Name, rcc.cc.Status.CassandraRackStatus[dcRackName].Phase, dcRackName + " phase")
+}
+
+func assertClusterStatusPhase(assert *assert.Assertions, rcc *CassandraClusterReconciler, expectedPhase api.ClusterStateInfo) {
+	assert.Equal(expectedPhase.Name, rcc.cc.Status.Phase, "cluster phase")
+}
+
+func assertRackStatusLastAction(assert *assert.Assertions, rcc *CassandraClusterReconciler, dcRackName string, expectedActionType api.ClusterStateInfo, expectedActionStatus string) {
+	assert.Equal(expectedActionType.Name, rcc.cc.Status.CassandraRackStatus[dcRackName].CassandraLastAction.Name, "dc1-rack1 last action type")
+	assert.Equal(expectedActionStatus, rcc.cc.Status.CassandraRackStatus[dcRackName].CassandraLastAction.Status, "dc1-rack1 last action status")
+}
+
+func assertClusterStatusLastAction(assert *assert.Assertions, rcc *CassandraClusterReconciler, expectedActionType api.ClusterStateInfo, expectedActionStatus string) {
+	assert.Equal(expectedActionType.Name, rcc.cc.Status.LastClusterAction, "cluster last action type")
+	assert.Equal(expectedActionStatus, rcc.cc.Status.LastClusterActionStatus, "cluster last action status")
 }
 
 func overrideDelayWaitWithNoDelay() {
