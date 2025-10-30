@@ -474,7 +474,7 @@ func (rcc *CassandraClusterReconciler) UpdateCassandraRackStatusPhase(ctx contex
 			return
 		}
 		//If yes, just check that lastPod is running
-		podsList, err := rcc.ListPods(ctx, cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
+		podsList, err := rcc.ListPodsOrderByNameAscending(ctx, cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
 		if err != nil || len(podsList.Items) < 1 {
 			return
 		}
