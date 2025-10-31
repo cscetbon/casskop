@@ -536,7 +536,7 @@ func (rcc *CassandraClusterReconciler) UpdateCassandraRackStatusFirstPodPerRackI
 	}
 	//If yes, just check that lastPod is running
 	labels := k8s.LabelsForCassandraDCRackStrongTypes(cc, completeDcRackName.DcName, completeDcRackName.RackName)
-	podsList, err := rcc.ListPods(ctx, cc.Namespace, labels)
+	podsList, err := rcc.ListPodsOrderByNameAscending(ctx, cc.Namespace, labels)
 	if err != nil || len(podsList.Items) < 1 {
 		return
 	}
