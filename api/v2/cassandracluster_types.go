@@ -70,6 +70,8 @@ var (
 
 	ActionCorrectCRDConfig = ClusterStateInfo{11, "CorrectCRDConfig"} //The Operator has correct a bad CRD configuration
 
+	ActionStorageUpsize = ClusterStateInfo{12, "StorageUpsize"}
+
 	regexDCRackName = regexp.MustCompile("^[a-z]([-a-z0-9]*[a-z0-9])?$")
 )
 
@@ -230,6 +232,10 @@ func (cc *CassandraCluster) GetDCName(dc int) string {
 		return DefaultCassandraDC
 	}
 	return cc.Spec.Topology.DC[dc].Name
+}
+
+func (cc *CassandraCluster) GetDCNameStrongType(dc int) DcName {
+	return DcName(cc.GetDCName(dc))
 }
 
 func (cc *CassandraCluster) getDCNodesPerRacksFromIndex(dc int) int32 {
@@ -462,6 +468,11 @@ func (cc *CassandraCluster) GetDataCapacityForDC(dcName string) string {
 	return cc.GetDataCapacityFromDCName(dcName)
 }
 
+// GetDataCapacityForDC sends back the data capacity of cassandra nodes for the given strongly-typed dcName
+func (cc *CassandraCluster) GetDataCapacityForDCName(dcName DcName) string {
+	return cc.GetDataCapacityFromDCName(dcName.String())
+}
+
 // GetDataCapacityFromDCName send DataCapacity used for the given dcName
 func (cc *CassandraCluster) GetDataCapacityFromDCName(dcName string) string {
 	dcIndex := cc.GetDCIndexFromDCName(dcName)
@@ -478,6 +489,11 @@ func (cc *CassandraCluster) GetDataCapacityFromDCName(dcName string) string {
 // GetDataCapacityForDC sends back the data storage class of cassandra nodes to uses for this dc
 func (cc *CassandraCluster) GetDataStorageClassForDC(dcName string) string {
 	return cc.GetDataStorageClassFromDCName(dcName)
+}
+
+// GetDataStorageClassForDCName send DataStorageClass used for the given strongly-typed dcName
+func (cc *CassandraCluster) GetDataStorageClassForDCName(dcName DcName) string {
+	return cc.GetDataStorageClassFromDCName(dcName.String())
 }
 
 // GetDataCapacityFromDCName send DataStorageClass used for the given dcName
@@ -537,6 +553,11 @@ func (cc *CassandraCluster) GetRackFromDCRackName(dcRackName string) *Rack {
 func (cc *CassandraCluster) GetNodesPerRacks(dcRackName string) int32 {
 	nodesPerRacks := cc.GetDCNodesPerRacksFromDCRackName(dcRackName)
 	return nodesPerRacks
+}
+
+// GetNodesPerRacks sends back the number of cassandra nodes to uses for this strongly-typed dc-rack
+func (cc *CassandraCluster) GetNodesPerRacksStrongType(dcRackName DcRackName) int32 {
+	return cc.GetNodesPerRacks(dcRackName.String())
 }
 
 // GetDCNodesPerRacksFromDCRackName send NodesPerRack used for the given dcRackName
@@ -931,6 +952,11 @@ type BackRestSidecar struct {
 	VolumeMounts []v1.VolumeMount         `json:"volumeMount,omitempty"`
 }
 
+// GetCassandraRackStatus returns CassandraRackStatus for a given strongly-typed dcRack
+func (in *CassandraClusterStatus) GetCassandraRackStatus(dcRackName DcRackName) *CassandraRackStatus {
+	return in.CassandraRackStatus[dcRackName.String()]
+}
+
 // CassandraRackStatus defines states of Cassandra for 1 rack (1 statefulset)
 type CassandraRackStatus struct {
 	// Phase indicates the state this Cassandra cluster jumps in.
@@ -943,6 +969,10 @@ type CassandraRackStatus struct {
 
 	// PodLastOperation manage status for Pod Operation (nodetool cleanup, upgradesstables..)
 	PodLastOperation PodLastOperation `json:"podLastOperation,omitempty"`
+
+	// StatefulSetSnapshotBeforeStorageResize is the StatefulSet snapshot taken before storage resize
+	// The purpose is to isolate the storage resize operation from other operations
+	StatefulSetSnapshotBeforeStorageResize string `json:"statefulSetSnapshotBeforeStorageResize,omitempty"`
 }
 
 // CassandraClusterStatus defines Global state of CassandraCluster

@@ -1,0 +1,44 @@
+#
+# requirements:
+# - Cluster nodes should support LVM
+# - OpenEBS LVM Operator should be installed and configured in the cluster.
+#   kubectl apply -f https://openebs.github.io/charts/lvm-operator.yaml
+#
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: openebs-lvm-sc
+allowVolumeExpansion: true
+parameters:
+  storage: lvm
+  volgroup: lvmvg
+provisioner: local.csi.openebs.io
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: db.orange.com/v2
+kind: CassandraCluster
+metadata:
+  name: cassandra-e2e
+spec:
+  dataCapacity: 1Gi
+  dataStorageClass: openebs-lvm-sc
+  nodesPerRacks: 1
+  cassandraImage: cassandra:4.0.2
+  serverVersion: 4.0.0
+  deletePVC: true
+  autoPilot: true
+  backRestSidecar:
+    resources:
+      limits:
+        memory: 128Mi
+        cpu: 100m
+  resources:
+    limits:
+      cpu: 200m
+      memory: 512Mi
+  topology:
+    dc:
+      - name: dc1
+        rack:
+          - name: rack1

@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cassandra-e2e-dc1-rack1
+status:
+  currentReplicas: 1
+  replicas: 1
+---
+apiVersion: db.orange.com/v2
+kind: CassandraCluster
+metadata:
+  name: cassandra-e2e
+status:
+  cassandraRackStatus:
+    dc1-rack1:
+      cassandraLastAction:
+        name: Initializing
+        status: Done
+      phase: Running
+  lastClusterAction: Initializing
+  lastClusterActionStatus: Done
+  phase: Running
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-cassandra-e2e-dc1-rack1-0
+spec:
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: openebs-lvm-sc
+  volumeMode: Filesystem
+status:
+  capacity:
+    storage: 1Gi
+  phase: Bound

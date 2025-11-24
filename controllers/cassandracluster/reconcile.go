@@ -24,6 +24,9 @@ import (
 	"time"
 
 	api "github.com/cscetbon/casskop/api/v2"
+	"github.com/cscetbon/casskop/controllers/cassandracluster/cassandrapod"
+	"github.com/cscetbon/casskop/controllers/cassandracluster/storageupsize"
+	"github.com/cscetbon/casskop/controllers/cassandracluster/sts"
 	"github.com/cscetbon/casskop/pkg/k8s"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/r3labs/diff"
@@ -142,21 +145,36 @@ func (rcc *CassandraClusterReconciler) CheckNonAllowedChanges(ctx context.Contex
 	}
 
 	for dc := 0; dc < cc.GetDCSize(); dc++ {
-		dcName := cc.GetDCName(dc)
-		//DataCapacity change is forbidden
-		if cc.GetDataCapacityForDC(dcName) != oldCRD.GetDataCapacityForDC(dcName) {
+		dcName := cc.GetDCNameStrongType(dc)
+
+		oldCapacity := oldCRD.GetDataCapacityForDCName(dcName)
+		requestedCapacity := cc.GetDataCapacityForDCName(dcName)
+		dataCapacityChange := storageupsize.AnalyzeDataCapacityChange(oldCapacity, requestedCapacity)
+		switch dataCapacityChange {
+		case storageupsize.CapacityUpsize:
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dcName": dcName}).
+				Infof("The Operator has accepted the DataCapacity upsize from [%s] to NewValue[%s]",
+					oldCapacity, requestedCapacity)
+		case storageupsize.CapacityDownsize:
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dcName": dcName}).
 				Warningf("The Operator has refused the change on DataCapacity from [%s] to NewValue[%s]",
-					oldCRD.GetDataCapacityForDC(dcName), cc.GetDataCapacityForDC(dcName))
+					oldCapacity, requestedCapacity)
 			cc.Spec.DataCapacity = oldCRD.Spec.DataCapacity
 			cc.Spec.Topology.DC[dc].DataCapacity = oldCRD.Spec.Topology.DC[dc].DataCapacity
 			needUpdate = true
+		case storageupsize.CapacitySyntacticChange:
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dcName": dcName}).
+				Debugf("The Operator has ignored the change on DataCapacity from [%s] to NewValue[%s] "+
+					"as semantically nothing changes", oldCapacity, requestedCapacity)
+		default:
+			// nothing to do
 		}
+
 		//DataStorage
-		if cc.GetDataStorageClassForDC(dcName) != oldCRD.GetDataStorageClassForDC(dcName) {
+		if cc.GetDataStorageClassForDCName(dcName) != oldCRD.GetDataStorageClassForDCName(dcName) {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dcName": dcName}).
 				Warningf("The Operator has refused the change on DataStorageClass from [%s] to NewValue[%s]",
-					oldCRD.GetDataStorageClassForDC(dcName), cc.GetDataStorageClassForDC(dcName))
+					oldCRD.GetDataStorageClassForDCName(dcName), cc.GetDataStorageClassForDCName(dcName))
 			cc.Spec.DataStorageClass = oldCRD.Spec.DataStorageClass
 			cc.Spec.Topology.DC[dc].DataStorageClass = oldCRD.Spec.Topology.DC[dc].DataStorageClass
 			needUpdate = true
@@ -450,6 +468,11 @@ func (rcc *CassandraClusterReconciler) ReconcileRack(ctx context.Context, cc *ap
 			if dcRackName == "" {
 				return fmt.Errorf("name used for DC and/or Rack are not good")
 			}
+			completeDcRackName := api.CompleteRackName{
+				DcName:     api.DcName(dcName),
+				RackName:   api.RackName(rackName),
+				DcRackName: api.DcRackName(dcRackName),
+			}
 
 			//If we have added a dc/rack to the CRD, we add it to the Status
 			if _, exists := status.CassandraRackStatus[dcRackName]; !exists {
@@ -468,23 +491,23 @@ func (rcc *CassandraClusterReconciler) ReconcileRack(ctx context.Context, cc *ap
 				continue
 			}
 			Name := cc.Name + "-" + dcRackName
-			storedStatefulSet, err := rcc.GetStatefulSet(ctx, cc.Namespace, Name)
-			if err != nil {
+			storedStatefulSet, getStsErr := rcc.GetStatefulSet(ctx, cc.Namespace, Name)
+			if getStsErr != nil {
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-					"dc-rack": dcRackName}).Infof("failed to get cassandra's statefulset (%s) %v", Name, err)
+					"dc-rack": dcRackName}).Infof("failed to get cassandra's statefulset (%s) %v", Name, getStsErr)
 			} else {
 
 				//Update CassandraClusterPhase
-				rcc.UpdateCassandraRackStatusPhase(ctx, cc, dcName, rackName, storedStatefulSet, status)
+				rcc.UpdateCassandraRackStatusPhase(ctx, cc, completeDcRackName, storedStatefulSet, status)
 
 				//Find if there is an Action to execute/end
-				rcc.getNextCassandraClusterStatus(ctx, cc, dc, rack, dcName, rackName, storedStatefulSet, status)
+				rcc.getNextCassandraClusterStatus(ctx, cc, dc, rack, completeDcRackName, storedStatefulSet, status)
 
 				//If not Initializing cluster execute pod operations queued
 				if dcRackStatus.Phase != api.ClusterPhaseInitial.Name {
 					// Check if there are joining nodes and break the loop if there are
 					breakResyncloop, err := rcc.handlePodOperation(ctx, cc, dcName, rackName, status,
-						!isStatefulSetNotReady(storedStatefulSet))
+						sts.IsStatefulSetReady(storedStatefulSet))
 					if err != nil {
 						logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName,
 							"err": err}).Error("Executing pod operation failed")
@@ -524,7 +547,22 @@ func (rcc *CassandraClusterReconciler) ReconcileRack(ctx context.Context, cc *ap
 					"dc-rack": dcRackName}).Errorf("ensureCassandraServiceMonitoring Error: %v", err)
 			}
 
-			breakLoop, err := rcc.ensureCassandraStatefulSet(ctx, cc, status, dcName, dcRackName, dc, rack)
+			if rcc.IsStorageUpsizeStarted(dcRackStatus) {
+				if getStsErr != nil && !apierrors.IsNotFound(getStsErr) {
+					logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName}).
+						Infof("cannot continue storage upsize because: failed to get cassandra's statefulset (%s) %v",
+							Name, getStsErr)
+					return nil
+				}
+				if getStsErr != nil && apierrors.IsNotFound(getStsErr) {
+					rcc.storedStatefulSet = nil
+				} else {
+					rcc.storedStatefulSet = storedStatefulSet
+				}
+				return rcc.ReconcileStorageUpsize(ctx, cc, status, completeDcRackName)
+			}
+
+			breakLoop, err := rcc.ensureCassandraStatefulSet(ctx, cc, status, completeDcRackName, dc, rack)
 			if err != nil {
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 					"dc-rack": dcRackName}).Errorf("ensureCassandraStatefulSet Error: %v", err)
@@ -786,7 +824,7 @@ func processingPods(hostIDMap map[string]string, restartCountBeforePodDeletion i
 
 	// For each pod
 	for _, pod := range podsList {
-		cassandraPodRestartCount := cassandraPodRestartCount(&pod)
+		cassandraPodRestartCount := cassandrapod.RestartCount(&pod)
 		// If the cassandra container has performed more restart than allowed
 		if restartCountBeforePodDeletion > 0 && cassandraPodRestartCount > restartCountBeforePodDeletion {
 			logrus.WithFields(logrus.Fields{"pod": pod.Name}).Debug(fmt.Sprintf("Pod found in restart status with %d restart", restartCountBeforePodDeletion))
@@ -802,7 +840,7 @@ func updateCassandraNodesStatusForPod(hostIDMap map[string]string, pod *v1.Pod, 
 
 	// Update Pod, HostId, Ip couple cached into status
 	hostId, keyFound := hostIDMap[pod.Status.PodIP]
-	if keyFound && cassandraPodIsReady(pod) {
+	if keyFound && cassandrapod.IsReady(pod) {
 		status.CassandraNodesStatus[pod.Name] = api.CassandraNodeStatus{HostId: hostId, NodeIp: pod.Status.PodIP}
 	}
 }

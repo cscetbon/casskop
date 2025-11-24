@@ -17,6 +17,7 @@ package cassandracluster
 import (
 	"context"
 	"fmt"
+
 	api "github.com/cscetbon/casskop/api/v2"
 	policyv1 "k8s.io/api/policy/v1"
 
@@ -89,17 +90,18 @@ func (rcc *CassandraClusterReconciler) podDisruptionBudgetEnvelope(cc *api.Cassa
 // take dcRackName to accordingly named the statefulset
 // take dc and rack index of dc and rack in conf to retrieve according  nodeselectors labels
 func (rcc *CassandraClusterReconciler) ensureCassandraStatefulSet(ctx context.Context, cc *api.CassandraCluster,
-	status *api.CassandraClusterStatus, dcName string, dcRackName string, dc int, rack int) (bool, error) {
+	status *api.CassandraClusterStatus, completeDcRackName api.CompleteRackName, dc int, rack int) (bool, error) {
 
 	labels, nodeSelector := k8s.DCRackLabelsAndNodeSelectorForStatefulSet(cc, dc, rack)
 
-	ss, err := generateCassandraStatefulSet(cc, status, dcName, dcRackName, labels, nodeSelector, nil)
+	ss, err := generateCassandraStatefulSet(cc, status, completeDcRackName.DcName.String(),
+		completeDcRackName.DcRackName.String(), labels, nodeSelector, nil)
 	if err != nil {
 		return true, err
 	}
 	k8s.AddOwnerRefToObject(ss, k8s.AsOwner(cc))
 
-	breakResyncloop, err := rcc.CreateOrUpdateStatefulSet(ctx, ss, status, dcRackName)
+	breakResyncloop, err := rcc.CreateOrUpdateStatefulSet(ctx, ss, status, completeDcRackName)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return breakResyncloop, fmt.Errorf("failed to create cassandra statefulset: %v", err)
 	}

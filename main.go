@@ -43,6 +43,8 @@ import (
 	api "github.com/cscetbon/casskop/api/v2"
 	"github.com/cscetbon/casskop/controllers/cassandrabackup"
 	"github.com/cscetbon/casskop/controllers/cassandracluster"
+	"github.com/cscetbon/casskop/controllers/cassandracluster/storagestateclient"
+	"github.com/cscetbon/casskop/controllers/cassandracluster/sts"
 	"github.com/cscetbon/casskop/controllers/cassandrarestore"
 	"github.com/operator-framework/operator-lib/leader"
 	"github.com/sirupsen/logrus"
@@ -197,9 +199,11 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&cassandracluster.CassandraClusterReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("CassandraCluster"),
-		Scheme: mgr.GetScheme(),
+		Client:             mgr.GetClient(),
+		StorageStateClient: storagestateclient.New(mgr.GetClient()),
+		StsClient:          sts.NewClient(mgr.GetClient()),
+		Log:                ctrl.Log.WithName("controllers").WithName("CassandraCluster"),
+		Scheme:             mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CassandraCluster")
 		os.Exit(1)

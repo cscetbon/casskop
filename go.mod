@@ -19,7 +19,7 @@ require (
 	github.com/r3labs/diff v0.0.0-20190801153147-a71de73c46ad
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.9.3
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.11.1
 	github.com/swarvanusg/go_jolokia v0.0.0-20190213021437-3cd2b3fc4f36
 	github.com/thoas/go-funk v0.4.0
 	github.com/zput/zxcTool v1.3.6
@@ -69,6 +69,7 @@ require (
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
