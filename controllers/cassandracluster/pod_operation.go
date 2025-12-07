@@ -112,21 +112,9 @@ func (rcc *CassandraClusterReconciler) handlePodOperation(ctx context.Context, c
 		return breakResyncLoopSwitch, err
 	}
 
-	podsList, err := rcc.ListCassandraClusterPods(ctx, cc)
+	hasJoiningNodes, err := rcc.hasJoiningNodes(ctx, cc)
 	if err != nil {
-		return true, err
-	}
-	firstPod, err := GetLastOrFirstPodReady(podsList, false)
-	if err != nil {
-		return true, err
-	}
-
-	hostName := k8s.PodHostname(*firstPod)
-	jolokiaClient, _ := NewJolokiaClient(ctx, hostName, JolokiaPort, rcc, cc.Spec.ImageJolokiaSecret, cc.Namespace)
-
-	hasJoiningNodes, err := jolokiaClient.hasJoiningNodes()
-	if err != nil {
-		return true, err
+		return breakResyncLoop, err
 	}
 	if hasJoiningNodes {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc": dcName, "rack": rackName,
@@ -149,6 +137,24 @@ func (rcc *CassandraClusterReconciler) handlePodOperation(ctx context.Context, c
 	}
 
 	return breakResyncLoopSwitch, err
+}
+
+func (rcc *CassandraClusterReconciler) hasJoiningNodes(ctx context.Context, cc *api.CassandraCluster) (bool, error) {
+	podsList, err := rcc.ListCassandraClusterPods(ctx, cc)
+	if err != nil {
+		return false, err
+	}
+	firstPod, err := GetLastOrFirstPodReady(podsList, false)
+	if err != nil {
+		return false, err
+	}
+
+	hostName := k8s.PodHostname(*firstPod)
+	jolokiaClient, err := NewJolokiaClient(ctx, hostName, JolokiaPort, rcc, cc.Spec.ImageJolokiaSecret, cc.Namespace)
+	if err != nil {
+		return false, err
+	}
+	return jolokiaClient.hasJoiningNodes()
 }
 
 // addPodOperationLabels will add Pod Labels labels on all Pod in the Current dcRackName
@@ -675,7 +681,7 @@ func (rcc *CassandraClusterReconciler) finalizeOperation(ctx context.Context, er
 		}
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 			"status": status}).Debug("Can't get new version of Cassandra Cluster. Will try again")
-		time.Sleep(retryInterval)
+		time.Sleep(retryInterval())
 	}
 }
 
@@ -830,7 +836,7 @@ func (rcc *CassandraClusterReconciler) runRemove(ctx context.Context, hostName s
 }
 
 func (rcc *CassandraClusterReconciler) waitUntilPvcIsDeleted(ctx context.Context, namespace, pvcName string) error {
-	err := wait.Poll(retryInterval, deletedPvcTimeout, func() (done bool, err error) {
+	err := wait.Poll(retryInterval(), deletedPvcTimeout, func() (done bool, err error) {
 		_, err = rcc.GetPVC(ctx, namespace, pvcName)
 		if err != nil && apierrors.IsNotFound(err) {
 			logrus.WithFields(logrus.Fields{"namespace": namespace,

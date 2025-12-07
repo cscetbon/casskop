@@ -88,12 +88,7 @@ func GetLastOrFirstPodItem(podsList []v1.Pod, last bool) (*v1.Pod, error) {
 
 	items := podsList[:]
 
-	// Sort pod list using ending number in field ObjectMeta.Name
-	sort.Slice(items, func(i, j int) bool {
-		id1, _ := strconv.Atoi(reEndingNumber.FindString(items[i].ObjectMeta.Name))
-		id2, _ := strconv.Atoi(reEndingNumber.FindString(items[j].ObjectMeta.Name))
-		return id1 < id2
-	})
+	sortPodsList(items)
 
 	idx := 0
 	if last {
@@ -103,6 +98,15 @@ func GetLastOrFirstPodItem(podsList []v1.Pod, last bool) (*v1.Pod, error) {
 	pod := podsList[idx]
 
 	return &pod, nil
+}
+
+// sortPodsList sorts pod list using ending number in field ObjectMeta.Name
+func sortPodsList(items []v1.Pod) {
+	sort.Slice(items, func(i, j int) bool {
+		id1, _ := strconv.Atoi(reEndingNumber.FindString(items[i].ObjectMeta.Name))
+		id2, _ := strconv.Atoi(reEndingNumber.FindString(items[j].ObjectMeta.Name))
+		return id1 < id2
+	})
 }
 
 // GetFirstPod returns the first pod satisfying the selector and being in the namespace
@@ -182,7 +186,6 @@ func (rcc *CassandraClusterReconciler) hasUnschedulablePod(ctx context.Context, 
 }
 
 func (rcc *CassandraClusterReconciler) ListPods(ctx context.Context, namespace string, selector map[string]string) (*v1.PodList, error) {
-
 	clientOpt := &client.ListOptions{
 		Namespace:     namespace,
 		LabelSelector: labels.SelectorFromSet(selector),
@@ -194,6 +197,14 @@ func (rcc *CassandraClusterReconciler) ListPods(ctx context.Context, namespace s
 
 	pl := &v1.PodList{}
 	return pl, rcc.Client.List(ctx, pl, opt...)
+}
+
+func (rcc *CassandraClusterReconciler) ListPodsOrderByNameAscending(ctx context.Context, namespace string, selector map[string]string) (*v1.PodList, error) {
+	pods, err := rcc.ListPods(ctx, namespace, selector)
+	if pods != nil {
+		sortPodsList(pods.Items)
+	}
+	return pods, err
 }
 
 func (rcc *CassandraClusterReconciler) CreatePod(ctx context.Context, pod *v1.Pod) error {

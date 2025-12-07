@@ -17,8 +17,10 @@ package cassandracluster
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/cscetbon/casskop/controllers/common"
+	"github.com/jarcoal/httpmock"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -94,6 +96,8 @@ func HelperInitCluster(t *testing.T, name string) (*CassandraClusterReconciler,
 	*api.CassandraCluster) {
 	var cc api.CassandraCluster
 	yaml.Unmarshal(common.HelperLoadBytes(t, name), &cc)
+
+	cc.UID = "123456789" //We need to set a UID so PatchMaker does not fail when comparing owner references
 
 	ccList := api.CassandraClusterList{}
 	//Create Fake client
@@ -201,33 +205,11 @@ func helperCreateCassandraCluster(ctx context.Context, t *testing.T, cassandraCl
 			rcc.Client.Status().Update(ctx, sts)
 
 			//Create Statefulsets associated fake Pods
-			podTemplate := v1.Pod{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "template",
-					Namespace: namespace,
-					Labels: map[string]string{
-						"cluster":                              cc.Labels["cluster"],
-						"dc-rack":                              dcRackName,
-						"cassandraclusters.db.orange.com.dc":   dc.Name,
-						"cassandraclusters.db.orange.com.rack": rack.Name,
-						"app":                                  "cassandracluster",
-						"cassandracluster":                     cc.Name,
-					},
-				},
-				Status: v1.PodStatus{
-					Phase: v1.PodRunning,
-					ContainerStatuses: []v1.ContainerStatus{
-						{
-							Name:  "cassandra",
-							Ready: true,
-						},
-					},
-				},
-			}
+			podTemplate := fakePodTemplate(cc, dc.Name, rack.Name)
 
 			for i := 0; i < int(sts.Status.Replicas); i++ {
 				pod := podTemplate.DeepCopy()
-				pod.Name = sts.Name + strconv.Itoa(i)
+				pod.Name = sts.Name + "-" + strconv.Itoa(i)
 				pod.Spec.Hostname = pod.Name
 				pod.Spec.Subdomain = cc.Name
 				if err = rcc.CreatePod(ctx, pod); err != nil {
@@ -263,7 +245,37 @@ func helperCreateCassandraCluster(ctx context.Context, t *testing.T, cassandraCl
 	return rcc, &req
 }
 
+func fakePodTemplate(cc *api.CassandraCluster, dcName, rackName string) v1.Pod {
+	dcRackName := cc.GetDCRackName(dcName, rackName)
+	return v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "template",
+			Namespace: namespace,
+			Labels: map[string]string{
+				"cluster":                              cc.Labels["cluster"],
+				"dc-rack":                              dcRackName,
+				"cassandraclusters.db.orange.com.dc":   dcName,
+				"cassandraclusters.db.orange.com.rack": rackName,
+				"app":                                  "cassandracluster",
+				"cassandracluster":                     cc.Name,
+			},
+		},
+		Status: v1.PodStatus{
+			Phase: v1.PodRunning,
+			ContainerStatuses: []v1.ContainerStatus{
+				{
+					Name:  "cassandra",
+					Ready: true,
+				},
+			},
+		},
+	}
+}
+
 func TestCassandraClusterReconciler(t *testing.T) {
+	// tests speed-up
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
 
 	// Mock request to simulate Reconcile() being called on an event for a
 	// watched resource .
@@ -284,6 +296,10 @@ func TestCassandraClusterReconciler(t *testing.T) {
 
 // test that we detect an addition of a configmap
 func TestUpdateStatusIfconfigMapHasChangedWithNoConfigMap(t *testing.T) {
+	// tests speed-up
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
 	// Mock request to simulate Reconcile() being called on an event for a
 	// watched resource .
 	rcc, req := helperCreateCassandraCluster(context.TODO(), t, "cassandracluster-2DC.yaml")
@@ -337,6 +353,10 @@ func TestUpdateStatusIfconfigMapHasChangedWithNoConfigMap(t *testing.T) {
 
 // test that we detect a change in a configmap
 func TestUpdateStatusIfconfigMapHasChangedWithConfigMap(t *testing.T) {
+	// tests speed-up
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
 	// Mock request to simulate Reconcile() being called on an event for a
 	// watched resource .
 	rcc, req := helperCreateCassandraCluster(context.TODO(), t, "cassandracluster-2DC-configmap.yaml")
@@ -408,6 +428,10 @@ func TestUpdateStatusIfconfigMapHasChangedWithConfigMap(t *testing.T) {
 
 // test that we detect a change in a the docker image
 func TestUpdateStatusIfDockerImageHasChanged(t *testing.T) {
+	// tests speed-up
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
 	// Mock request to simulate Reconcile() being called on an event for a
 	// watched resource .
 	rcc, req := helperCreateCassandraCluster(context.TODO(), t, "cassandracluster-2DC-configmap.yaml")
@@ -457,4 +481,36 @@ func TestUpdateStatusIfDockerImageHasChanged(t *testing.T) {
 		}
 	}
 
+}
+
+func assertRackStatusPhase(assert *assert.Assertions, rcc *CassandraClusterReconciler, dcRackName string, expectedPhase api.ClusterStateInfo) {
+	assert.Equal(expectedPhase.Name, rcc.cc.Status.CassandraRackStatus[dcRackName].Phase, dcRackName + " phase")
+}
+
+func assertClusterStatusPhase(assert *assert.Assertions, rcc *CassandraClusterReconciler, expectedPhase api.ClusterStateInfo) {
+	assert.Equal(expectedPhase.Name, rcc.cc.Status.Phase, "cluster phase")
+}
+
+func assertRackStatusLastAction(assert *assert.Assertions, rcc *CassandraClusterReconciler, dcRackName string, expectedActionType api.ClusterStateInfo, expectedActionStatus string) {
+	assert.Equal(expectedActionType.Name, rcc.cc.Status.CassandraRackStatus[dcRackName].CassandraLastAction.Name, "dc1-rack1 last action type")
+	assert.Equal(expectedActionStatus, rcc.cc.Status.CassandraRackStatus[dcRackName].CassandraLastAction.Status, "dc1-rack1 last action status")
+}
+
+func assertClusterStatusLastAction(assert *assert.Assertions, rcc *CassandraClusterReconciler, expectedActionType api.ClusterStateInfo, expectedActionStatus string) {
+	assert.Equal(expectedActionType.Name, rcc.cc.Status.LastClusterAction, "cluster last action type")
+	assert.Equal(expectedActionStatus, rcc.cc.Status.LastClusterActionStatus, "cluster last action status")
+}
+
+func overrideDelayWaitWithNoDelay() {
+	delayWait = func() time.Duration {
+		return 0
+	}
+	retryInterval = func() time.Duration {
+		return time.Millisecond
+	}
+}
+
+func restoreDefaultDelayWait() {
+	delayWait = defaultDelayWait
+	retryInterval = defaultRetryInterval
 }

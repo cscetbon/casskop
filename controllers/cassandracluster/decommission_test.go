@@ -69,7 +69,7 @@ type podName struct {
 }
 
 func podHost(stfsName string, id int8, rcc *CassandraClusterReconciler) podName {
-	name := stfsName + strconv.Itoa(int(id))
+	name := stfsName + "-" + strconv.Itoa(int(id))
 	return podName{name, name + "." + rcc.cc.Name}
 }
 
@@ -81,12 +81,15 @@ func deletePodNotDeletedByFakeClient(rcc *CassandraClusterReconciler, host podNa
 }
 
 func TestOneDecommission(t *testing.T) {
-	ctx := context.TODO()
-	rcc, req := createCassandraClusterWithNoDisruption(t, "cassandracluster-1DC.yaml")
+	overrideDelayWaitWithNoDelay()
+	defer restoreDefaultDelayWait()
 
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 	assert := assert.New(t)
+
+	ctx := context.TODO()
+	rcc, req := createCassandraClusterWithNoDisruption(t, "cassandracluster-1DC.yaml")
 
 	assert.Equal(int32(3), rcc.cc.Spec.NodesPerRacks)
 
