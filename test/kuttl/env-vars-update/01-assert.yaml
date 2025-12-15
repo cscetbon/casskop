@@ -1,0 +1,24 @@
+apiVersion: db.orange.com/v2
+kind: CassandraCluster
+metadata:
+  name: cassandra-e2e
+status:
+  cassandraRackStatus:
+    dc1-rack1:
+      cassandraLastAction:
+        name: UpdateStatefulSet
+        status: Done
+      phase: Running
+  lastClusterAction: UpdateStatefulSet
+  lastClusterActionStatus: Done
+  phase: Running
+---
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+commands:
+  - command: >-
+      go run ../scripts/assert-env-vars.go ../scripts/helpers.go
+        --expect cassandra:CASSANDRA_TEST_ENV_VAR=sample_cassandra_env_var
+        --expect cassandra:ANOTHER_CASSANDRA_TEST_ENV_VAR=another_sample_cassandra_env_var
+        --expect backRestSidecar:BACKREST_TEST_ENV_VAR=sample_backrest_env_var
+        --expect backRestSidecar:ANOTHER_BACKREST_TEST_ENV_VAR=another_sample_backrest_env_var

@@ -17,6 +17,7 @@ package cassandracluster
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/Jeffail/gabs"
 	"github.com/banzaicloud/k8s-objectmatcher/patch"
 
@@ -820,6 +821,7 @@ func bootstrapContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClu
 	}
 	commonEnvVars := commonBootstrapCassandraEnvVar(cc)
 	bootstrapEnvVars = append(bootstrapEnvVars, commonEnvVars...)
+	bootstrapEnvVars = append(bootstrapEnvVars, cc.Spec.BackRestSidecar.EnvVars...)
 	return bootstrapEnvVars
 }
 
@@ -958,6 +960,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 		command = []string{"cassandra", "-f"}
 	}
 	cassandraEnv := commonBootstrapCassandraEnvVar(cc)
+	cassandraEnv = append(cassandraEnv, cc.Spec.EnvVars...)
 	// This option required for nodetool correct execution
 	cassandraEnv = append(cassandraEnv, v1.EnvVar{
 		Name:  "JAVA_TOOL_OPTIONS",

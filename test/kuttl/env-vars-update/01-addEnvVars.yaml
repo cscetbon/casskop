@@ -1,0 +1,16 @@
+apiVersion: db.orange.com/v2
+kind: CassandraCluster
+metadata:
+  name: cassandra-e2e
+spec:
+  envVars:
+    - name: CASSANDRA_TEST_ENV_VAR
+      value: sample_cassandra_env_var
+    - name: ANOTHER_CASSANDRA_TEST_ENV_VAR
+      value: another_sample_cassandra_env_var
+  backRestSidecar:
+    envVars:
+      - name: BACKREST_TEST_ENV_VAR
+        value: sample_backrest_env_var
+      - name: ANOTHER_BACKREST_TEST_ENV_VAR
+        value: another_sample_backrest_env_var
