@@ -75,21 +75,21 @@ func applyPVCModification(newStatefulSet *appsv1.StatefulSet, newDataCapacity re
 //     (StatefulSet generated from the CR would be clean and would not match the polluted last-applied in the stored StatefulSet)
 func enrichWithCleanLastAppliedAnnotation(newStatefulSet *appsv1.StatefulSet, newDataCapacity resource.Quantity) error {
 
+	// best effort = swallow all errors:
+	// if we cannot get/edit/encode original sts -> we skip setting last-applied annotation, would lead to extra update after resize (no pod restart)
+
 	originalStatefulSet, err := lastapplied.GetOriginalSts(newStatefulSet)
 	if err != nil {
-		// best effort: cannot get original sts so skip setting last-applied annotation, would lead to extra update after resize (no pod restart)
 		return nil
 	}
 
 	err = setNewDataCapacity(&originalStatefulSet, newDataCapacity)
 	if err != nil {
-		// best effort: cannot edit original sts so skip setting last-applied annotation, would lead to extra update after resize (no pod restart)
 		return nil
 	}
 
 	lastApplied, err := lastapplied.EncodeLastAppliedConfigAnnotation(originalStatefulSet)
 	if err != nil {
-		// best effort: cannot encode original sts so skip setting last-applied annotation, would lead to extra update after resize (no pod restart)
 		return nil
 	}
 	newStatefulSet.Annotations[patch.LastAppliedConfig] = lastApplied

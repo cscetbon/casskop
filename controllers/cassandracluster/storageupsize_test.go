@@ -205,3 +205,87 @@ func assertUpsizeDoneGlobally(assert *assert.Assertions, rcc *CassandraClusterRe
 		assertRackStatusLastAction(assert, rcc, dcRackName, api.ActionStorageUpsize, api.StatusDone)
 	}
 }
+
+func TestStorageUpsizeDoesNotStartWhenOtherOperationInProgress(t *testing.T) {
+
+	overrideDelayWaitWithNoDelay()
+	defer restoreDefaultDelayWait()
+
+	const InitialCapacity = "3Gi"
+	const NewCapacity = "10Gi"
+
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+	assert := assert.New(t)
+
+	// setup cluster
+	rcc, req := createCassandraClusterWithNoDisruption(t, "cassandracluster-1DC.yaml")
+	assert.Equal(int32(3), rcc.cc.Spec.NodesPerRacks)
+
+	cassandraCluster := rcc.cc.DeepCopy()
+	datacenters := cassandraCluster.Spec.Topology.DC
+	assert.Equal(1, len(datacenters))
+	assert.Equal(1, len(datacenters[0].Rack))
+	assertClusterInitialized(assert, rcc)
+
+	// check initial sts capacity
+	dc := datacenters[0]
+	rack := dc.Rack[0]
+	assertStsCapacity(assert, rcc, dc, rack.Name, InitialCapacity)
+
+	// mock no joining nodes
+	sts1Name := cassandraCluster.Name + fmt.Sprintf("-%s-%s", dc.Name, rack.Name)
+	firstPod := podHost(sts1Name, 0, rcc)
+	registerJolokiaOperationJoiningNodes(firstPod, 0)
+
+	// request scale out - assert operation started
+	cassandraCluster.Spec.NodesPerRacks = 4
+	rcc.Client.Update(context.TODO(), cassandraCluster)
+
+	reconcileValidation(t, rcc, *req)
+	assert.GreaterOrEqual(jolokiaCallsCount(firstPod), 0)
+	assertStatefulsetReplicas(ctx, t, rcc, 4, cassandraCluster.Namespace, sts1Name)
+	assertClusterStatusLastAction(assert, rcc, api.ActionScaleUp, api.StatusOngoing)
+	assertRackStatusLastAction(assert, rcc, "dc1-rack1", api.ActionScaleUp, api.StatusOngoing)
+
+	// request storage upsize while scale-out ongoing - assert new capacity accepted but upsize is not started and sts capacity untouched
+	cassandraCluster = rcc.cc.DeepCopy()
+	cassandraCluster.Spec.DataCapacity = NewCapacity
+	assert.NoError(rcc.Client.Update(context.TODO(), cassandraCluster))
+
+	reconcileValidation(t, rcc, *req)
+
+	cassandraCluster = rcc.cc.DeepCopy()
+	assert.Equal(NewCapacity, cassandraCluster.Spec.DataCapacity)
+	assertStsCapacity(assert, rcc, dc, rack.Name, InitialCapacity)
+
+	assertStatefulsetReplicas(ctx, t, rcc, 4, cassandraCluster.Namespace, sts1Name)
+	assertClusterStatusLastAction(assert, rcc, api.ActionScaleUp, api.StatusOngoing)
+	assertRackStatusLastAction(assert, rcc, "dc1-rack1", api.ActionScaleUp, api.StatusOngoing)
+
+	// scale-out finishes - capacity still unchanged
+	simulateNewPodsReady(t, rcc, sts1Name, dc, 3, 4)
+	registerJolokiaOperationJoiningNodes(firstPod, 0)
+
+	reconcileValidation(t, rcc, *req)
+
+	assert.GreaterOrEqual(jolokiaCallsCount(firstPod), 1)
+	assertClusterStatusPhase(assert, rcc, api.ClusterPhaseRunning)
+	assertRackStatusPhase(assert, rcc, "dc1-rack1", api.ClusterPhaseRunning)
+	assertClusterStatusLastAction(assert, rcc, api.ActionScaleUp, api.StatusDone)
+	assertRackStatusLastAction(assert, rcc, "dc1-rack1", api.ActionScaleUp, api.StatusDone)
+	assertStsCapacity(assert, rcc, dc, rack.Name, InitialCapacity)
+
+	// next reconcile should initialize storage upsize action
+	simulatePVCsReadyForWholeCluster(assert, rcc, datacenters, InitialCapacity)
+
+	reconcileValidation(t, rcc, *req)
+
+	assertUpsizeInProgress(assert, rcc, cassandraCluster.GetDCRackName(dc.Name, rack.Name))
+	assertStsCapacity(assert, rcc, dc, rack.Name, InitialCapacity)
+
+	// next two reconciles do: 1. sts removal,2.  sts re-creation with new capacity
+	reconcileValidation(t, rcc, *req)
+	reconcileValidation(t, rcc, *req)
+	assertStsCapacity(assert, rcc, dc, rack.Name, NewCapacity)
+}

@@ -71,10 +71,11 @@ func RevertAnyStorageUpsizeBeyondUpsizeAction(rack view.RackView, newStatefulSet
 		_, current := findDataCapacity(rack.LivingStatefulSet().Spec.VolumeClaimTemplates)
 		index, requested := findDataCapacity(newStatefulSet.Spec.VolumeClaimTemplates)
 		if !requested.Equal(current) {
-			if newStatefulSet.Spec.VolumeClaimTemplates[index].Spec.Resources.Requests == nil {
-				newStatefulSet.Spec.VolumeClaimTemplates[index].Spec.Resources.Requests = corev1.ResourceList{}
+			dataPvcResources := &newStatefulSet.Spec.VolumeClaimTemplates[index].Spec.Resources
+			if dataPvcResources.Requests == nil {
+				dataPvcResources.Requests = corev1.ResourceList{}
 			}
-			newStatefulSet.Spec.VolumeClaimTemplates[index].Spec.Resources.Requests[corev1.ResourceStorage] = current
+			dataPvcResources.Requests[corev1.ResourceStorage] = current
 			rack.Log().
 				Infof("Storage Resize request detected, postponing resize from %s to %s until other actions are done",
 					requested.String(), current.String())

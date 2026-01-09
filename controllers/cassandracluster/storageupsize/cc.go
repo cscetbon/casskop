@@ -8,12 +8,13 @@ func AnalyzeDataCapacityChange(oldCapacity, newCapacity string) CapacityChange {
 		return CapacityNoChange
 	}
 
-	if newParsed.Cmp(oldParsed) == 0 {
+	cmp := newParsed.Cmp(oldParsed)
+	if cmp == 0 {
 		// Same numeric value, only syntactic change (e.g. 1024Mi -> 1Gi)
 		return CapacitySyntacticChange
 	}
 
-	if newParsed.Cmp(oldParsed) > 0 {
+	if cmp > 0 {
 		return CapacityUpsize
 	}
 

@@ -133,4 +133,28 @@ func TestRevertAnyStorageUpsizeBeyondUpsizeAction(t *testing.T) {
 		assert.Equal(t, resource.MustParse(InitialCapacity),
 			newStsWithRevertApplied.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests[corev1.ResourceStorage])
 	})
+
+	t.Run("handle unspecified resources", func(t *testing.T) {
+		currentSts := &appsv1.StatefulSet{Spec: appsv1.StatefulSetSpec{VolumeClaimTemplates: []corev1.PersistentVolumeClaim{
+			pvc(consts.DataPVCName, InitialCapacity),
+		}}}
+		newSts := &appsv1.StatefulSet{Spec: appsv1.StatefulSetSpec{VolumeClaimTemplates: []corev1.PersistentVolumeClaim{
+			pvcWithoutSpecifiedResources(consts.DataPVCName),
+		}}}
+		rack := stub.RackView{
+			LivingStatefulSetStub: currentSts.DeepCopy(),
+			RackStatusStub: &v2.CassandraRackStatus{
+				CassandraLastAction: v2.CassandraLastAction{
+					Name:   v2.ActionStorageUpsize.Name,
+					Status: v2.StatusDone,
+				},
+			},
+		}
+
+		newStsWithRevertApplied := newSts.DeepCopy()
+		RevertAnyStorageUpsizeBeyondUpsizeAction(rack, newStsWithRevertApplied)
+
+		assert.Equal(t, resource.MustParse(InitialCapacity),
+			newStsWithRevertApplied.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests[corev1.ResourceStorage])
+	})
 }

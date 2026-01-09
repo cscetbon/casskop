@@ -116,6 +116,16 @@ func pvc(name, capacity string) corev1.PersistentVolumeClaim {
 	}
 }
 
+func pvcWithoutSpecifiedResources(name string) corev1.PersistentVolumeClaim {
+	return corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: "default",
+		},
+		Spec: corev1.PersistentVolumeClaimSpec{},
+	}
+}
+
 func assertPvcCapacity(t *testing.T, cl client.WithWatch, pvcName, expectedCapacity string) {
 	updatedPvc := corev1.PersistentVolumeClaim{}
 	err := cl.Get(testCtx, types.NamespacedName{Namespace: "default", Name: pvcName}, &updatedPvc)
