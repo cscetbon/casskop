@@ -669,6 +669,9 @@ type CassandraClusterSpec struct {
 	//ImagePullPolicy define the pull policy for C* docker image
 	ImagePullPolicy v1.PullPolicy `json:"imagepullpolicy,omitempty"`
 
+	//EnvVars define environment variables to be added to Cassandra container
+	EnvVars []v1.EnvVar `json:"envVars,omitempty"`
+
 	// Image used for bootstrapping cluster (use format base:version)
 	BootstrapImage string `json:"bootstrapImage,omitempty"`
 
@@ -926,6 +929,8 @@ type BackRestSidecar struct {
 	Image string `json:"image,omitempty"`
 	// ImagePullPolicy define the pull policy for backrest sidecar docker image
 	ImagePullPolicy v1.PullPolicy `json:"imagePullPolicy,omitempty"`
+	//EnvVars define environment variables to be added to cassandra-sidecar container
+	EnvVars []v1.EnvVar `json:"envVars,omitempty"`
 	// Kubernetes object : https://godoc.org/k8s.io/api/core/v1#ResourceRequirements
 	Resources    *v1.ResourceRequirements `json:"resources,omitempty"`
 	VolumeMounts []v1.VolumeMount         `json:"volumeMount,omitempty"`

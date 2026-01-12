@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/Jeffail/gabs"
+	"github.com/cscetbon/casskop/controllers/cassandracluster/envVars"
 	"github.com/cscetbon/casskop/controllers/common"
 	"github.com/ghodss/yaml"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -194,8 +195,8 @@ func TestInitContainerConfiguration(t *testing.T) {
 	cassieResources := cc.Spec.Resources
 
 	assert := assert.New(t)
-	initEnvVar := initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
-	bootstrapEnvVar := bootstrapContainerEnvVar(cc, &cc.Status)
+	initEnvVar := envVars.InitContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+	bootstrapEnvVar := envVars.BootstrapContainerEnvVar(cc, &cc.Status)
 
 	assert.Equal(6, len(bootstrapEnvVar))
 	assert.Equal(7, len(initEnvVar))
@@ -259,7 +260,7 @@ func TestInitContainerConfiguration(t *testing.T) {
 
 	cc.Spec.ServerVersion = "3.11.19"
 
-	initEnvVar = initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+	initEnvVar = envVars.InitContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
 
 	assert.Equal(7, len(initEnvVar))
 
@@ -289,7 +290,7 @@ func TestInitContainerConfigFileData(t *testing.T) {
 	dcName, rackName := "dc1", "rack1"
 	dcRackName := fmt.Sprintf("%s-%s", dcName, rackName)
 
-	initEnvVar := initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+	initEnvVar := envVars.InitContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
 
 	assert := assert.New(t)
 
@@ -323,13 +324,13 @@ func TestInitContainerConfigFileData(t *testing.T) {
 	assert.Equal(configFileData.String(), initEnvVar[0].Value)
 
 	dcRackName = fmt.Sprintf("%s-%s", dcName, "rack2")
-	initEnvVar = initContainerEnvVar(cc, &cc.Status, cc.Spec.Resources, dcRackName)
+	initEnvVar = envVars.InitContainerEnvVar(cc, &cc.Status, cc.Spec.Resources, dcRackName)
 	configFileData.SetP(16, "cassandra-yaml.num_tokens")
 	assert.Equal(configFileData.String(), initEnvVar[0].Value)
 
 	dcName = "dc2"
 	dcRackName = fmt.Sprintf("%s-%s", dcName, "rack1")
-	initEnvVar = initContainerEnvVar(cc, &cc.Status, cc.Spec.Resources, dcRackName)
+	initEnvVar = envVars.InitContainerEnvVar(cc, &cc.Status, cc.Spec.Resources, dcRackName)
 	configFileData.SetP(64, "cassandra-yaml.num_tokens")
 	configFileData.SetP("dc2", "datacenter-info.name")
 	assert.Equal(configFileData.String(), initEnvVar[0].Value)
@@ -351,7 +352,7 @@ func TestInitContainerServerVersionDetect(t *testing.T) {
 	for _, image := range images {
 		cc.Spec.CassandraImage = image
 		cassieResources := cc.Spec.Resources
-		initEnvVar := initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+		initEnvVar := envVars.InitContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
 		prodVer := GetEnvVarByName(initEnvVar, "PRODUCT_VERSION")
 		assert.Equal(imageTag, prodVer.Value)
 	}
@@ -689,9 +690,9 @@ func generateCassandraStorageConfigVolumeMounts() []v1.VolumeMount {
 
 func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraCluster, dcRackName string) {
 	cassieResources := cc.Spec.Resources
-	initContainerEnvVar := initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
-	bootstrapContainerEnvVar := bootstrapContainerEnvVar(cc, &cc.Status)
-	jmxEnvVar := generateJMXConfiguration(*cc.Spec.JMXConfiguration)
+	initContainerEnvVar := envVars.InitContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+	bootstrapContainerEnvVar := envVars.BootstrapContainerEnvVar(cc, &cc.Status)
+	jmxEnvVar := envVars.GenerateJMXConfigEnvVar(*cc.Spec.JMXConfiguration)
 
 	assert := assert.New(t)
 
