@@ -79,7 +79,7 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        test-name: [operations, sidecars, scaling, multi-dcs, backup-restore, nodetool]
+        test-name: [operations, sidecars, scaling, multi-dcs, backup-restore, nodetool, storage-upsize]
     steps:
       - id: lower-repo
         shell: pwsh
@@ -105,13 +105,65 @@ jobs:
           ref: ${{ steps.get-branch.outputs.branch }}
 
       - uses: rinx/setup-k3d@v0.0.4
+        if: matrix.test-name != 'storage-upsize'
         with:
           version: v5.4.0
           options: --image rancher/k3s:v1.24.13-k3s1
 
-      - uses: azure/setup-helm@v1
+      - name: Create kind config with LVM mounts
+        if: matrix.test-name == 'storage-upsize'
+        run: |
+          mkdir -p kindAndLvm
+          cat <<EOF > kindAndLvm/kind-lvm-config.yaml
+          kind: Cluster
+          apiVersion: kind.x-k8s.io/v1alpha4
+          nodes:
+          - role: control-plane
+          - role: worker
+            extraMounts:
+            - hostPath: /tmp/kind-worker1-lvm
+              containerPath: /mnt/disks
+          - role: worker
+            extraMounts:
+            - hostPath: /tmp/kind-worker2-lvm
+              containerPath: /mnt/disks
+          EOF
+          
+          mkdir -p /tmp/kind-worker1-lvm /tmp/kind-worker2-lvm
+
+      - name: Setup kind cluster
+        if: matrix.test-name == 'storage-upsize'
+        uses: helm/kind-action@v1.8.0
         with:
-          version: v3.8.1
+          cluster_name: lvm-test
+          config: kindAndLvm/kind-lvm-config.yaml
+          wait: 300s
+
+      - name: Setup LVM on worker nodes
+        if: matrix.test-name == 'storage-upsize'
+        run: |
+          WORKER_NODES=$(kubectl get nodes -o name | grep worker | sed 's|node/||')
+          
+          for NODE in $WORKER_NODES; do
+            echo "Setting up LVM on $NODE..."
+            docker exec $NODE bash -c '
+              apt-get update -qq && apt-get install -y -qq lvm2 thin-provisioning-tools > /dev/null 2>&1
+              mkdir -p /mnt/disks
+              truncate -s 10G /mnt/disks/disk.img
+              LOOP_DEVICE=$(losetup -f)
+              losetup $LOOP_DEVICE /mnt/disks/disk.img
+              pvcreate $LOOP_DEVICE
+              vgcreate lvmvg $LOOP_DEVICE
+              vgs
+            '
+          done
+
+      - name: Install OpenEBS LVM LocalPV
+        if: matrix.test-name == 'storage-upsize'
+        run: |
+          kubectl apply -f https://openebs.github.io/charts/lvm-operator.yaml
+          kubectl wait --for=condition=ready pod -l app=openebs-lvm-controller -n kube-system --timeout=300s
+          kubectl rollout status daemonset/openebs-lvm-node -n kube-system --timeout=300s
 
       - name: Restore Kuttl
         id: cache-kuttl
