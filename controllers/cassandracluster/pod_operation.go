@@ -158,11 +158,11 @@ func (rcc *CassandraClusterReconciler) hasJoiningNodes(ctx context.Context, cc *
 }
 
 // addPodOperationLabels will add Pod Labels labels on all Pod in the Current dcRackName
-func (rcc *CassandraClusterReconciler) addPodOperationLabels(ctx context.Context, cc *api.CassandraCluster, dcName string,
-	rackName string, labels map[string]string) {
-	dcRackName := cc.GetDCRackName(dcName, rackName)
+func (rcc *CassandraClusterReconciler) addPodOperationLabels(ctx context.Context, cc *api.CassandraCluster,
+	completeDcRackName api.CompleteRackName, labels map[string]string) {
+
 	//Select all Pods in the Rack
-	selector := k8s.MergeLabels(k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
+	selector := k8s.MergeLabels(k8s.LabelsForCassandraDCRackStrongTypes(cc, completeDcRackName.DcName, completeDcRackName.RackName))
 
 	podsList, err := rcc.ListPods(ctx, cc.Namespace, selector)
 
@@ -180,10 +180,10 @@ func (rcc *CassandraClusterReconciler) addPodOperationLabels(ctx context.Context
 		pod.SetLabels(newlabels)
 		err = rcc.UpdatePod(ctx, &pod)
 		if err != nil {
-			logrus.Errorf("[%s][%s]:[%s] UpdatePod Error: %v", cc.Name, dcRackName, pod.Name, err)
+			logrus.Errorf("[%s][%s]:[%s] UpdatePod Error: %v", cc.Name, completeDcRackName.DcRackName, pod.Name, err)
 		}
 
-		logrus.Infof("[%s][%s]:[%s] UpdatePod Labels: %v", cc.Name, dcRackName, pod.Name, labels)
+		logrus.Infof("[%s][%s]:[%s] UpdatePod Labels: %v", cc.Name, completeDcRackName.DcRackName, pod.Name, labels)
 
 	}
 }

@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cscetbon/casskop/controllers/cassandracluster/storagestateclient"
+	"github.com/cscetbon/casskop/controllers/cassandracluster/sts"
 	"github.com/cscetbon/casskop/controllers/common"
 	"github.com/jarcoal/httpmock"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -111,7 +113,12 @@ func HelperInitCluster(t *testing.T, name string) (*CassandraClusterReconciler,
 	fakeClientScheme.AddKnownTypes(api.GroupVersion, &ccList)
 	cl := fake.NewClientBuilder().WithScheme(fakeClientScheme).WithRuntimeObjects(objs...).WithStatusSubresource(&cc).Build()
 	// Create a CassandraClusterReconciler object with the scheme and fake client.
-	rcc := CassandraClusterReconciler{Client: cl, Scheme: fakeClientScheme}
+	rcc := CassandraClusterReconciler{
+		Client:             cl,
+		StorageStateClient: storagestateclient.New(cl),
+		StsClient:          sts.NewClient(cl),
+		Scheme:             fakeClientScheme,
+	}
 
 	cc.InitCassandraRackList()
 	cl.Status().Update(context.TODO(), &cc)
@@ -327,7 +334,7 @@ func TestUpdateStatusIfconfigMapHasChangedWithNoConfigMap(t *testing.T) {
 			if err != nil {
 				t.Fatalf("get statefulset: (%v)", err)
 			}
-			assert.Equal(t, false, UpdateStatusIfconfigMapHasChanged(rcc.cc, dcRackName, sts, &rcc.cc.Status))
+			assert.Equal(t, false, UpdateStatusIfconfigMapHasChanged(rcc.cc, api.DcRackName(dcRackName), sts, &rcc.cc.Status))
 		}
 	}
 
@@ -345,7 +352,7 @@ func TestUpdateStatusIfconfigMapHasChangedWithNoConfigMap(t *testing.T) {
 			if err != nil {
 				t.Fatalf("get statefulset: (%v)", err)
 			}
-			assert.Equal(t, true, UpdateStatusIfconfigMapHasChanged(rcc.cc, dcRackName, sts, &rcc.cc.Status))
+			assert.Equal(t, true, UpdateStatusIfconfigMapHasChanged(rcc.cc, api.DcRackName(dcRackName), sts, &rcc.cc.Status))
 		}
 	}
 
@@ -384,7 +391,7 @@ func TestUpdateStatusIfconfigMapHasChangedWithConfigMap(t *testing.T) {
 			if err != nil {
 				t.Fatalf("get statefulset: (%v)", err)
 			}
-			assert.Equal(t, false, UpdateStatusIfconfigMapHasChanged(rcc.cc, dcRackName, sts, &rcc.cc.Status))
+			assert.Equal(t, false, UpdateStatusIfconfigMapHasChanged(rcc.cc, api.DcRackName(dcRackName), sts, &rcc.cc.Status))
 		}
 	}
 
@@ -402,7 +409,7 @@ func TestUpdateStatusIfconfigMapHasChangedWithConfigMap(t *testing.T) {
 			if err != nil {
 				t.Fatalf("get statefulset: (%v)", err)
 			}
-			assert.Equal(t, true, UpdateStatusIfconfigMapHasChanged(rcc.cc, dcRackName, sts, &rcc.cc.Status))
+			assert.Equal(t, true, UpdateStatusIfconfigMapHasChanged(rcc.cc, api.DcRackName(dcRackName), sts, &rcc.cc.Status))
 		}
 	}
 
@@ -420,7 +427,7 @@ func TestUpdateStatusIfconfigMapHasChangedWithConfigMap(t *testing.T) {
 			if err != nil {
 				t.Fatalf("get statefulset: (%v)", err)
 			}
-			assert.Equal(t, true, UpdateStatusIfconfigMapHasChanged(rcc.cc, dcRackName, sts, &rcc.cc.Status))
+			assert.Equal(t, true, UpdateStatusIfconfigMapHasChanged(rcc.cc, api.DcRackName(dcRackName), sts, &rcc.cc.Status))
 		}
 	}
 
@@ -459,7 +466,7 @@ func TestUpdateStatusIfDockerImageHasChanged(t *testing.T) {
 			if err != nil {
 				t.Fatalf("get statefulset: (%v)", err)
 			}
-			assert.Equal(t, false, UpdateStatusIfDockerImageHasChanged(rcc.cc, dcRackName, sts, &rcc.cc.Status))
+			assert.Equal(t, false, UpdateStatusIfDockerImageHasChanged(rcc.cc, api.DcRackName(dcRackName), sts, &rcc.cc.Status))
 		}
 	}
 
@@ -477,14 +484,14 @@ func TestUpdateStatusIfDockerImageHasChanged(t *testing.T) {
 			if err != nil {
 				t.Fatalf("get statefulset: (%v)", err)
 			}
-			assert.Equal(t, true, UpdateStatusIfDockerImageHasChanged(rcc.cc, dcRackName, sts, &rcc.cc.Status))
+			assert.Equal(t, true, UpdateStatusIfDockerImageHasChanged(rcc.cc, api.DcRackName(dcRackName), sts, &rcc.cc.Status))
 		}
 	}
 
 }
 
 func assertRackStatusPhase(assert *assert.Assertions, rcc *CassandraClusterReconciler, dcRackName string, expectedPhase api.ClusterStateInfo) {
-	assert.Equal(expectedPhase.Name, rcc.cc.Status.CassandraRackStatus[dcRackName].Phase, dcRackName + " phase")
+	assert.Equal(expectedPhase.Name, rcc.cc.Status.CassandraRackStatus[dcRackName].Phase, dcRackName+" phase")
 }
 
 func assertClusterStatusPhase(assert *assert.Assertions, rcc *CassandraClusterReconciler, expectedPhase api.ClusterStateInfo) {

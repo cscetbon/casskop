@@ -21,6 +21,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/cscetbon/casskop/controllers/cassandracluster/consts"
 	"github.com/cscetbon/casskop/controllers/common"
 	"k8s.io/apimachinery/pkg/api/resource"
 
@@ -359,7 +360,7 @@ func TestCheckNonAllowedChangesMix1(t *testing.T) {
 	//Forbidden Changes
 	//Global ScaleDown to 0 must be ignored
 	cc.Spec.NodesPerRacks = 0         //instead of 1
-	cc.Spec.DataCapacity = "4Gi"      //instead of "3Gi"
+	cc.Spec.DataCapacity = "2Gi"      //instead of "3Gi"
 	cc.Spec.DataStorageClass = "fast" //instead of "local-storage"
 	//Allow Changed
 	cc.Spec.AutoPilot = false //instead of true
@@ -678,11 +679,11 @@ func TestUpdateCassandraNodesStatusForPod(t *testing.T) {
 				Phase: v1.PodRunning,
 				ContainerStatuses: []v1.ContainerStatus{
 					{
-						Name:  cassandraContainerName,
+						Name:  consts.CassandraContainerName,
 						Ready: ccReady,
 					},
 					{
-						Name:  cassandraContainerName + "B",
+						Name:  consts.CassandraContainerName + "B",
 						Ready: !ccReady,
 					},
 				},
@@ -743,11 +744,11 @@ func TestCheckPodCrossIpUseCaseForPodKey(t *testing.T) {
 				Phase: v1.PodRunning,
 				ContainerStatuses: []v1.ContainerStatus{
 					{
-						Name:  cassandraContainerName,
+						Name:  consts.CassandraContainerName,
 						Ready: ccReady,
 					},
 					{
-						Name:  cassandraContainerName + "B",
+						Name:  consts.CassandraContainerName + "B",
 						Ready: !ccReady,
 					},
 				},
@@ -806,12 +807,12 @@ func TestProcessingPods(t *testing.T) {
 				Phase: v1.PodRunning,
 				ContainerStatuses: []v1.ContainerStatus{
 					{
-						Name:         cassandraContainerName,
+						Name:         consts.CassandraContainerName,
 						Ready:        true,
 						RestartCount: restartCount,
 					},
 					{
-						Name:         cassandraContainerName + "B",
+						Name:         consts.CassandraContainerName + "B",
 						Ready:        true,
 						RestartCount: 10000,
 					},

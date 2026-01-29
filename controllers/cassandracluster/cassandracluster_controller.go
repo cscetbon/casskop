@@ -16,10 +16,13 @@ package cassandracluster
 
 import (
 	"context"
+	"time"
+
+	"github.com/cscetbon/casskop/controllers/cassandracluster/storagestateclient"
+	"github.com/cscetbon/casskop/controllers/cassandracluster/sts"
 	"github.com/go-logr/logr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"time"
 
 	"github.com/sirupsen/logrus"
 
@@ -53,6 +56,9 @@ type CassandraClusterReconciler struct {
 
 	storedPdb         *policyv1.PodDisruptionBudget
 	storedStatefulSet *appsv1.StatefulSet
+
+	storagestateclient.StorageStateClient
+	sts.StsClient
 }
 
 // +kubebuilder:rbac:groups=db.orange.com,resources=cassandraclusters,verbs=get;list;watch;create;update;patch;delete

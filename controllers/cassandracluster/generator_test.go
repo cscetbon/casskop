@@ -21,6 +21,9 @@ import (
 	"testing"
 
 	"github.com/Jeffail/gabs"
+	"github.com/cscetbon/casskop/controllers/cassandracluster/consts"
+	"github.com/cscetbon/casskop/controllers/cassandracluster/storagestateclient"
+	"github.com/cscetbon/casskop/controllers/cassandracluster/sts"
 	"github.com/cscetbon/casskop/controllers/common"
 	"github.com/ghodss/yaml"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -55,7 +58,12 @@ func helperInitCluster(t *testing.T, name string) (*CassandraClusterReconciler, 
 	fakeClientScheme.AddKnownTypes(api.GroupVersion, &ccList)
 	cl := fake.NewClientBuilder().WithScheme(fakeClientScheme).WithRuntimeObjects(objs...).WithStatusSubresource(&cc).Build()
 	// Create a CassandraClusterReconciler object with the scheme and fake client.
-	rcc := CassandraClusterReconciler{Client: cl, Scheme: fakeClientScheme}
+	rcc := CassandraClusterReconciler{
+		Client:             cl,
+		StorageStateClient: storagestateclient.New(cl),
+		StsClient:          sts.NewClient(cl),
+		Scheme:             fakeClientScheme,
+	}
 
 	cc.InitCassandraRackList()
 	return &rcc, &cc
@@ -469,7 +477,7 @@ func TestCassandraStatefulSetHasNoDuplicateVolumes(t *testing.T) {
 
 	assert := assert.New(t)
 	cassandraContainer := sts.Spec.Template.Spec.Containers[2]
-	assert.Equal(cassandraContainer.Name, cassandraContainerName)
+	assert.Equal(cassandraContainer.Name, consts.CassandraContainerName)
 	cassandraLogVolumeMounts := 0
 	for _, vol := range cassandraContainer.VolumeMounts {
 		if vol.MountPath == "/var/log/cassandra" {
@@ -531,7 +539,7 @@ func checkLiveAndReadiNessProbe(t *testing.T, containers []v1.Container,
 	livenessFailureThreshold,
 	livenessSuccessThreshold int32) {
 	for _, c := range containers {
-		if c.Name == cassandraContainerName {
+		if c.Name == consts.CassandraContainerName {
 			// Readiness Config check
 			assert.Equal(t, readinessInitialDelaySecond, c.ReadinessProbe.InitialDelaySeconds)
 			assert.Equal(t, readinessTimeoutSeconds, c.ReadinessProbe.TimeoutSeconds)
@@ -736,7 +744,7 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 	}
 
 	for _, container := range containers {
-		if container.Name != cassandraContainerName {
+		if container.Name != consts.CassandraContainerName {
 			for _, env := range container.Env {
 				if env.Name == "POD_IP" {
 					continue
