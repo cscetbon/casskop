@@ -91,12 +91,12 @@ func (rcc *CassandraClusterReconciler) getNextCassandraClusterStatus(ctx context
 		unlockNextOperation = true
 	}
 	//Do nothing in Initial phase except if we force it
-	if status.GetCassandraRackStatus(completeDcRackName.DcRackName).Phase == api.ClusterPhaseInitial.Name {
+	if status.GetCassandraRackStatus(completeDcRackName.DcRackName).IsInInitialPhase() {
 		if !unlockNextOperation {
 			ClusterPhaseMetric.set(api.ClusterPhaseInitial, cc.Name)
 			return nil
 		}
-		status.GetCassandraRackStatus(completeDcRackName.DcRackName).Phase = api.ClusterPhasePending.Name
+		status.GetCassandraRackStatus(completeDcRackName.DcRackName).SetPendingPhase()
 		ClusterPhaseMetric.set(api.ClusterPhasePending, cc.Name)
 	}
 
@@ -468,7 +468,7 @@ func (rcc *CassandraClusterReconciler) UpdateCassandraRackStatusPhase(ctx contex
 	logrusFields := logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 		"ReadyReplicas": storedStatefulSet.Status.ReadyReplicas, "RequestedReplicas": *storedStatefulSet.Spec.Replicas}
 
-	if status.GetCassandraRackStatus(dcRackName).Phase == api.ClusterPhaseInitial.Name {
+	if status.GetCassandraRackStatus(dcRackName).IsInInitialPhase() {
 		nodesPerRacks := cc.GetNodesPerRacksStrongType(dcRackName)
 		//If we are stuck in initializing state, we can rollback the add of dc which implies decommissioning nodes
 		if nodesPerRacks <= 0 {
@@ -496,7 +496,7 @@ func (rcc *CassandraClusterReconciler) UpdateCassandraRackStatusPhase(ctx contex
 		}
 		pod := podsList.Items[nodesPerRacks-1]
 		if cassandrapod.IsReady(&pod) {
-			status.GetCassandraRackStatus(dcRackName).Phase = api.ClusterPhaseRunning.Name
+			status.GetCassandraRackStatus(dcRackName).SetRunningPhase()
 			ClusterPhaseMetric.set(api.ClusterPhaseRunning, cc.Name)
 			now := metav1.Now()
 			lastAction.EndTime = &now
@@ -508,18 +508,18 @@ func (rcc *CassandraClusterReconciler) UpdateCassandraRackStatusPhase(ctx contex
 	//No more in Initializing state
 	if sts.IsStatefulSetNotReady(storedStatefulSet) {
 		logrus.WithFields(logrusFields).Infof("StatefulSet: Replicas count is not okay")
-		status.GetCassandraRackStatus(dcRackName).Phase = api.ClusterPhasePending.Name
+		status.GetCassandraRackStatus(dcRackName).SetPendingPhase()
 		ClusterPhaseMetric.set(api.ClusterPhasePending, cc.Name)
-	} else if status.GetCassandraRackStatus(dcRackName).Phase != api.ClusterPhaseRunning.Name {
+	} else if !status.GetCassandraRackStatus(dcRackName).IsInRunningPhase() {
 		logrus.WithFields(logrusFields).Infof("StatefulSet: Rack Phase is not %s", api.ClusterPhaseRunning.Name)
-		status.GetCassandraRackStatus(dcRackName).Phase = api.ClusterPhaseRunning.Name
+		status.GetCassandraRackStatus(dcRackName).SetRunningPhase()
 		ClusterPhaseMetric.set(api.ClusterPhaseRunning, cc.Name)
 	}
 }
 
 func setDecommissionStatus(status *api.CassandraClusterStatus, dcRackName api.DcRackName) {
 	rackStatus := status.GetCassandraRackStatus(dcRackName)
-	rackStatus.Phase = api.ClusterPhasePending.Name
+	rackStatus.SetPendingPhase()
 	now := metav1.Now()
 	lastAction := &rackStatus.CassandraLastAction
 	lastAction.StartTime = &now

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	api "github.com/cscetbon/casskop/api/v2"
+	"github.com/cscetbon/casskop/controllers/cassandracluster/testfixtures"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 )
@@ -105,9 +106,8 @@ func TestAddTwoNodes(t *testing.T) {
 		assert.GreaterOrEqual(jolokiaCallsCount(firstPod), 1)
 		assertStatefulsetReplicas(ctx, t, rcc, expectedReplicas+1, cassandraCluster.Namespace, stfsName)
 	}
-
-	assertClusterStatusPhase(assert, rcc, api.ClusterPhasePending)
-	assertRackStatusPhase(assert, rcc, "dc1-rack1", api.ClusterPhasePending)
+	assertClusterStatusPhase(assert, rcc, testfixtures.PendingPhase)
+	assertRackStatusPhase(assert, rcc, "dc1-rack1", testfixtures.PendingPhase)
 	assertClusterStatusLastAction(assert, rcc, api.ActionScaleUp, api.StatusOngoing)
 	assertRackStatusLastAction(assert, rcc, "dc1-rack1", api.ActionScaleUp, api.StatusOngoing)
 
@@ -117,8 +117,8 @@ func TestAddTwoNodes(t *testing.T) {
 	for reconcileIteration := 0; reconcileIteration <= 2; reconcileIteration++ {
 		reconcileValidation(t, rcc, *req)
 		assert.GreaterOrEqual(jolokiaCallsCount(firstPod), 1)
-		assertClusterStatusPhase(assert, rcc, api.ClusterPhasePending)
-		assertRackStatusPhase(assert, rcc, "dc1-rack1", api.ClusterPhaseRunning)
+		assertClusterStatusPhase(assert, rcc, testfixtures.PendingPhase)
+		assertRackStatusPhase(assert, rcc, "dc1-rack1", testfixtures.RunningPhase)
 		assertClusterStatusLastAction(assert, rcc, api.ActionScaleUp, api.StatusOngoing)
 		assertRackStatusLastAction(assert, rcc, "dc1-rack1", api.ActionScaleUp, api.StatusOngoing)
 	}
@@ -127,8 +127,8 @@ func TestAddTwoNodes(t *testing.T) {
 	registerJolokiaOperationJoiningNodes(firstPod, 0)
 	reconcileValidation(t, rcc, *req)
 	assert.GreaterOrEqual(jolokiaCallsCount(firstPod), 1)
-	assertClusterStatusPhase(assert, rcc, api.ClusterPhaseRunning)
-	assertRackStatusPhase(assert, rcc, "dc1-rack1", api.ClusterPhaseRunning)
+	assertClusterStatusPhase(assert, rcc, testfixtures.RunningPhase)
+	assertRackStatusPhase(assert, rcc, "dc1-rack1", testfixtures.RunningPhase)
 	assertClusterStatusLastAction(assert, rcc, api.ActionScaleUp, api.StatusDone)
 	assertRackStatusLastAction(assert, rcc, "dc1-rack1", api.ActionScaleUp, api.StatusDone)
 }

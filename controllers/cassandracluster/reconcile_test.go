@@ -86,9 +86,9 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2(t *testing.T) {
 	//UpdateClusterStatus
 	UpdateCassandraClusterStatusPhase(cc, status)
 
-	status.CassandraRackStatus["dc1-rack1"].Phase = api.ClusterPhaseRunning.Name
-	status.CassandraRackStatus["dc1-rack2"].Phase = api.ClusterPhaseRunning.Name
-	status.CassandraRackStatus["dc2-rack1"].Phase = api.ClusterPhaseRunning.Name
+	status.CassandraRackStatus["dc1-rack1"].SetRunningPhase()
+	status.CassandraRackStatus["dc1-rack2"].SetRunningPhase()
+	status.CassandraRackStatus["dc2-rack1"].SetRunningPhase()
 
 	//Flip with AutoUpdateSeedList= true -> update status
 	EnsureSeedListIsUpdatedWhenRequired(cc, status)
@@ -162,8 +162,8 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2ManualSeedList(t *testi
 	//UpdateClusterStatus
 	UpdateCassandraClusterStatusPhase(cc, status)
 
-	status.CassandraRackStatus["dc1-rack1"].Phase = api.ClusterPhaseRunning.Name
-	status.CassandraRackStatus["dc1-rack2"].Phase = api.ClusterPhaseRunning.Name
+	status.CassandraRackStatus["dc1-rack1"].SetRunningPhase()
+	status.CassandraRackStatus["dc1-rack2"].SetRunningPhase()
 
 	//Flip with AutoUpdateSeedList= true -> update status
 	EnsureSeedListIsUpdatedWhenRequired(cc, status)
@@ -219,9 +219,9 @@ func TestFlipCassandraClusterUpdateSeedListStatusscaleDC1(t *testing.T) {
 	//UpdateClusterStatus
 	UpdateCassandraClusterStatusPhase(cc, status)
 
-	status.CassandraRackStatus["dc1-rack1"].Phase = api.ClusterPhaseRunning.Name
-	status.CassandraRackStatus["dc1-rack2"].Phase = api.ClusterPhaseRunning.Name
-	status.CassandraRackStatus["dc2-rack1"].Phase = api.ClusterPhaseRunning.Name
+	status.CassandraRackStatus["dc1-rack1"].SetRunningPhase()
+	status.CassandraRackStatus["dc1-rack2"].SetRunningPhase()
+	status.CassandraRackStatus["dc2-rack1"].SetRunningPhase()
 
 	//Flip with AutoUpdateSeedList= true -> update status
 	EnsureSeedListIsUpdatedWhenRequired(cc, status)
@@ -283,9 +283,9 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDown(t *testing.T) {
 	//UpdateClusterStatus
 	UpdateCassandraClusterStatusPhase(cc, status)
 
-	status.CassandraRackStatus["dc1-rack1"].Phase = api.ClusterPhaseRunning.Name
-	status.CassandraRackStatus["dc1-rack2"].Phase = api.ClusterPhaseRunning.Name
-	status.CassandraRackStatus["dc2-rack1"].Phase = api.ClusterPhaseRunning.Name
+	status.CassandraRackStatus["dc1-rack1"].SetRunningPhase()
+	status.CassandraRackStatus["dc1-rack2"].SetRunningPhase()
+	status.CassandraRackStatus["dc2-rack1"].SetRunningPhase()
 
 	//Flip with AutoUpdateSeedList= true -> update status
 	EnsureSeedListIsUpdatedWhenRequired(cc, status)

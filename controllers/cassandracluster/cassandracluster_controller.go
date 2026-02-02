@@ -94,7 +94,7 @@ func (rcc *CassandraClusterReconciler) Reconcile(ctx context.Context, request re
 	}
 
 	// After first time reconcile, phase will switch to "Initializing".
-	if cc.Status.Phase == "" {
+	if cc.Status.CassandraPhase.IsEmpty() {
 		// Simulate initializer.
 		changed := cc.SetDefaults()
 		if changed {

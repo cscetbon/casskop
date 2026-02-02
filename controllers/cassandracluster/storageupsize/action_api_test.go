@@ -75,7 +75,9 @@ func TestRevertAnyStorageUpsizeBeyondUpsizeAction(t *testing.T) {
 		rack := stub.RackView{
 			LivingStatefulSetStub: currentSts.DeepCopy(),
 			RackStatusStub: &v2.CassandraRackStatus{
-				Phase: v2.ClusterPhaseRunning.Name,
+				CassandraPhase: v2.CassandraPhase{
+					Phase: v2.ClusterPhaseRunning.Name,
+				},
 			},
 		}
 
