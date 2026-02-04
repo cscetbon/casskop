@@ -219,22 +219,15 @@ func (rcc *CassandraClusterReconciler) CheckNonAllowedChanges(ctx context.Contex
 	if !reflect.DeepEqual(cc.Spec.Resources, oldCRD.Spec.Resources) {
 		logrus.Infof("[%s]: We ask to Change Pod Resources from %v to %v", cc.Name, oldCRD.Spec.Resources, cc.Spec.Resources)
 
-		for dc := 0; dc < cc.GetDCSize(); dc++ {
-			dcName := cc.GetDCName(dc)
-			for rack := 0; rack < cc.GetRackSize(dc); rack++ {
-
-				rackName := cc.GetRackName(dc, rack)
-				dcRackName := cc.GetDCRackName(dcName, rackName)
-				dcRackStatus := status.CassandraRackStatus[dcRackName]
-
-				logrus.Infof("[%s][%s]: Update Rack Status UpdateResources=Ongoing", cc.Name, dcRackName)
-				dcRackStatus.CassandraLastAction.Name = api.ActionUpdateResources.Name
-				ClusterActionMetric.set(api.ActionUpdateResources, cc.Name)
-				dcRackStatus.CassandraLastAction.Status = api.StatusToDo
-				now := metav1.Now()
-				status.CassandraRackStatus[dcRackName].CassandraLastAction.StartTime = &now
-				status.CassandraRackStatus[dcRackName].CassandraLastAction.EndTime = nil
-			}
+		for _, rack := range cc.IterateRacks() {
+			dcRackStatus := status.GetCassandraRackStatus(rack.DcRackName)
+			logrus.Infof("[%s][%s]: Update Rack Status UpdateResources=Ongoing", cc.Name, rack.DcRackName)
+			dcRackStatus.CassandraLastAction.Name = api.ActionUpdateResources.Name
+			ClusterActionMetric.set(api.ActionUpdateResources, cc.Name)
+			dcRackStatus.CassandraLastAction.Status = api.StatusToDo
+			now := metav1.Now()
+			dcRackStatus.CassandraLastAction.StartTime = &now
+			dcRackStatus.CassandraLastAction.EndTime = nil
 		}
 	}
 
@@ -462,127 +455,116 @@ func (rcc *CassandraClusterReconciler) ReconcileRack(ctx context.Context, cc *ap
 	status *api.CassandraClusterStatus) (err error) {
 
 	newStatus := false
-	for dc := 0; dc < cc.GetDCSize(); dc++ {
-		dcName := cc.GetDCName(dc)
-		for rack := 0; rack < cc.GetRackSize(dc); rack++ {
-			rackName := cc.GetRackName(dc, rack)
-			dcRackName := cc.GetDCRackName(dcName, rackName)
-			if dcRackName == "" {
-				return fmt.Errorf("name used for DC and/or Rack are not good")
-			}
-			completeDcRackName := api.CompleteRackName{
-				DcName:     api.DcName(dcName),
-				RackName:   api.RackName(rackName),
-				DcRackName: api.DcRackName(dcRackName),
-			}
+	for _, completeDcRackName := range cc.IterateRacks() {
+		if completeDcRackName.DcRackName.String() == "" {
+			return fmt.Errorf("name used for DC and/or Rack are not good")
+		}
 
-			if rcc.initiateRackStatusIfNeeded(status, cc, completeDcRackName) {
-				newStatus = true
-				continue
-			}
-			dcRackStatus := status.CassandraRackStatus[dcRackName]
+		if rcc.initiateRackStatusIfNeeded(status, cc, completeDcRackName) {
+			newStatus = true
+			continue
+		}
+		dcRackStatus := status.GetCassandraRackStatus(completeDcRackName.DcRackName)
 
-			if cc.DeletionTimestamp != nil && cc.Spec.DeletePVC {
-				rcc.DeletePVCs(ctx, cc, dcName, rackName)
-				//Go to next rack
-				continue
-			}
-			Name := cc.Name + "-" + dcRackName
-			storedStatefulSet, getStsErr := rcc.GetStatefulSet(ctx, cc.Namespace, Name)
-			if getStsErr != nil {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-					"dc-rack": dcRackName}).Infof("failed to get cassandra's statefulset (%s) %v", Name, getStsErr)
-			} else {
+		if cc.DeletionTimestamp != nil && cc.Spec.DeletePVC {
+			rcc.DeletePVCs(ctx, cc, completeDcRackName)
+			//Go to next rack
+			continue
+		}
+		Name := cc.Name + "-" + completeDcRackName.DcRackName.String()
+		storedStatefulSet, getStsErr := rcc.GetStatefulSet(ctx, cc.Namespace, Name)
+		if getStsErr != nil {
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+				"dc-rack": completeDcRackName.DcRackName}).Infof("failed to get cassandra's statefulset (%s) %v", Name, getStsErr)
+		} else {
 
-				//Update CassandraClusterPhase
-				rcc.UpdateCassandraRackStatusPhase(ctx, cc, completeDcRackName, storedStatefulSet, status)
+			//Update CassandraClusterPhase
+			rcc.UpdateCassandraRackStatusPhase(ctx, cc, completeDcRackName, storedStatefulSet, status)
 
-				//Find if there is an Action to execute/end
-				rcc.getNextCassandraClusterStatus(ctx, cc, dc, rack, completeDcRackName, storedStatefulSet, status)
+			//Find if there is an Action to execute/end
+			rcc.getNextCassandraClusterStatus(ctx, cc, completeDcRackName, storedStatefulSet, status)
 
-				//If not Initializing cluster execute pod operations queued
-				if !dcRackStatus.IsInInitialPhase() {
-					// Check if there are joining nodes and break the loop if there are
-					breakResyncloop, err := rcc.handlePodOperation(ctx, cc, dcName, rackName, status,
-						sts.IsStatefulSetReady(storedStatefulSet))
-					if err != nil {
-						logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName,
-							"err": err}).Error("Executing pod operation failed")
+			//If not Initializing cluster execute pod operations queued
+			if !dcRackStatus.IsInInitialPhase() {
+				// Check if there are joining nodes and break the loop if there are
+				breakResyncloop, err := rcc.handlePodOperation(ctx, cc, completeDcRackName.DcName.String(), completeDcRackName.RackName.String(), status,
+					sts.IsStatefulSetReady(storedStatefulSet))
+				if err != nil {
+					logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": completeDcRackName.DcRackName,
+						"err": err}).Error("Executing pod operation failed")
+				}
+				//For some Operations, we must NOT update the statefulset until Done.
+				//So we block until OK
+				if breakResyncloop {
+					// If an Action is ongoing on the current Rack,
+					// we don't want to check or start actions on Next Rack
+					if !dcRackStatus.IsInRunningPhase() ||
+						dcRackStatus.CassandraLastAction.Status == api.StatusToDo ||
+						dcRackStatus.CassandraLastAction.Status == api.StatusOngoing ||
+						dcRackStatus.CassandraLastAction.Status == api.StatusContinue {
+						logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": completeDcRackName.DcRackName,
+							"err": err}).Debug("Waiting Rack to be running before continuing, " +
+							"we break ReconcileRack Without Updating Statefulset")
+						return nil
 					}
-					//For some Operations, we must NOT update the statefulset until Done.
-					//So we block until OK
-					if breakResyncloop {
-						// If an Action is ongoing on the current Rack,
-						// we don't want to check or start actions on Next Rack
-						if !dcRackStatus.IsInRunningPhase() ||
-							dcRackStatus.CassandraLastAction.Status == api.StatusToDo ||
-							dcRackStatus.CassandraLastAction.Status == api.StatusOngoing ||
-							dcRackStatus.CassandraLastAction.Status == api.StatusContinue {
-							logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName,
-								"err": err}).Debug("Waiting Rack to be running before continuing, " +
-								"we break ReconcileRack Without Updating Statefulset")
-							return nil
-						}
-						logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName,
-							"LastActionName":   dcRackStatus.CassandraLastAction.Name,
-							"LastActionStatus": dcRackStatus.CassandraLastAction.Status,
-							"Phase":            dcRackStatus.Phase,
-							"CassandraPhase":   dcRackStatus.CassandraPhase.String(),
-						}).Warning(
-							"Should Not see this message ;) Waiting Rack to be running before continuing, we " +
-								"loop on Next Rack, maybe we don't want that")
-						continue
-					}
+					logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": completeDcRackName.DcRackName,
+						"LastActionName":   dcRackStatus.CassandraLastAction.Name,
+						"LastActionStatus": dcRackStatus.CassandraLastAction.Status,
+						"Phase":            dcRackStatus.Phase,
+						"CassandraPhase":   dcRackStatus.CassandraPhase.String(),
+					}).Warning(
+						"Should Not see this message ;) Waiting Rack to be running before continuing, we " +
+							"loop on Next Rack, maybe we don't want that")
+					continue
 				}
-			}
-
-			rcc.ensureCassandraServiceObjectsDeployed(ctx, cc, completeDcRackName.DcRackName)
-
-			if rcc.IsStorageUpsizeStarted(dcRackStatus) {
-				if getStsErr != nil && !apierrors.IsNotFound(getStsErr) {
-					logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName}).
-						Infof("cannot continue storage upsize because: failed to get cassandra's statefulset (%s) %v",
-							Name, getStsErr)
-					return nil
-				}
-				if getStsErr != nil && apierrors.IsNotFound(getStsErr) {
-					rcc.storedStatefulSet = nil
-				} else {
-					rcc.storedStatefulSet = storedStatefulSet
-				}
-				return rcc.ReconcileStorageUpsize(ctx, cc, status, completeDcRackName)
-			}
-
-			breakLoop, err := rcc.ensureCassandraStatefulSet(ctx, cc, status, completeDcRackName, dc, rack)
-			if err != nil {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-					"dc-rack": dcRackName}).Errorf("ensureCassandraStatefulSet Error: %v", err)
-			}
-			if cc.Spec.UnlockNextOperation {
-				//If we enter specific change we remove unlockNextOperation from Spec
-				cc.Spec.UnlockNextOperation = false
-				needUpdate = true
-			}
-			if breakLoop {
-				if status.LastClusterAction == api.ActionUpdateSeedList.Name &&
-					status.LastClusterActionStatus == api.StatusConfiguring {
-					rcc.waitForStatefulSetToBeUpdated(ctx, cc, dcRackName, err)
-				}
-				return nil
-			}
-
-			//If the Phase is not running then we won't check on Next Racks so we return
-			//We don't want to make any changes in 2 racks at the same time
-			if !dcRackStatus.IsInRunningPhase() ||
-				(dcRackStatus.CassandraLastAction.Status == api.StatusOngoing ||
-					dcRackStatus.CassandraLastAction.Status == api.StatusFinalizing) {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-					"dc-rack": dcRackName}).Infof("Waiting Rack to be running before continuing, " +
-					"we break ReconcileRack after updated statefulset")
-				return nil
 			}
 		}
 
+		rcc.ensureCassandraServiceObjectsDeployed(ctx, cc, completeDcRackName.DcRackName)
+
+		if rcc.IsStorageUpsizeStarted(dcRackStatus) {
+			if getStsErr != nil && !apierrors.IsNotFound(getStsErr) {
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": completeDcRackName.DcRackName}).
+					Infof("cannot continue storage upsize because: failed to get cassandra's statefulset (%s) %v",
+						Name, getStsErr)
+				return nil
+			}
+			if getStsErr != nil && apierrors.IsNotFound(getStsErr) {
+				rcc.storedStatefulSet = nil
+			} else {
+				rcc.storedStatefulSet = storedStatefulSet
+			}
+			return rcc.ReconcileStorageUpsize(ctx, cc, status, completeDcRackName)
+		}
+
+		breakLoop, err := rcc.ensureCassandraStatefulSet(ctx, cc, status, completeDcRackName)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+				"dc-rack": completeDcRackName.DcRackName}).Errorf("ensureCassandraStatefulSet Error: %v", err)
+		}
+		if cc.Spec.UnlockNextOperation {
+			//If we enter specific change we remove unlockNextOperation from Spec
+			cc.Spec.UnlockNextOperation = false
+			needUpdate = true
+		}
+		if breakLoop {
+			if status.LastClusterAction == api.ActionUpdateSeedList.Name &&
+				status.LastClusterActionStatus == api.StatusConfiguring {
+				rcc.waitForStatefulSetToBeUpdated(ctx, cc, completeDcRackName.DcRackName, err)
+			}
+			return nil
+		}
+
+		//If the Phase is not running then we won't check on Next Racks so we return
+		//We don't want to make any changes in 2 racks at the same time
+		if !dcRackStatus.IsInRunningPhase() ||
+			(dcRackStatus.CassandraLastAction.Status == api.StatusOngoing ||
+				dcRackStatus.CassandraLastAction.Status == api.StatusFinalizing) {
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+				"dc-rack": completeDcRackName.DcRackName}).Infof("Waiting Rack to be running before continuing, " +
+				"we break ReconcileRack after updated statefulset")
+			return nil
+		}
 	}
 
 	if newStatus {
@@ -654,58 +636,47 @@ func (rcc *CassandraClusterReconciler) reconcileFirstPodPerRack(ctx context.Cont
 	status *api.CassandraClusterStatus) (err error) {
 
 	newStatus := false
-	for dc := 0; dc < cc.GetDCSize(); dc++ {
-		dcName := cc.GetDCName(dc)
-		for rack := 0; rack < cc.GetRackSize(dc); rack++ {
+	for _, completeDcRackName := range cc.IterateRacks() {
+		if completeDcRackName.DcRackName.String() == "" {
+			return fmt.Errorf("name used for DC and/or Rack are not good")
+		}
 
-			rackName := cc.GetRackName(dc, rack)
-			dcRackName := cc.GetDCRackName(dcName, rackName)
-			if dcRackName == "" {
-				return fmt.Errorf("name used for DC and/or Rack are not good")
-			}
-			completeDcRackName := api.CompleteRackName{
-				DcName:     api.DcName(dcName),
-				RackName:   api.RackName(rackName),
-				DcRackName: api.DcRackName(dcRackName),
-			}
+		if rcc.initiateRackStatusIfNeeded(status, cc, completeDcRackName) {
+			newStatus = true
+			continue
+		}
+		dcRackStatus := status.GetCassandraRackStatus(completeDcRackName.DcRackName)
 
-			if rcc.initiateRackStatusIfNeeded(status, cc, completeDcRackName) {
-				newStatus = true
-				continue
-			}
-			dcRackStatus := status.GetCassandraRackStatus(completeDcRackName.DcRackName)
+		if cc.DeletionTimestamp != nil && cc.Spec.DeletePVC {
+			rcc.DeletePVCs(ctx, cc, completeDcRackName)
+			//Go to next rack
+			continue
+		}
 
-			if cc.DeletionTimestamp != nil && cc.Spec.DeletePVC {
-				rcc.DeletePVCs(ctx, cc, dcName, rackName)
-				//Go to next rack
-				continue
-			}
+		Name := cc.Name + "-" + completeDcRackName.DcRackName.String()
+		storedStatefulSet, err := rcc.GetStatefulSet(ctx, cc.Namespace, Name)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+				"dc-rack": completeDcRackName.DcRackName}).Infof("failed to get cassandra's statefulset (%s) %v", Name, err)
+		} else {
+			rcc.UpdateCassandraRackStatusFirstPodPerRackInitPhase(ctx, cc, completeDcRackName, storedStatefulSet, status)
+		}
 
-			Name := cc.Name + "-" + dcRackName
-			storedStatefulSet, err := rcc.GetStatefulSet(ctx, cc.Namespace, Name)
-			if err != nil {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-					"dc-rack": dcRackName}).Infof("failed to get cassandra's statefulset (%s) %v", Name, err)
-			} else {
-				rcc.UpdateCassandraRackStatusFirstPodPerRackInitPhase(ctx, cc, completeDcRackName, storedStatefulSet, status)
-			}
+		rcc.ensureCassandraServiceObjectsDeployed(ctx, cc, completeDcRackName.DcRackName)
 
-			rcc.ensureCassandraServiceObjectsDeployed(ctx, cc, completeDcRackName.DcRackName)
+		_, err = rcc.ensureCassandraStatefulSet(ctx, cc, status, completeDcRackName,
+			overrideReplicasCountForFirstPodPerRackInitPhase)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+				"dc-rack": completeDcRackName.DcRackName}).Errorf("ensureCassandraStatefulSet Error: %v", err)
+		}
 
-			_, err = rcc.ensureCassandraStatefulSet(ctx, cc, status, completeDcRackName, dc, rack,
-				overrideReplicasCountForFirstPodPerRackInitPhase)
-			if err != nil {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-					"dc-rack": dcRackName}).Errorf("ensureCassandraStatefulSet Error: %v", err)
-			}
-
-			// in first pod per rack phase move to next rack as soon as current rack has 1 ready replica
-			if dcRackStatus.IsInFirstPodPerRackInitPhase() {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-					"dc-rack": dcRackName}).Infof("Waiting Rack to be have one pod running before continuing, " +
-					"we break reconcileFirstPodPerRack after updated statefulset")
-				return nil
-			}
+		// in first pod per rack phase move to next rack as soon as current rack has 1 ready replica
+		if dcRackStatus.IsInFirstPodPerRackInitPhase() {
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+				"dc-rack": completeDcRackName.DcRackName}).Infof("Waiting Rack to be have one pod running before continuing, " +
+				"we break reconcileFirstPodPerRack after updated statefulset")
+			return nil
 		}
 
 	}
@@ -727,12 +698,9 @@ func (rcc *CassandraClusterReconciler) reconcileFirstPodPerRack(ctx context.Cont
 }
 
 func (rcc *CassandraClusterReconciler) updateClusterFirstPodPerRackInitPhaseStatus(cc *api.CassandraCluster, status *api.CassandraClusterStatus) bool {
-	for dc := 0; dc < cc.GetDCSize(); dc++ {
-		for rack := 0; rack < cc.GetRackSize(dc); rack++ {
-			dcRackName := cc.GetDCRackNameStrongType(dc, rack)
-			if status.GetCassandraRackStatus(dcRackName).IsInFirstPodPerRackInitPhase() {
-				return false
-			}
+	for _, rack := range cc.IterateRacks() {
+		if status.GetCassandraRackStatus(rack.DcRackName).IsInFirstPodPerRackInitPhase() {
+			return false
 		}
 	}
 
@@ -748,8 +716,9 @@ func overrideReplicasCountForFirstPodPerRackInitPhase(stsSpec appsv1.StatefulSet
 	return stsSpec
 }
 
-func (rcc *CassandraClusterReconciler) waitForStatefulSetToBeUpdated(ctx context.Context, cc *api.CassandraCluster, dcRackName string,
-	err error) {
+func (rcc *CassandraClusterReconciler) waitForStatefulSetToBeUpdated(ctx context.Context, cc *api.CassandraCluster,
+	dcRackName api.DcRackName, err error) {
+
 	logrus.WithFields(logrus.Fields{
 		"cluster": cc.Name, "dc-rack": dcRackName,
 	}).Debug("Statefulset is getting updated we break ReconcileRack")
@@ -779,39 +748,32 @@ func (rcc *CassandraClusterReconciler) waitForStatefulSetToBeUpdated(ctx context
 // UpdateCassandraClusterStatusPhase sets the Cluster Phase according to StatefulSet Status.
 func UpdateCassandraClusterStatusPhase(cc *api.CassandraCluster, status *api.CassandraClusterStatus) {
 	var setLastClusterActionStatus bool
-	for dc := 0; dc < cc.GetDCSize(); dc++ {
-		dcName := cc.GetDCName(dc)
-		for rack := 0; rack < cc.GetRackSize(dc); rack++ {
-			rackName := cc.GetRackName(dc, rack)
-			dcRackName := cc.GetDCRackName(dcName, rackName)
-			dcRackStatus, exist := status.CassandraRackStatus[dcRackName]
-			if !exist {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Infof(
-					"the DC(%s) and Rack(%s) does not exist, the rack status will be updated in next reconcile",
-					dcName, rackName)
-				continue
-			}
-
-			// If there is a lastAction ongoing in a Rack we update LastClusterAction accordingly
-			if dcRackStatus.CassandraLastAction.Status != api.StatusDone {
-				status.LastClusterActionStatus = dcRackStatus.CassandraLastAction.Status
-				status.LastClusterAction = dcRackStatus.CassandraLastAction.Name
-				setLastClusterActionStatus = true
-			}
-
-			//If a rack is not running we return
-			if !dcRackStatus.IsInRunningPhase() {
-				status.SetClusterPhaseFromRackPhase(dcRackStatus)
-
-				if cc.Status.HasRackPhaseChanged(dcRackName, dcRackStatus.CassandraPhase) {
-					logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-						"dc-rack": dcRackName}).Infof("Update Rack Status: %s", dcRackStatus.CassandraPhase)
-				}
-				return
-			}
-
+	for _, rack := range cc.IterateRacks() {
+		dcRackStatus, exist := status.SafeGetCassandraRackStatus(rack.DcRackName)
+		if !exist {
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Infof(
+				"the DC(%s) and Rack(%s) does not exist, the rack status will be updated in next reconcile",
+				rack.DcName, rack.RackName)
+			continue
 		}
 
+		// If there is a lastAction ongoing in a Rack we update LastClusterAction accordingly
+		if dcRackStatus.CassandraLastAction.Status != api.StatusDone {
+			status.LastClusterActionStatus = dcRackStatus.CassandraLastAction.Status
+			status.LastClusterAction = dcRackStatus.CassandraLastAction.Name
+			setLastClusterActionStatus = true
+		}
+
+		//If a rack is not running we return
+		if !dcRackStatus.IsInRunningPhase() {
+			status.SetClusterPhaseFromRackPhase(dcRackStatus)
+
+			if cc.Status.HasRackPhaseChanged(rack.DcRackName, dcRackStatus.CassandraPhase) {
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+					"dc-rack": rack.DcRackName}).Infof("Update Rack Status: %s", dcRackStatus.CassandraPhase)
+			}
+			return
+		}
 	}
 
 	//If there is no more action in racks, we update cluster
@@ -832,22 +794,19 @@ func UpdateCassandraClusterStatusPhase(cc *api.CassandraCluster, status *api.Cas
 }
 
 func UpdateCassandraLastActionFirstPodPerRack(cc *api.CassandraCluster, status *api.CassandraClusterStatus) {
-	for dc := 0; dc < cc.GetDCSize(); dc++ {
-		for rack := 0; rack < cc.GetRackSize(dc); rack++ {
-			dcRackName := cc.GetDCRackNameStrongType(dc, rack)
-			dcRackStatus, exist := status.SafeGetCassandraRackStatus(dcRackName)
-			if !exist {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Infof(
-					"the DC-Rack(%s) does not exist, the rack status will be updated in next reconcile",
-					dcRackName)
-				continue
-			}
+	for _, rack := range cc.IterateRacks() {
+		dcRackStatus, exist := status.SafeGetCassandraRackStatus(rack.DcRackName)
+		if !exist {
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Infof(
+				"the DC-Rack(%s) does not exist, the rack status will be updated in next reconcile",
+				rack.DcRackName)
+			continue
+		}
 
-			// If there is a lastAction ongoing in a Rack we update LastClusterAction accordingly
-			if dcRackStatus.CassandraLastAction.Status != api.StatusDone {
-				status.LastClusterActionStatus = dcRackStatus.CassandraLastAction.Status
-				status.LastClusterAction = dcRackStatus.CassandraLastAction.Name
-			}
+		// If there is a lastAction ongoing in a Rack we update LastClusterAction accordingly
+		if dcRackStatus.CassandraLastAction.Status != api.StatusDone {
+			status.LastClusterActionStatus = dcRackStatus.CassandraLastAction.Status
+			status.LastClusterAction = dcRackStatus.CassandraLastAction.Name
 		}
 	}
 }
@@ -861,43 +820,33 @@ func EnsureSeedListIsUpdatedWhenRequired(cc *api.CassandraCluster, status *api.C
 		var setOperationToDo = true
 
 		//All racks must be configuring the seed list or in initializing mode
-		for dc := 0; dc < cc.GetDCSize(); dc++ {
-			dcName := cc.GetDCName(dc)
-			for rack := 0; rack < cc.GetRackSize(dc); rack++ {
-				rackName := cc.GetRackName(dc, rack)
-				dcRackName := cc.GetDCRackName(dcName, rackName)
-				dcRackStatus := status.CassandraRackStatus[dcRackName]
+		for _, rack := range cc.IterateRacks() {
+			dcRackStatus := status.GetCassandraRackStatus(rack.DcRackName)
 
-				if !(dcRackStatus.CassandraLastAction.Name == api.ActionUpdateSeedList.Name &&
-					dcRackStatus.CassandraLastAction.Status == api.StatusConfiguring) {
-					if dcRackStatus.CassandraLastAction.Name != api.ClusterPhaseInitial.Name {
-						setOperationToDo = false
-					}
-					break
+			if !(dcRackStatus.CassandraLastAction.Name == api.ActionUpdateSeedList.Name &&
+				dcRackStatus.CassandraLastAction.Status == api.StatusConfiguring) {
+				if dcRackStatus.CassandraLastAction.Name != api.ClusterPhaseInitial.Name {
+					setOperationToDo = false
 				}
+				break
 			}
 		}
 
 		//If all racks are in "configuring" state, we update the status to trigger the operator actions
 		if setOperationToDo {
-			for dc := 0; dc < cc.GetDCSize(); dc++ {
-				dcName := cc.GetDCName(dc)
-				for rack := 0; rack < cc.GetRackSize(dc); rack++ {
-					rackName := cc.GetRackName(dc, rack)
-					dcRackName := cc.GetDCRackName(dcName, rackName)
-					dcRackStatus := status.CassandraRackStatus[dcRackName]
+			for _, rack := range cc.IterateRacks() {
+				dcRackStatus := status.GetCassandraRackStatus(rack.DcRackName)
 
-					if dcRackStatus.IsInInitialPhase() {
-						continue
-					}
-
-					logrus.WithFields(logrus.Fields{
-						"cluster": cc.Name, "dc-rack": dcRackName,
-					}).Infof("Update Rack Status UpdateSeedList=ToDo")
-					dcRackStatus.CassandraLastAction.Name = api.ActionUpdateSeedList.Name
-					ClusterActionMetric.set(api.ActionUpdateSeedList, cc.Name)
-					dcRackStatus.CassandraLastAction.Status = api.StatusToDo
+				if dcRackStatus.IsInInitialPhase() {
+					continue
 				}
+
+				logrus.WithFields(logrus.Fields{
+					"cluster": cc.Name, "dc-rack": rack.DcRackName,
+				}).Infof("Update Rack Status UpdateSeedList=ToDo")
+				dcRackStatus.CassandraLastAction.Name = api.ActionUpdateSeedList.Name
+				ClusterActionMetric.set(api.ActionUpdateSeedList, cc.Name)
+				dcRackStatus.CassandraLastAction.Status = api.StatusToDo
 			}
 		}
 	}
@@ -958,23 +907,19 @@ func (rcc *CassandraClusterReconciler) ListCassandraClusterPods(ctx context.Cont
 	var podsList []v1.Pod
 
 	// We loop on each DC and Rack of the CassandraCluster
-	for dc := 0; dc < cc.GetDCSize(); dc++ {
-		dcName := cc.GetDCName(dc)
-		for rack := 0; rack < cc.GetRackSize(dc); rack++ {
-			rackName := cc.GetRackName(dc, rack)
-			dcRackName := cc.GetDCRackName(dcName, rackName)
-			if dcRackName == "" {
-				return nil, fmt.Errorf("name used for DC and/or Rack are not good")
-			}
-
-			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName}).Debug("List available pods")
-			pods, err := rcc.ListPods(ctx, cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
-			if err != nil {
-				return nil, err
-			}
-
-			podsList = append(podsList, pods.Items...)
+	for _, rack := range cc.IterateRacks() {
+		if rack.DcRackName.String() == "" {
+			return nil, fmt.Errorf("name used for DC and/or Rack are not good")
 		}
+
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": rack.DcRackName}).Debug("List available pods")
+		labels := k8s.LabelsForCassandraDCRackStrongTypes(cc, rack.DcName, rack.RackName)
+		pods, err := rcc.ListPods(ctx, cc.Namespace, labels)
+		if err != nil {
+			return nil, err
+		}
+
+		podsList = append(podsList, pods.Items...)
 	}
 	return podsList, nil
 }

@@ -90,10 +90,10 @@ func (rcc *CassandraClusterReconciler) podDisruptionBudgetEnvelope(cc *api.Cassa
 // take dcRackName to accordingly name the statefulset
 // take dc and rack index of dc and rack in conf to retrieve according nodeselectors labels
 func (rcc *CassandraClusterReconciler) ensureCassandraStatefulSet(ctx context.Context, cc *api.CassandraCluster,
-	status *api.CassandraClusterStatus, completeDcRackName api.CompleteRackName, dc int, rack int,
+	status *api.CassandraClusterStatus, completeDcRackName api.CompleteRackName,
 	cassandraStatefulSetModifiers ...cassandraStatefulSetModifier) (bool, error) {
 
-	labels, nodeSelector := k8s.DCRackLabelsAndNodeSelectorForStatefulSet(cc, dc, rack)
+	labels, nodeSelector := k8s.DCRackLabelsAndNodeSelectorForStatefulSet(cc, completeDcRackName.DcIndex, completeDcRackName.RackIndex)
 
 	ss, err := generateCassandraStatefulSet(cc, status, completeDcRackName.DcName.String(),
 		completeDcRackName.DcRackName.String(), labels, nodeSelector, nil)

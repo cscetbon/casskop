@@ -71,7 +71,7 @@ func (rcc *CassandraClusterReconciler) updateCassandraStatus(ctx context.Context
 
 // getNextCassandraClusterStatus goal is to detect some changes in the status between cassandracluster and its statefulset
 // We follow only one change at a Time : so this function will return on the first change found
-func (rcc *CassandraClusterReconciler) getNextCassandraClusterStatus(ctx context.Context, cc *api.CassandraCluster, dc, rack int,
+func (rcc *CassandraClusterReconciler) getNextCassandraClusterStatus(ctx context.Context, cc *api.CassandraCluster,
 	completeDcRackName api.CompleteRackName, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) error {
 
 	//UpdateStatusIfUpdateResources(cc, dcRackName, storedStatefulSet, status)
@@ -141,7 +141,7 @@ func (rcc *CassandraClusterReconciler) getNextCassandraClusterStatus(ctx context
 			return nil
 		}
 
-		if UpdateStatusIfRollingRestart(cc, dc, rack, completeDcRackName.DcRackName, status) {
+		if UpdateStatusIfRollingRestart(cc, completeDcRackName.DcIndex, completeDcRackName.RackIndex, completeDcRackName.DcRackName, status) {
 			return nil
 		}
 

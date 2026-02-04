@@ -19,6 +19,8 @@ func (n DcRackName) String() string {
 }
 
 type CompleteRackName struct {
+	DcIndex    int
+	RackIndex  int
 	DcName     DcName
 	RackName   RackName
 	DcRackName DcRackName

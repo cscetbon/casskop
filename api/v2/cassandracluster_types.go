@@ -694,6 +694,24 @@ func (cc *CassandraCluster) IsValidDC(dcName string) bool {
 	return false
 }
 
+func (in *CassandraCluster) IterateRacks() []CompleteRackName {
+	var racks []CompleteRackName
+	for dc := 0; dc < in.GetDCSize(); dc++ {
+		dcName := in.GetDCName(dc)
+		for rack := 0; rack < in.GetRackSize(dc); rack++ {
+			rackName := in.GetRackName(dc, rack)
+			racks = append(racks, CompleteRackName{
+				DcIndex:    dc,
+				RackIndex:  rack,
+				DcName:     DcName(dcName),
+				RackName:   RackName(rackName),
+				DcRackName: DcRackName(in.GetDCRackName(dcName, rackName)),
+			})
+		}
+	}
+	return racks
+}
+
 // Remove elements from DC slice
 func (dc *DCSlice) Remove(idx int) {
 	*dc = append((*dc)[:idx], (*dc)[idx+1:]...)
@@ -1110,8 +1128,8 @@ func (in *CassandraClusterStatus) SetRunningPhase() {
 	}
 }
 
-func (in *CassandraClusterStatus) HasRackPhaseChanged(dcRackName string, cassandraPhase CassandraPhase) bool {
-	rackStatus, ok := in.CassandraRackStatus[dcRackName]
+func (in *CassandraClusterStatus) HasRackPhaseChanged(dcRackName DcRackName, cassandraPhase CassandraPhase) bool {
+	rackStatus, ok := in.SafeGetCassandraRackStatus(dcRackName)
 	return !ok || rackStatus.CassandraPhase != cassandraPhase
 }
 

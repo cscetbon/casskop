@@ -46,7 +46,7 @@ func (v RackView) IsStatefulSetAliveNow() bool {
 }
 
 func (v RackView) GetLabelsForCassandraDCRack(cc *api.CassandraCluster) map[string]string {
-	return k8s.LabelsForCassandraDCRack(cc, v.DcName().String(), v.RackName().String())
+	return k8s.LabelsForCassandraDCRackStrongTypes(cc, v.DcName(), v.RackName())
 }
 
 func (v RackView) Log() *logrus.Entry {
