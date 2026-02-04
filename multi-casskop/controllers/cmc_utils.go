@@ -13,7 +13,7 @@ import (
 // ReadyCassandraCluster
 // return true if CassandraCluster it Done and Running
 func (r *reconciler) ReadyCassandraCluster(cc *ccv1.CassandraCluster) bool {
-	if cc.Status.Phase != ccv1.ClusterPhaseRunning.Name || cc.Status.LastClusterActionStatus != ccv1.StatusDone {
+	if !cc.Status.IsInRunningPhase() || cc.Status.LastClusterActionStatus != ccv1.StatusDone {
 		return false
 	}
 	return true
@@ -44,11 +44,11 @@ func (r *reconciler) CreateOrUpdateCassandraCluster(client *Client,
 		cc.Spec.RunAsUser = storedCC.Spec.RunAsUser
 	}
 
-	if cc.Spec.FSGroup == 0  && cc.Spec.FSGroup != storedCC.Spec.FSGroup {
+	if cc.Spec.FSGroup == 0 && cc.Spec.FSGroup != storedCC.Spec.FSGroup {
 		cc.Spec.FSGroup = storedCC.Spec.FSGroup
 	}
 
-	if cc.Spec.ServerType == ""  && cc.Spec.ServerType != storedCC.Spec.ServerType {
+	if cc.Spec.ServerType == "" && cc.Spec.ServerType != storedCC.Spec.ServerType {
 		cc.Spec.ServerType = storedCC.Spec.ServerType
 	}
 

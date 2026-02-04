@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	api "github.com/cscetbon/casskop/api/v2"
+	"github.com/cscetbon/casskop/controllers/cassandracluster/testfixtures"
 	"github.com/cscetbon/casskop/pkg/k8s"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
@@ -173,10 +174,10 @@ func simulateCurrentRackPvcsAreUpsizedByProvisioner(assert *assert.Assertions, r
 }
 
 func assertClusterInitialized(assert *assert.Assertions, rcc *CassandraClusterReconciler) {
-	assertClusterStatusPhase(assert, rcc, api.ClusterPhaseRunning)
+	assertClusterStatusPhase(assert, rcc, testfixtures.RunningPhase)
 	assertClusterStatusLastAction(assert, rcc, api.ClusterPhaseInitial, api.StatusDone)
 	for dcRackName := range rcc.cc.Status.CassandraRackStatus {
-		assertRackStatusPhase(assert, rcc, dcRackName, api.ClusterPhaseRunning)
+		assertRackStatusPhase(assert, rcc, dcRackName, testfixtures.RunningPhase)
 		assertRackStatusLastAction(assert, rcc, dcRackName, api.ClusterPhaseInitial, api.StatusDone)
 	}
 }
@@ -184,24 +185,24 @@ func assertClusterInitialized(assert *assert.Assertions, rcc *CassandraClusterRe
 func assertUpsizeInProgress(assert *assert.Assertions, rcc *CassandraClusterReconciler, dcRackName string) {
 	assert.NotEmpty(rcc.cc.Status.CassandraRackStatus[dcRackName].StatefulSetSnapshotBeforeStorageResize)
 
-	assertClusterStatusPhase(assert, rcc, api.ClusterPhasePending)
+	assertClusterStatusPhase(assert, rcc, testfixtures.PendingPhase)
 	assertClusterStatusLastAction(assert, rcc, api.ActionStorageUpsize, api.StatusOngoing)
-	assertRackStatusPhase(assert, rcc, dcRackName, api.ClusterPhasePending)
+	assertRackStatusPhase(assert, rcc, dcRackName, testfixtures.PendingPhase)
 	assertRackStatusLastAction(assert, rcc, dcRackName, api.ActionStorageUpsize, api.StatusOngoing)
 }
 
 func assertUpsizeDoneOnRack(assert *assert.Assertions, rcc *CassandraClusterReconciler, dcRackName string) {
-	assertClusterStatusPhase(assert, rcc, api.ClusterPhasePending)
+	assertClusterStatusPhase(assert, rcc, testfixtures.PendingPhase)
 	assertClusterStatusLastAction(assert, rcc, api.ActionStorageUpsize, api.StatusOngoing)
-	assertRackStatusPhase(assert, rcc, dcRackName, api.ClusterPhasePending)
+	assertRackStatusPhase(assert, rcc, dcRackName, testfixtures.PendingPhase)
 	assertRackStatusLastAction(assert, rcc, dcRackName, api.ActionStorageUpsize, api.StatusDone)
 }
 
 func assertUpsizeDoneGlobally(assert *assert.Assertions, rcc *CassandraClusterReconciler) {
-	assertClusterStatusPhase(assert, rcc, api.ClusterPhaseRunning)
+	assertClusterStatusPhase(assert, rcc, testfixtures.RunningPhase)
 	assertClusterStatusLastAction(assert, rcc, api.ActionStorageUpsize, api.StatusDone)
 	for dcRackName := range rcc.cc.Status.CassandraRackStatus {
-		assertRackStatusPhase(assert, rcc, dcRackName, api.ClusterPhaseRunning)
+		assertRackStatusPhase(assert, rcc, dcRackName, testfixtures.RunningPhase)
 		assertRackStatusLastAction(assert, rcc, dcRackName, api.ActionStorageUpsize, api.StatusDone)
 	}
 }
@@ -270,8 +271,8 @@ func TestStorageUpsizeDoesNotStartWhenOtherOperationInProgress(t *testing.T) {
 	reconcileValidation(t, rcc, *req)
 
 	assert.GreaterOrEqual(jolokiaCallsCount(firstPod), 1)
-	assertClusterStatusPhase(assert, rcc, api.ClusterPhaseRunning)
-	assertRackStatusPhase(assert, rcc, "dc1-rack1", api.ClusterPhaseRunning)
+	assertClusterStatusPhase(assert, rcc, testfixtures.RunningPhase)
+	assertRackStatusPhase(assert, rcc, "dc1-rack1", testfixtures.RunningPhase)
 	assertClusterStatusLastAction(assert, rcc, api.ActionScaleUp, api.StatusDone)
 	assertRackStatusLastAction(assert, rcc, "dc1-rack1", api.ActionScaleUp, api.StatusDone)
 	assertStsCapacity(assert, rcc, dc, rack.Name, InitialCapacity)

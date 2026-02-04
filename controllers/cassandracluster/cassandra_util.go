@@ -39,8 +39,9 @@ func (rcc *CassandraClusterReconciler) weAreScalingDown(dcRackStatus *api.Cassan
 }
 
 // DeletePVC deletes persistentvolumes of nodes in a rack
-func (rcc *CassandraClusterReconciler) DeletePVCs(ctx context.Context, cc *api.CassandraCluster, dcName string, rackName string) {
-	lpvc, err := rcc.ListPVC(ctx, cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
+func (rcc *CassandraClusterReconciler) DeletePVCs(ctx context.Context, cc *api.CassandraCluster, completeDcRackName api.CompleteRackName) {
+	labels := k8s.LabelsForCassandraDCRackStrongTypes(cc, completeDcRackName.DcName, completeDcRackName.RackName)
+	lpvc, err := rcc.ListPVC(ctx, cc.Namespace, labels)
 	if err != nil {
 		logrus.Errorf("failed to get cassandra's PVC: %v", err)
 	}

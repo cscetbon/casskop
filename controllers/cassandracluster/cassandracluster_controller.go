@@ -94,7 +94,7 @@ func (rcc *CassandraClusterReconciler) Reconcile(ctx context.Context, request re
 	}
 
 	// After first time reconcile, phase will switch to "Initializing".
-	if cc.Status.Phase == "" {
+	if cc.Status.CassandraPhase.IsEmpty() || cc.Status.CassandraPhase.SubPhaseMigrationNeeded() {
 		// Simulate initializer.
 		changed := cc.SetDefaults()
 		if changed {
@@ -132,6 +132,14 @@ func (rcc *CassandraClusterReconciler) Reconcile(ctx context.Context, request re
 	// check pods status
 	if err = rcc.CheckPodsState(ctx, cc, status); err != nil {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Errorf("CheckPodsState Error: %v", err)
+	}
+
+	if rcc.FirstPodPerRackFlowEnabled(cc) {
+		if shouldBreak, err := rcc.ReconcileFirstPodPerRack(ctx, cc, status); err != nil {
+			return requeue5, err
+		} else if shouldBreak == breakResyncLoop {
+			return requeue5, nil
+		}
 	}
 
 	//ReconcileRack will also add and initiate new racks, we must not go through racks before this method
