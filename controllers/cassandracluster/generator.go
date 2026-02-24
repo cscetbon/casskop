@@ -17,7 +17,6 @@ package cassandracluster
 import (
 	"fmt"
 
-	"github.com/Jeffail/gabs"
 	"github.com/banzaicloud/k8s-objectmatcher/patch"
 	"github.com/cscetbon/casskop/controllers/cassandracluster/consts"
 	"github.com/cscetbon/casskop/controllers/cassandracluster/envVars"
