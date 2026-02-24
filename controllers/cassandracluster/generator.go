@@ -17,7 +17,9 @@ package cassandracluster
 import (
 	"fmt"
 
+	"github.com/Jeffail/gabs"
 	"github.com/banzaicloud/k8s-objectmatcher/patch"
+	"github.com/cscetbon/casskop/controllers/cassandracluster/consts"
 	"github.com/cscetbon/casskop/controllers/cassandracluster/envVars"
 
 	"github.com/sirupsen/logrus"
@@ -37,7 +39,6 @@ import (
 
 /*Bunch of different constants*/
 const (
-	cassandraContainerName    = "cassandra"
 	bootstrapContainerName    = "bootstrap"
 	cassConfigBuilderName     = "config-builder"
 	cassBaseConfigBuilderName = "base-config-builder"
@@ -249,7 +250,7 @@ func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]str
 	pvc = []v1.PersistentVolumeClaim{
 		{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:   "data",
+				Name:   consts.DataPVCName,
 				Labels: labels,
 			},
 			Spec: v1.PersistentVolumeClaimSpec{
@@ -378,7 +379,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 
 	addBootstrapContainerEnvVarsToSidecars(bootstrapContainer, ss)
 
-	if err := patch.DefaultAnnotator.SetLastAppliedAnnotation(ss); err != nil {
+	if err = patch.DefaultAnnotator.SetLastAppliedAnnotation(ss); err != nil {
 		logrus.Warnf("[%s]: error while applying LastApplied Annotation on Statefulset", cc.Name)
 	}
 	return ss, nil
@@ -422,7 +423,7 @@ func removeDuplicateVolumeMountsFromContainers(containers []v1.Container,
 				if value == vm.MountPath {
 					found = true
 					volumeToRemove[vm.Name] = true
-					if container.Name != cassandraContainerName {
+					if container.Name != consts.CassandraContainerName {
 						vm.Name = key
 						newVolumesMounts = append(newVolumesMounts, vm)
 					}
@@ -444,7 +445,7 @@ func volumeClaimMapNameMountPath(containers []v1.Container,
 	volumeClaimTemplate []v1.PersistentVolumeClaim) map[string]string {
 	var cassandraContainerVolumeMounts []v1.VolumeMount
 	for _, container := range containers {
-		if container.Name == cassandraContainerName {
+		if container.Name == consts.CassandraContainerName {
 			cassandraContainerVolumeMounts = container.VolumeMounts
 		}
 	}
@@ -462,7 +463,7 @@ func volumeClaimMapNameMountPath(containers []v1.Container,
 
 func addBootstrapContainerEnvVarsToSidecars(bootstrapContainer v1.Container, ss *appsv1.StatefulSet) {
 	for idx, container := range ss.Spec.Template.Spec.Containers {
-		if container.Name != cassandraContainerName {
+		if container.Name != consts.CassandraContainerName {
 			ss.Spec.Template.Spec.Containers[idx].Env = append(container.Env, bootstrapContainer.Env...)
 		}
 	}
@@ -667,7 +668,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 	}
 
 	cassandraContainer := v1.Container{
-		Name:            cassandraContainerName,
+		Name:            consts.CassandraContainerName,
 		Image:           cc.Spec.CassandraImage,
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
 		Command:         command,

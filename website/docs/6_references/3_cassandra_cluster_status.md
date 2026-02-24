@@ -10,6 +10,7 @@ sidebar_label: Cassandra cluster Status
 |Field|Type| Description                                                                                                            |Required|Default|
 |-----|----|------------------------------------------------------------------------------------------------------------------------|--------|--------|
 |phase|string| Indicates the state this Cassandra cluster jumps in. Phase goes as one way as below: Initial \> Running \<\> updating. |Yes| - |
+|initializingSubPhase|string| Gives more details when phase=Initializing. Goes one way: FirstPodPerRack -> NextPodPerRack                            | No | - |
 |lastClusterAction|string| Is the Last Action at the Cluster level                                                                                |Yes| - |
 |lastClusterActionStatus|string| Is the Last Action Status at the Cluster level                                                                         |Yes|-|
 |seedlist|\[ \]string| it is the Cassandra SEED List used in the Cluster.                                                                     |Yes|-|
@@ -28,6 +29,7 @@ sidebar_label: Cassandra cluster Status
 |Field|Type| Description                                                                                                            |Required|Default|
 |-----|----|------------------------------------------------------------------------------------------------------------------------|--------|--------|
 |phase|string| Indicates the state this Cassandra cluster jumps in. Phase goes as one way as below: Initial \> Running \<\> updating. |Yes| - |
+|initializingSubPhase|string| Gives more details when phase=Initializing. Goes one way: FirstPodPerRack -> NextPodPerRack                            | No | - |
 |cassandraLastAction|[CassandraLastAction](#cassandralastaction)| Is the set of Cassandra State & Actions: Active, Standby..                                                             |Yes| - |
 |podLastOperation|[PodLastOperation](#podlastoperation)| manage status for Pod Operation (nodetool cleanup, upgradesstables..).                                                 |Yes| - |
 

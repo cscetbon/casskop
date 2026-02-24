@@ -16,19 +16,18 @@ package cassandracluster
 
 import (
 	"context"
-	api "github.com/cscetbon/casskop/api/v2"
-	v1 "k8s.io/api/core/v1"
 
+	api "github.com/cscetbon/casskop/api/v2"
 	"github.com/cscetbon/casskop/pkg/k8s"
 	"github.com/sirupsen/logrus"
 )
 
-//hasNoPodDisruption return true if there is no Disruption in the Pods of the cassandra Cluster
+// hasNoPodDisruption return true if there is no Disruption in the Pods of the cassandra Cluster
 func (rcc *CassandraClusterReconciler) hasNoPodDisruption() bool {
 	return rcc.storedPdb.Status.DisruptionsAllowed > 0 || rcc.storedPdb.Status.ExpectedPods == 0
 }
 
-//weAreScalingDown return true if we are Scaling Down the provided dc-rack
+// weAreScalingDown return true if we are Scaling Down the provided dc-rack
 func (rcc *CassandraClusterReconciler) weAreScalingDown(dcRackStatus *api.CassandraRackStatus) bool {
 	if dcRackStatus.CassandraLastAction.Name == api.ActionScaleDown.Name &&
 		(dcRackStatus.CassandraLastAction.Status == api.StatusToDo ||
@@ -39,38 +38,10 @@ func (rcc *CassandraClusterReconciler) weAreScalingDown(dcRackStatus *api.Cassan
 	return false
 }
 
-func cassandraPodIsReady(pod *v1.Pod) bool {
-	cassandraContainerStatus := getCassandraContainerStatus(pod)
-
-	if cassandraContainerStatus != nil && cassandraContainerStatus.Name == cassandraContainerName &&
-		pod.Status.Phase == v1.PodRunning && cassandraContainerStatus.Ready {
-		return true
-	}
-	return false
-}
-
-func getCassandraContainerStatus(pod *v1.Pod) *v1.ContainerStatus {
-
-	for i := range pod.Status.ContainerStatuses {
-		if pod.Status.ContainerStatuses[i].Name == cassandraContainerName {
-			return &pod.Status.ContainerStatuses[i]
-		}
-	}
-	return nil
-}
-
-func cassandraPodRestartCount(pod *v1.Pod) int32 {
-	for idx := range pod.Status.ContainerStatuses {
-		if pod.Status.ContainerStatuses[idx].Name == cassandraContainerName {
-			return pod.Status.ContainerStatuses[idx].RestartCount
-		}
-	}
-	return 0
-}
-
 // DeletePVC deletes persistentvolumes of nodes in a rack
-func (rcc *CassandraClusterReconciler) DeletePVCs(ctx context.Context, cc *api.CassandraCluster, dcName string, rackName string) {
-	lpvc, err := rcc.ListPVC(ctx, cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
+func (rcc *CassandraClusterReconciler) DeletePVCs(ctx context.Context, cc *api.CassandraCluster, completeDcRackName api.CompleteRackName) {
+	labels := k8s.LabelsForCassandraDCRackStrongTypes(cc, completeDcRackName.DcName, completeDcRackName.RackName)
+	lpvc, err := rcc.ListPVC(ctx, cc.Namespace, labels)
 	if err != nil {
 		logrus.Errorf("failed to get cassandra's PVC: %v", err)
 	}

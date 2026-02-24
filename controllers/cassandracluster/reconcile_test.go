@@ -21,6 +21,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/cscetbon/casskop/controllers/cassandracluster/consts"
 	"github.com/cscetbon/casskop/controllers/common"
 	"k8s.io/apimachinery/pkg/api/resource"
 
@@ -85,9 +86,9 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2(t *testing.T) {
 	//UpdateClusterStatus
 	UpdateCassandraClusterStatusPhase(cc, status)
 
-	status.CassandraRackStatus["dc1-rack1"].Phase = api.ClusterPhaseRunning.Name
-	status.CassandraRackStatus["dc1-rack2"].Phase = api.ClusterPhaseRunning.Name
-	status.CassandraRackStatus["dc2-rack1"].Phase = api.ClusterPhaseRunning.Name
+	status.CassandraRackStatus["dc1-rack1"].SetRunningPhase()
+	status.CassandraRackStatus["dc1-rack2"].SetRunningPhase()
+	status.CassandraRackStatus["dc2-rack1"].SetRunningPhase()
 
 	//Flip with AutoUpdateSeedList= true -> update status
 	EnsureSeedListIsUpdatedWhenRequired(cc, status)
@@ -161,8 +162,8 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2ManualSeedList(t *testi
 	//UpdateClusterStatus
 	UpdateCassandraClusterStatusPhase(cc, status)
 
-	status.CassandraRackStatus["dc1-rack1"].Phase = api.ClusterPhaseRunning.Name
-	status.CassandraRackStatus["dc1-rack2"].Phase = api.ClusterPhaseRunning.Name
+	status.CassandraRackStatus["dc1-rack1"].SetRunningPhase()
+	status.CassandraRackStatus["dc1-rack2"].SetRunningPhase()
 
 	//Flip with AutoUpdateSeedList= true -> update status
 	EnsureSeedListIsUpdatedWhenRequired(cc, status)
@@ -218,9 +219,9 @@ func TestFlipCassandraClusterUpdateSeedListStatusscaleDC1(t *testing.T) {
 	//UpdateClusterStatus
 	UpdateCassandraClusterStatusPhase(cc, status)
 
-	status.CassandraRackStatus["dc1-rack1"].Phase = api.ClusterPhaseRunning.Name
-	status.CassandraRackStatus["dc1-rack2"].Phase = api.ClusterPhaseRunning.Name
-	status.CassandraRackStatus["dc2-rack1"].Phase = api.ClusterPhaseRunning.Name
+	status.CassandraRackStatus["dc1-rack1"].SetRunningPhase()
+	status.CassandraRackStatus["dc1-rack2"].SetRunningPhase()
+	status.CassandraRackStatus["dc2-rack1"].SetRunningPhase()
 
 	//Flip with AutoUpdateSeedList= true -> update status
 	EnsureSeedListIsUpdatedWhenRequired(cc, status)
@@ -282,9 +283,9 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDown(t *testing.T) {
 	//UpdateClusterStatus
 	UpdateCassandraClusterStatusPhase(cc, status)
 
-	status.CassandraRackStatus["dc1-rack1"].Phase = api.ClusterPhaseRunning.Name
-	status.CassandraRackStatus["dc1-rack2"].Phase = api.ClusterPhaseRunning.Name
-	status.CassandraRackStatus["dc2-rack1"].Phase = api.ClusterPhaseRunning.Name
+	status.CassandraRackStatus["dc1-rack1"].SetRunningPhase()
+	status.CassandraRackStatus["dc1-rack2"].SetRunningPhase()
+	status.CassandraRackStatus["dc2-rack1"].SetRunningPhase()
 
 	//Flip with AutoUpdateSeedList= true -> update status
 	EnsureSeedListIsUpdatedWhenRequired(cc, status)
@@ -359,7 +360,7 @@ func TestCheckNonAllowedChangesMix1(t *testing.T) {
 	//Forbidden Changes
 	//Global ScaleDown to 0 must be ignored
 	cc.Spec.NodesPerRacks = 0         //instead of 1
-	cc.Spec.DataCapacity = "4Gi"      //instead of "3Gi"
+	cc.Spec.DataCapacity = "2Gi"      //instead of "3Gi"
 	cc.Spec.DataStorageClass = "fast" //instead of "local-storage"
 	//Allow Changed
 	cc.Spec.AutoPilot = false //instead of true
@@ -678,11 +679,11 @@ func TestUpdateCassandraNodesStatusForPod(t *testing.T) {
 				Phase: v1.PodRunning,
 				ContainerStatuses: []v1.ContainerStatus{
 					{
-						Name:  cassandraContainerName,
+						Name:  consts.CassandraContainerName,
 						Ready: ccReady,
 					},
 					{
-						Name:  cassandraContainerName + "B",
+						Name:  consts.CassandraContainerName + "B",
 						Ready: !ccReady,
 					},
 				},
@@ -743,11 +744,11 @@ func TestCheckPodCrossIpUseCaseForPodKey(t *testing.T) {
 				Phase: v1.PodRunning,
 				ContainerStatuses: []v1.ContainerStatus{
 					{
-						Name:  cassandraContainerName,
+						Name:  consts.CassandraContainerName,
 						Ready: ccReady,
 					},
 					{
-						Name:  cassandraContainerName + "B",
+						Name:  consts.CassandraContainerName + "B",
 						Ready: !ccReady,
 					},
 				},
@@ -806,12 +807,12 @@ func TestProcessingPods(t *testing.T) {
 				Phase: v1.PodRunning,
 				ContainerStatuses: []v1.ContainerStatus{
 					{
-						Name:         cassandraContainerName,
+						Name:         consts.CassandraContainerName,
 						Ready:        true,
 						RestartCount: restartCount,
 					},
 					{
-						Name:         cassandraContainerName + "B",
+						Name:         consts.CassandraContainerName + "B",
 						Ready:        true,
 						RestartCount: 10000,
 					},

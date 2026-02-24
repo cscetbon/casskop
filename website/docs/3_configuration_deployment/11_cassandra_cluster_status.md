@@ -77,6 +77,9 @@ The CassandraCluster prints out it's whole status.
     - **Initialization**, we just launched a new cluster, and waiting for its requested state
     - **Running**, the cluster is running normally
     - **Pending**, the number of Nodes requested has changed, waiting for reconciliation
+- **InitializingSubPhase** : gives details about the Initializing phase, can have different values :
+    - **FirstPodPerRack**, we just launched a new cluster, and waiting for first Pod of each Rack to be ready
+    - **NextPodPerRack**, we have first Pod of each Rack ready, and waiting for cluster to reach its requested size
 - **lastClusterAction** Is the Last Action at the Cluster level
 - **lastClusterActionStatus** Is the Last Action Status at the Cluster level
 - **CassandraNodeStatus**: represents a map of (hostId, Ip Node) couple for each Pod in the Cluster
@@ -85,6 +88,7 @@ The CassandraCluster prints out it's whole status.
     - **IpNode**: the cassandra node's ip
 - **CassandraRackStatus** represents a map of statuses for each of the Cassandra Racks in the Cluster
   - **$\{Cassandra DC-Rack Name\}**
+    - **InitializingSubPhase** : Initializing phase details, see InitializingSubPhase on cluster level for more details
     - **Cassandra Last Action**: it's an action which is ongoing on the Cassandra cluster :
         - **Name**: name of the Action
             - **UpdateConfigMap** a new ConfigMap has been submitted to the cluster

@@ -11,7 +11,7 @@ Cluster Operations must only be triggered by a change made on the `CassandraClus
 
 Some updates in the `CassandraCluster` CRD object are forbidden and will be gently dismissed by CassKop:
 
-- `spec.dataCapacity`
+- `spec.dataCapacity` (volume shrinking is forbidden, but we support online volume expansion, see section StorageUpsize)
 - `spec.dataStorage`
 
 Some Updates in the `CassandraCluster` CRD object will trigger a rolling update of the whole cluster such as :
@@ -212,9 +212,75 @@ We also allow to configure Cassandra pods with different num_tokens confiogurati
 parameter in the config.
 :::
 
-CassKop will create a statefulset for each Rack, and start creating the
-Cassandra Cluster, starting by nodes from the Rack 1.
+Casskop will create a statefulset for each Rack, with 1 node in each rack.
+This phase is called `Initializing` with subphase `FirstPodPerRack`.
+
+The status at the beginning looks similar to :
+
+```yaml
+status:
+  cassandraRackStatus:
+    dc1-rack1:
+      cassandraLastAction:
+        Name: Initializing
+        status: Ongoing
+      initializingSubPhase: FirstPodPerRack
+      phase: Initializing
+      podLastOperation: {}
+    dc1-rack2:
+      cassandraLastAction:
+        Name: Initializing
+        status: Ongoing
+      initializingSubPhase: FirstPodPerRack
+      phase: Initializing
+      podLastOperation: {}
+    dc2-rack1:
+      cassandraLastAction:
+        Name: Initializing
+        status: Ongoing
+      initializingSubPhase: FirstPodPerRack
+      phase: Initializing
+      podLastOperation: {}
+  lastClusterAction: Initializing
+  lastClusterActionStatus: Ongoing
+  initializingSubPhase: FirstPodPerRack
+```
+
+When all Racks have one pod running, then the subphase changes to `NextPodPerRack`.
+After that, Casskop scale-out racks one by one, adding one pod at a time until reached the desired number of nodes.
 When CassKop will end operations on Rack1, it will process the next rack and so on.
+
+For instance, status after finishing with first two racks may look like :
+
+```yaml
+status:
+  cassandraRackStatus:
+    dc1-rack1:
+      cassandraLastAction:
+        Name: Initializing
+        status: Ongoing
+      phase: Running
+      podLastOperation: {}
+    dc1-rack2:
+      cassandraLastAction:
+        Name: Initializing
+        status: Ongoing
+      phase: Running
+      podLastOperation: {}
+    dc2-rack1:
+      cassandraLastAction:
+        Name: Initializing
+        status: Ongoing
+      initializingSubPhase: NextPodPerRack
+      phase: Initializing
+      podLastOperation: {}
+  lastClusterAction: Initializing
+  lastClusterActionStatus: Ongoing
+  initializingSubPhase: NextPodPerRack
+  phase: Initializing
+```
+
+Once all racks have reached the desired number of nodes, the status change to `Running` phase.
 
 The status may be similar to :
 
@@ -224,24 +290,24 @@ status:
     dc1-rack1:
       cassandraLastAction:
         Name: Initializing
-        status: Ongoing
-      phase: Initializing
+        status: Done
+      phase: Running
       podLastOperation: {}
     dc1-rack2:
       cassandraLastAction:
         Name: Initializing
-        status: Ongoing
-      phase: Initializing
+        status: Done
+      phase: Running
       podLastOperation: {}
     dc2-rack1:
       cassandraLastAction:
         Name: Initializing
-        status: Ongoing
-      phase: Initializing
+        status: Done
+      phase: Running
       podLastOperation: {}
   lastClusterAction: Initializing
-  lastClusterActionStatus: Ongoing
-  phase: Initializing
+  lastClusterActionStatus: Done
+  phase: Running
   seedlist:
   - cassandra-demo-dc1-rack1-0.cassandra-demo-dc1-rack1.cassandra-test
   - cassandra-demo-dc1-rack1-1.cassandra-demo-dc1-rack1.cassandra-test
@@ -251,7 +317,7 @@ status:
   - cassandra-demo-dc2-rack1-2.cassandra-demo-dc2-rack1.cassandra-test
 ```
 
-The creation of the cluster is ongoing.
+The creation of the cluster is finished.
 We can see that, regarding the Cluster Topology, CassKop has created the SeedList.
 
 :::tip
@@ -879,6 +945,26 @@ The UpdateSeedList is done automatically by CassKop when the parameter
 `CassandraCluster.spec.autoUpdateSeedList` is true (default).
 
 See [ScaleUp](#scaleup) and [ScaleDown](#updatescaledown).
+
+### StorageUpsize
+
+- Scope: Only the `data` PersistentVolumeClaim can be resized
+- Direction: Storage upsize only; downsize operations are not supported
+- Storage Class: The storage class cannot be changed
+- Prerequisites: The underlying storage class must support volume expansion (allowVolumeExpansion: true)
+- Operation Mode: Live resizing without pod restarts (requires CSI driver support for online expansion)
+- Tested Platforms: Validated on Azure Kubernetes Service (AKS) and Google Kubernetes Engine (GKE)
+
+Execution Strategy:
+- Storage resize is performed rack by rack to maintain cluster stability
+- All pods within a single rack are resized concurrently
+- The operation proceeds to the next rack only after the current rack completes successfully
+
+Operation Isolation:
+- Storage upsize operations are executed independently from other cluster operations
+- During an active storage resize, no other configuration changes are applied
+- However, such changes are not reverted from CR and will be processed after the resize completes
+- Conversely, when other operations are in progress, storage resize requests are queued until completion
 
 ### CorrectCRDConfig
 
