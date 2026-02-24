@@ -35,6 +35,10 @@ func AddOwnerRefToObject(o metav1.Object, r metav1.OwnerReference) {
 	o.SetOwnerReferences(append(o.GetOwnerReferences(), r))
 }
 
+func LabelsForCassandraDCRackStrongTypes(cc *api.CassandraCluster, dcName api.DcName, rackName api.RackName) map[string]string {
+	return LabelsForCassandraDCRack(cc, dcName.String(), rackName.String())
+}
+
 // labelsForCassandra returns the labels for selecting the resources
 // belonging to the given name.
 func LabelsForCassandraDCRack(cc *api.CassandraCluster, dcName string, rackName string) map[string]string {

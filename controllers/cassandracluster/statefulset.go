@@ -24,10 +24,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/banzaicloud/k8s-objectmatcher/patch"
-	"k8s.io/apimachinery/pkg/util/wait"
-
 	"github.com/allamand/godebug/pretty"
+	"github.com/banzaicloud/k8s-objectmatcher/patch"
 	api "github.com/cscetbon/casskop/api/v2"
 	"github.com/cscetbon/casskop/pkg/k8s"
 	"github.com/sirupsen/logrus"
@@ -36,12 +34,19 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 var (
-	retryInterval = time.Second
-	timeout       = time.Second * 5
+	// visible for tests
+	retryInterval = defaultRetryInterval
+
+	timeout = time.Second * 5
 )
+
+func defaultRetryInterval() time.Duration {
+	return time.Second
+}
 
 // GetStatefulSet return the Statefulset name from the cluster in the namespace
 func (rcc *CassandraClusterReconciler) GetStatefulSet(ctx context.Context, namespace, name string) (*appsv1.StatefulSet, error) {
@@ -66,19 +71,6 @@ func (rcc *CassandraClusterReconciler) DeleteStatefulSet(ctx context.Context, na
 	return rcc.Client.Delete(ctx, ss)
 }
 
-// CreateStatefulSet create a new statefulset ss
-func (rcc *CassandraClusterReconciler) CreateStatefulSet(ctx context.Context, statefulSet *appsv1.StatefulSet) error {
-	err := rcc.Client.Create(ctx, statefulSet)
-	if err != nil {
-		if !apierrors.IsAlreadyExists(err) {
-			return fmt.Errorf("statefulset already exists: %cc", err)
-		}
-		return fmt.Errorf("failed to create cassandra statefulset: %cc", err)
-		//return err
-	}
-	return nil
-}
-
 // UpdateStatefulSet updates an existing statefulset ss
 func (rcc *CassandraClusterReconciler) UpdateStatefulSet(ctx context.Context, statefulSet *appsv1.StatefulSet) error {
 	revision := statefulSet.ResourceVersion
@@ -89,7 +81,7 @@ func (rcc *CassandraClusterReconciler) UpdateStatefulSet(ctx context.Context, st
 		return fmt.Errorf("failed to update cassandra statefulset: %cc", err)
 	}
 	//Check that the new revision of statefulset has been taken into account
-	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+	err := wait.Poll(retryInterval(), timeout, func() (done bool, err error) {
 		newSts, err := rcc.GetStatefulSet(ctx, statefulSet.Namespace, statefulSet.Name)
 		if err != nil && !apierrors.IsNotFound(err) {
 			return false, fmt.Errorf("failed to get cassandra statefulset: %cc", err)
@@ -198,7 +190,10 @@ func tryJsonPrettyPrint(patchResult []byte) string {
 
 // CreateOrUpdateStatefulSet Create statefulset if not found, or update it
 func (rcc *CassandraClusterReconciler) CreateOrUpdateStatefulSet(ctx context.Context, statefulSet *appsv1.StatefulSet,
-	status *api.CassandraClusterStatus, dcRackName string) (bool, error) {
+	status *api.CassandraClusterStatus, completeDcRackName api.CompleteRackName) (bool, error) {
+
+	dcRackName := completeDcRackName.DcRackName
+
 	// if there is an existing pod disruptions
 	// Or if we are not scaling Down the current statefulset
 	if !rcc.hasNoPodDisruption() {
@@ -212,7 +207,7 @@ func (rcc *CassandraClusterReconciler) CreateOrUpdateStatefulSet(ctx context.Con
 		}
 	}
 
-	dcRackStatus := status.CassandraRackStatus[dcRackName]
+	dcRackStatus := status.GetCassandraRackStatus(dcRackName)
 	var err error
 	now := metav1.Now()
 
@@ -272,6 +267,8 @@ func (rcc *CassandraClusterReconciler) CreateOrUpdateStatefulSet(ctx context.Con
 		*statefulSet.Spec.Replicas = *rcc.storedStatefulSet.Spec.Replicas + incrementValue
 	}
 
+	rcc.RevertAnyStorageUpsizeBeyondUpsizeAction(completeDcRackName, dcRackStatus, statefulSet)
+
 	if dcRackStatus.CassandraLastAction.Name == api.ActionRollingRestart.Name &&
 		dcRackStatus.CassandraLastAction.Status == api.StatusToDo {
 		statefulSet.Spec.Template.SetLabels(k8s.MergeLabels(statefulSet.Spec.Template.GetLabels(), map[string]string{
@@ -327,8 +324,4 @@ func getStoredSeedList(storedStatefulSet *appsv1.StatefulSet) []string {
 		}
 	}
 	return []string{}
-}
-
-func isStatefulSetNotReady(storedStatefulSet *appsv1.StatefulSet) bool {
-	return storedStatefulSet.Status.ReadyReplicas != *storedStatefulSet.Spec.Replicas
 }

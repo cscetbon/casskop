@@ -24,6 +24,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/utils/ptr"
 
 	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
@@ -205,15 +206,25 @@ func TestInitCassandraRackinStatus(t *testing.T) {
 
 	cc.InitCassandraRackList()
 
+	initialCassandraPhase := CassandraPhase{
+		Phase:                ClusterPhaseInitial.Name,
+		InitializingSubPhase: ptr.To(ClusterPhaseInitialSubPhaseFirstPodPerRack),
+	}
+
 	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name)
 	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack2"].CassandraLastAction.Name)
 	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["stats-rack1"].CassandraLastAction.Name)
 	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["stats-rack2"].CassandraLastAction.Name)
+	assert.Equal(initialCassandraPhase, cc.Status.CassandraRackStatus["online-rack1"].CassandraPhase)
+	assert.Equal(initialCassandraPhase, cc.Status.CassandraRackStatus["online-rack2"].CassandraPhase)
+	assert.Equal(initialCassandraPhase, cc.Status.CassandraRackStatus["stats-rack1"].CassandraPhase)
+	assert.Equal(initialCassandraPhase, cc.Status.CassandraRackStatus["stats-rack2"].CassandraPhase)
 	assert.Equal(4, len(cc.Status.CassandraRackStatus))
 	//Add new DC from existing RackStatus
 	cc.InitCassandraRackStatus(&cc.Status, "foo", "bar")
 
 	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["foo-bar"].CassandraLastAction.Name)
+	assert.Equal(initialCassandraPhase, cc.Status.CassandraRackStatus["foo-bar"].CassandraPhase)
 	assert.Equal(5, len(cc.Status.CassandraRackStatus))
 }
 
@@ -250,7 +261,7 @@ func TestGetStatusDCRackSize(t *testing.T) {
 	assert.Equal(int(2), nb)
 }
 
-//Test that a reinit keep history of changes in the status
+// Test that a reinit keep history of changes in the status
 func TestGetStatusDCRackSize_KeepChanges(t *testing.T) {
 	assert := assert.New(t)
 
@@ -424,7 +435,7 @@ func TestIsPodInSeedList(t *testing.T) {
 
 }
 
-//Test that a reinit keep history of changes in the status
+// Test that a reinit keep history of changes in the status
 func TestComputeLastAppliedConfiguration(t *testing.T) {
 	assert := assert.New(t)
 
@@ -472,7 +483,36 @@ func TestSetDefaults(t *testing.T) {
 	assert.Equal(resource.MustParse("500m"), *cluster.Spec.Resources.Limits.Cpu())
 	assert.Equal(resource.MustParse("1Gi"), *cluster.Spec.Resources.Limits.Memory())
 
-	assert.Equal(ClusterPhaseInitial.Name, cluster.Status.Phase)
+	initialCassandraPhase := CassandraPhase{
+		Phase:                ClusterPhaseInitial.Name,
+		InitializingSubPhase: ptr.To(ClusterPhaseInitialSubPhaseFirstPodPerRack),
+	}
+	assert.Equal(initialCassandraPhase, cluster.Status.CassandraPhase)
 	assert.Equal(int32(defaultMaxPodUnavailable), cluster.Spec.MaxPodUnavailable)
 	assert.Equal([]string{"defaults-test-dc1-rack1-0.defaults-test.default"}, cluster.Status.SeedList)
+}
+
+func TestAddSubPhase(t *testing.T) {
+	assert := assert.New(t)
+
+	cluster := CassandraCluster{
+		Status: CassandraClusterStatus{
+			CassandraPhase: CassandraPhase{
+				Phase:                ClusterPhaseInitial.Name,
+				InitializingSubPhase: nil,
+			},
+			SeedList:             nil,
+			CassandraNodesStatus: nil,
+			CassandraRackStatus:  nil,
+		},
+	}
+
+	assert.True(cluster.SetDefaults())
+	cluster.CheckDefaults()
+
+	initialCassandraPhase := CassandraPhase{
+		Phase:                ClusterPhaseInitial.Name,
+		InitializingSubPhase: ptr.To(ClusterPhaseInitialSubPhaseFirstPodPerRack),
+	}
+	assert.Equal(initialCassandraPhase, cluster.Status.CassandraPhase)
 }

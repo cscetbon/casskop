@@ -38,7 +38,6 @@ type reconciler struct {
 	namespace string
 }
 
-
 // NewController will create k8s clients for each k8s clusters,
 // and watch for changes to MultiCasskop and CassandraCluster CRD objects
 func NewController(clusters Clusters, namespace string) (*controller.Controller, error) {
@@ -135,7 +134,7 @@ func (r *reconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) 
 		var cc *ccv1.CassandraCluster
 		var found bool
 		if found, cc = r.computeCassandraClusterForContext(client); !found {
-            continue
+			continue
 		}
 
 		// If deletion is asked
@@ -159,7 +158,7 @@ func (r *reconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) 
 		if !r.ReadyCassandraCluster(storedCC) {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "namespace": cc.Namespace,
 				"kubernetes": client.Name}).Infof("Cluster is not Ready, "+
-				"we requeue [phase=%s / action=%s / status=%s]", storedCC.Status.Phase,
+				"we requeue [cassandraPhase=%s / phase=%s / action=%s / status=%s]", storedCC.Status.CassandraPhase, storedCC.Status.Phase,
 				storedCC.Status.LastClusterAction, storedCC.Status.LastClusterActionStatus)
 			return requeue30, err
 		}
@@ -206,4 +205,3 @@ func (r *reconciler) deleteCassandraCluster(client *Client, cc *ccv1.CassandraCl
 	}
 	return nil
 }
-
