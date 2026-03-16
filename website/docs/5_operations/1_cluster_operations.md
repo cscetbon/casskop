@@ -22,6 +22,8 @@ Some Updates in the `CassandraCluster` CRD object will trigger a rolling update 
 - `spec.configMap`
 - `spec.runAsUser`
 - `spec.fsGroup`
+- `spec.envVars`
+- `spec.backRestSidecar.envVars`
 
 Some Updates in the `CassandraCluster` CRD object will not trigger change on the cluster but only in future behavior of
 CassKop :
@@ -1188,3 +1190,32 @@ So the Operation will be :
 3. the Pod will boot, execute the pre_run.sh script prior to the /run.sh
 4. the new pod replace the dead one by re-syncing the content which could take some times depending on the data size.
 5. Do not forget to edit again the ConfigMap and to remove the specific line with replace_node instructions.
+
+### Setting environment variables on running containers
+
+CassKop allows you to set custom environment variables on both the Cassandra container and the backrest-sidecar container. These environment variables can be added, updated, or removed dynamically on running clusters.
+
+The operator will perform a rolling update of the StatefulSet to apply the changes.
+
+#### Setting environment variables
+
+To set environment variables, use the `envVars` and `backRestSidecar.envVars` fields in the CassandraCluster spec:
+
+```yaml
+apiVersion: db.orange.com/v2
+kind: CassandraCluster
+metadata:
+  name: cassandra-demo
+spec:
+  envVars:
+    - name: CASSANDRA_TEST_ENV_VAR
+      value: sample_cassandra_env_var
+    - name: ANOTHER_CASSANDRA_TEST_ENV_VAR
+      value: another_sample_cassandra_env_var
+  backRestSidecar:
+    envVars:
+      - name: BACKREST_TEST_ENV_VAR
+        value: sample_backrest_env_var
+      - name: ANOTHER_BACKREST_TEST_ENV_VAR
+        value: another_sample_backrest_env_var
+```
