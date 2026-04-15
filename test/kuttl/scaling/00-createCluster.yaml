@@ -15,8 +15,11 @@ spec:
   backRestSidecar:
     resources:
       limits:
-        memory: 128Mi
-        cpu: 100m
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
   resources:
     limits:
       cpu: 200m
