@@ -1,4 +1,4 @@
-FROM golang:1.23.10
+FROM golang:1.26
 
 # Make Apt non-interactive
 RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90ci \
