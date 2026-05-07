@@ -369,6 +369,20 @@ func (rcc *CassandraClusterReconciler) ensureDecommission(ctx context.Context, c
 
 		lastPod, err := rcc.GetPod(ctx, cc.Namespace, podLastOperation.Pods[0])
 		if err != nil {
+			// If pod is not found, it means it was already deleted (e.g., StatefulSet scaled down)
+			// Transition to StatusFinalizing to proceed with PVC cleanup
+			if apierrors.IsNotFound(err) {
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
+					"pod": podLastOperation.Pods[0]}).Info("Pod not found during decommission, transitioning to Finalizing")
+				// Create a minimal pod object for deletePodPVC (it only needs the name)
+				lastPod = &v1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      podLastOperation.Pods[0],
+						Namespace: cc.Namespace,
+					},
+				}
+				return rcc.deletePodPVC(ctx, cc, dcName, rackName, status, lastPod, statefulsetIsReady)
+			}
 			return breakResyncLoop, fmt.Errorf(
 				"failed to get last pod '%s': %v", podLastOperation.Pods[0], err)
 		}
@@ -646,8 +660,10 @@ func (rcc *CassandraClusterReconciler) updatePodLastOperation(clusterName, dcRac
 	podLastOperation.Pods = k8s.RemoveString(podLastOperation.Pods, podName)
 }
 
-/* finalizeOperation sets the labels on the pod where ran an operation depending on the error status
-   It also updates status.CassandraRackStatus[dcRackName].PodLastOperation
+/*
+finalizeOperation sets the labels on the pod where ran an operation depending on the error status
+
+	It also updates status.CassandraRackStatus[dcRackName].PodLastOperation
 */
 func (rcc *CassandraClusterReconciler) finalizeOperation(ctx context.Context, err error, cc *api.CassandraCluster, dcRackName string,
 	pod v1.Pod, status *api.CassandraClusterStatus, operationName string) {
