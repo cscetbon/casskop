@@ -18,7 +18,8 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on \
              -ldflags "-X main.version=${VERSION}" \
              -a -o casskop main.go
 
-FROM gcr.io/distroless/base
+# static has no OpenSSL/libssl (CGO is disabled); base pulled openssl CVEs into scans
+FROM gcr.io/distroless/static
 
 WORKDIR /
 COPY --from=build /etc/passwd /etc/passwd
