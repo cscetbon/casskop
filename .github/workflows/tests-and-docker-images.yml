@@ -50,6 +50,11 @@ jobs:
       - name: Vendor dependencies
         run: go mod vendor
 
+      # Prebuilt casskop-build may still ship an older controller-gen; k8s 0.34
+      # needs >= v0.19.0 for json.RawMessage deepcopy generation.
+      - name: Install controller-gen
+        run: go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.19.0
+
       - name: Validate operator-sdk Bundle
         run: |
           make bundle-validate
