@@ -54,7 +54,7 @@ func TestCassandraBackupComputeLastAppliedConfiguration(t *testing.T) {
 	}
 
 	lastAppliedConfiguration, _ := backup.ComputeLastAppliedAnnotation()
-	result := `{"metadata":{"creationTimestamp":null},
+	result := `{"metadata":{},
                 "spec":{"cassandraCluster":"cluster1","datacenter":"dc1","storageLocation":"s3://cassie",
                         "schedule":"@weekly","snapshotTag":"weekly","entities":"k1.t1, k3.t3"},"status":{}
                 }`

@@ -21,7 +21,7 @@ import (
 func reconcileValidation(t *testing.T, rcc *CassandraClusterReconciler, request reconcile.Request) {
 	if res, err := rcc.Reconcile(context.TODO(), request); err != nil {
 		t.Fatalf("reconcile: (%v)", err)
-	} else if !res.Requeue && res.RequeueAfter == 0 {
+	} else if res.RequeueAfter == 0 {
 		t.Error("reconcile did not requeue request as expected")
 	}
 }

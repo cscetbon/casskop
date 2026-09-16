@@ -30,8 +30,9 @@ CONTROLLER_GEN_OPTIONS=crd paths=./api/... output:dir=./config/crd/bases schemap
 SHELL := $(shell which bash)
 
 # Generate code
+# Limit to ./api/... so generate does not try to load multi-casskop (separate module).
 generate-k8s:
-	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./api/..."
 
 OPERATOR_SDK_VERSION=v1.13.0
 # workdir

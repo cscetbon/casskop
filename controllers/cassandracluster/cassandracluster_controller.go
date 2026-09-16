@@ -75,7 +75,7 @@ func (rcc *CassandraClusterReconciler) Reconcile(ctx context.Context, request re
 
 	requeue30 := reconcile.Result{RequeueAfter: 30 * time.Second}
 	requeue5 := reconcile.Result{RequeueAfter: 5 * time.Second}
-	requeue := reconcile.Result{Requeue: true}
+	requeue := reconcile.Result{RequeueAfter: time.Second}
 	forget := reconcile.Result{}
 
 	// Fetch the CassandraCluster instance

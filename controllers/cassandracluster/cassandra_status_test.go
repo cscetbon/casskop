@@ -186,7 +186,7 @@ func helperCreateCassandraCluster(ctx context.Context, t *testing.T, cassandraCl
 		assert.Equal(f[0], "kubernetes.io/pvc-to-delete", "set finalizer for PVC")
 	}
 	// Check the result of reconciliation to make sure it has the desired state.
-	if !res.Requeue {
+	if res.RequeueAfter == 0 {
 		t.Error("reconcile did not requeue request as expected")
 	}
 
@@ -361,7 +361,7 @@ func TestCassandraClusterReconciler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reconcile: (%v)", err)
 	}
-	if !res.Requeue && res.RequeueAfter == 0 {
+	if res.RequeueAfter == 0 {
 		t.Error("reconcile did not requeue request as expected")
 	}
 }
@@ -384,7 +384,7 @@ func TestCassandraClusterReconcilerMultiNodePerRack(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reconcile: (%v)", err)
 	}
-	if !res.Requeue && res.RequeueAfter == 0 {
+	if res.RequeueAfter == 0 {
 		t.Error("reconcile did not requeue request as expected")
 	}
 }
@@ -406,7 +406,7 @@ func TestUpdateStatusIfconfigMapHasChangedWithNoConfigMap(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reconcile: (%v)", err)
 	}
-	if !res.Requeue && res.RequeueAfter == 0 {
+	if res.RequeueAfter == 0 {
 		t.Error("reconcile did not requeue request as expected")
 	}
 
@@ -463,7 +463,7 @@ func TestUpdateStatusIfconfigMapHasChangedWithConfigMap(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reconcile: (%v)", err)
 	}
-	if !res.Requeue && res.RequeueAfter == 0 {
+	if res.RequeueAfter == 0 {
 		t.Error("reconcile did not requeue request as expected")
 	}
 
@@ -538,7 +538,7 @@ func TestUpdateStatusIfDockerImageHasChanged(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reconcile: (%v)", err)
 	}
-	if !res.Requeue && res.RequeueAfter == 0 {
+	if res.RequeueAfter == 0 {
 		t.Error("reconcile did not requeue request as expected")
 	}
 
