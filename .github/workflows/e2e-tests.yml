@@ -121,39 +121,67 @@ jobs:
           - role: control-plane
           - role: worker
             extraMounts:
-            - hostPath: /tmp/kind-worker1-lvm
-              containerPath: /mnt/disks
-          - role: worker
-            extraMounts:
-            - hostPath: /tmp/kind-worker2-lvm
+            - hostPath: /tmp/kind-worker-lvm
               containerPath: /mnt/disks
           EOF
-          
-          mkdir -p /tmp/kind-worker1-lvm /tmp/kind-worker2-lvm
+
+          mkdir -p /tmp/kind-worker-lvm
 
       - name: Setup kind cluster
         if: matrix.test-name == 'storage-upsize'
-        uses: helm/kind-action@v1.8.0
+        uses: helm/kind-action@v1.12.0
         with:
+          version: v0.27.0
+          kubectl_version: v1.32.2
           cluster_name: lvm-test
           config: kindAndLvm/kind-lvm-config.yaml
           wait: 300s
+          # Debian bookworm node image so apt uses current mirrors, not archive.debian.org.
+          node_image: kindest/node:v1.32.2@sha256:f226345927d7e348497136874b6d207e0b32cc52154ad8323129352923a3142f
 
       - name: Setup LVM on worker nodes
         if: matrix.test-name == 'storage-upsize'
         run: |
-          WORKER_NODES=$(kubectl get nodes -o name | grep worker | sed 's|node/||')
-          
-          for NODE in $WORKER_NODES; do
-            echo "Setting up LVM on $NODE..."
-            docker exec $NODE bash -c '
-              apt-get update -qq && apt-get install -y -qq lvm2 thin-provisioning-tools > /dev/null 2>&1
+          set -euo pipefail
+          echo "Docker containers:"
+          docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'
+
+          WORKER_NODES=$(docker ps --format '{{.Names}}' | grep -E 'lvm-test-worker' || true)
+          if [ -z "${WORKER_NODES}" ]; then
+            echo "No lvm-test worker containers found" >&2
+            docker ps -a
+            exit 1
+          fi
+
+          for NODE in ${WORKER_NODES}; do
+            echo "Setting up LVM on ${NODE}..."
+            docker exec "${NODE}" /bin/bash -c '
+              set -euo pipefail
+              export DEBIAN_FRONTEND=noninteractive
+              . /etc/os-release
+              echo "Node OS: ${PRETTY_NAME:-unknown}"
+              if ! command -v apt-get >/dev/null 2>&1; then
+                echo "apt-get not found on $(hostname)" >&2
+                exit 1
+              fi
+              apt-get update
+              apt-get install -y lvm2 thin-provisioning-tools
+              command -v pvcreate
+              command -v vgcreate
+              command -v vgs
+              # kind nodes share the host kernel/device-mapper, so the VG
+              # name lvmvg can exist only once. Skip if another worker created it.
+              if vgs lvmvg >/dev/null 2>&1; then
+                echo "Volume group lvmvg already exists; skipping vgcreate on $(hostname)"
+                vgs
+                exit 0
+              fi
               mkdir -p /mnt/disks
               truncate -s 10G /mnt/disks/disk.img
-              LOOP_DEVICE=$(losetup -f)
-              losetup $LOOP_DEVICE /mnt/disks/disk.img
-              pvcreate $LOOP_DEVICE
-              vgcreate lvmvg $LOOP_DEVICE
+              LOOP_DEVICE=$(losetup -f --show /mnt/disks/disk.img)
+              echo "Loop device: ${LOOP_DEVICE}"
+              pvcreate --yes "${LOOP_DEVICE}"
+              vgcreate lvmvg "${LOOP_DEVICE}"
               vgs
             '
           done
