@@ -639,12 +639,12 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 		for _, volumeMount := range container.VolumeMounts {
 			switch container.Name {
 			case "cassandra":
-				assert.True(t, volumesContains(append(generateContainerVolumeMount(cc, cassandraContainer),
+				assert.True(t, slices.Contains(append(generateContainerVolumeMount(cc, cassandraContainer),
 					generateCassandraStorageConfigVolumeMounts()...), volumeMount))
 			case "gc-logs", "cassandra-logs":
-				assert.True(t, volumesContains([]v1.VolumeMount{{Name: "cassandra-logs", MountPath: "/var/log/cassandra"}}, volumeMount))
+				assert.True(t, slices.Contains([]v1.VolumeMount{{Name: "cassandra-logs", MountPath: "/var/log/cassandra"}}, volumeMount))
 			case "backrest-sidecar":
-				assert.True(t, volumesContains(generateContainerVolumeMount(cc, backrestContainer), volumeMount))
+				assert.True(t, slices.Contains(generateContainerVolumeMount(cc, backrestContainer), volumeMount))
 			default:
 				t.Errorf("unexpected container: %s.", container.Name)
 			}
@@ -674,10 +674,6 @@ func checkDefaultInitContainerResources(t *testing.T, containers []v1.Container)
 		default:
 		}
 	}
-}
-
-func volumesContains(vms []v1.VolumeMount, mount v1.VolumeMount) bool {
-	return slices.Contains(vms, mount)
 }
 
 func generateCassandraStorageConfigVolumeMounts() []v1.VolumeMount {

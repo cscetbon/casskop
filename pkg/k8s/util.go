@@ -83,14 +83,10 @@ func RemoveString(s []string, r string) []string {
 	return s
 }
 
-func Contains(s []string, e string) bool {
-	return slices.Contains(s, e)
-}
-
 // ContainSlice return true if each element of n exists in ref
 func ContainSlice(ref []string, n []string) bool {
 	for i := range n {
-		if !Contains(ref, n[i]) {
+		if !slices.Contains(ref, n[i]) {
 			return false
 		}
 	}
@@ -104,13 +100,13 @@ func MergeSlice(old []string, new []string) []string {
 
 	//result start from old but we don't add if elem don't exists in new
 	for i := range old {
-		if Contains(new, old[i]) {
+		if slices.Contains(new, old[i]) {
 			result = append(result, old[i])
 		}
 	}
 	//Do we need to add more elements from new ?
 	for i := range new {
-		if !Contains(old, new[i]) {
+		if !slices.Contains(old, new[i]) {
 			result = append(result, new[i])
 		}
 	}

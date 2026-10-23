@@ -162,18 +162,6 @@ spec:
 	assert.Equal(0, len(nodeSelector))
 }
 
-func TestContain(t *testing.T) {
-	assert := assert.New(t)
-
-	var a = []string{"1", "2", "3", "4", "5"}
-	var b = []string{"1", "2", "3", "4", "5", "6"}
-
-	assert.Equal(true, Contains(a, "2"))
-	assert.Equal(true, Contains(b, "6"))
-	assert.Equal(false, Contains(a, "6"))
-
-}
-
 func TestContainSlice(t *testing.T) {
 	assert := assert.New(t)
 
