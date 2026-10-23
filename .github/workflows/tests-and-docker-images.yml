@@ -27,12 +27,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Cache vendor modules
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         env:
           cache-name: casskop-vendor
         with:
@@ -69,10 +69,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
 
       - name: Cache vendor modules
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         env:
           cache-name: casskop-vendor
         with:
@@ -107,14 +107,14 @@ jobs:
       - id: lower-repo
         shell: pwsh
         run: |
-          "::set-output name=repository::$($env:GITHUB_REPOSITORY.ToLowerInvariant())"
+          "repository=$($env:GITHUB_REPOSITORY.ToLowerInvariant())" >> $env:GITHUB_OUTPUT
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Log in to the Container registry
-        uses: docker/login-action@v1.14.1
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -125,7 +125,7 @@ jobs:
           echo "VERSION=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: docker/${{ matrix.image }}/Dockerfile
@@ -137,7 +137,7 @@ jobs:
 
       - name: Tag Docker image as latest
         if: ${{ github.ref_type == 'tag' }}
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: docker/${{ matrix.image }}/Dockerfile
