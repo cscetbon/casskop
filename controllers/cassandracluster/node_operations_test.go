@@ -27,10 +27,10 @@ const (
 
 /* The wrapper structure for an EXEC json request */
 type execRequestData struct {
-	Type      string        `json:"type"`
-	Mbean     string        `json:"mbean"`
-	Attribute string        `json:"attribute"`
-	Arguments []interface{} `json:"arguments"`
+	Type      string `json:"type"`
+	Mbean     string `json:"mbean"`
+	Attribute string `json:"attribute"`
+	Arguments []any  `json:"arguments"`
 }
 
 func keyspaceListString() string {
@@ -441,7 +441,7 @@ func TestNodeOperationMode(t *testing.T) {
 	}
 }
 
-func registerJolokiaLeavingNodesResponder(value interface{}) {
+func registerJolokiaLeavingNodesResponder(value any) {
 	jsonValue, _ := json.Marshal(value)
 	httpmock.RegisterResponder("POST", JolokiaURL(host, jolokiaPort),
 		httpmock.NewStringResponder(200, fmt.Sprintf(`{"request":

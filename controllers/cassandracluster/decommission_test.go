@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	policyv1 "k8s.io/api/policy/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -31,10 +30,8 @@ func createCassandraClusterWithNoDisruption(t *testing.T, cassandraClusterFileNa
 	rcc, req := helperCreateCassandraCluster(context.TODO(), t, cassandraClusterFileName)
 
 	pdb := &policyv1.PodDisruptionBudget{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      rcc.cc.Name,
-			Namespace: rcc.cc.Namespace,
-		},
+		Name:      rcc.cc.Name,
+		Namespace: rcc.cc.Namespace,
 	}
 
 	rcc.Client.Get(context.TODO(), req.NamespacedName, pdb)
@@ -78,9 +75,7 @@ func podHost(stfsName string, id int8, rcc *CassandraClusterReconciler) podName 
 
 func deletePodNotDeletedByFakeClient(rcc *CassandraClusterReconciler, host podName) {
 	// Need to manually delete pod managed by the fake client
-	rcc.Client.Delete(context.TODO(), &v1.Pod{ObjectMeta: metav1.ObjectMeta{
-		Name:      host.Name,
-		Namespace: rcc.cc.Namespace}})
+	rcc.Client.Delete(context.TODO(), &v1.Pod{Name: host.Name, Namespace: rcc.cc.Namespace})
 }
 
 func simulateStsAfterDecommission(t *testing.T, rcc *CassandraClusterReconciler, stfsName string) {

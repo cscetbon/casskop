@@ -36,11 +36,11 @@ func TestGetLastOrFirstPod(t *testing.T) {
 		if running {
 			podStatus = v1.PodRunning
 		}
-		return &v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("ns-nm-%02d", id)},
+		return &v1.Pod{Name: fmt.Sprintf("ns-nm-%02d", id),
 			Status: v1.PodStatus{Phase: podStatus}}
 	}
 	mkList := func(pods ...*v1.Pod) *v1.PodList {
-		list := &v1.PodList{ListMeta: metav1.ListMeta{ResourceVersion: "1"}}
+		list := &v1.PodList{ResourceVersion: "1"}
 		for _, pod := range pods {
 			list.Items = append(list.Items, *pod)
 		}
@@ -91,7 +91,7 @@ func TestAllPodContainerReady(t *testing.T) {
 			containerStatuses = append(containerStatuses, containerStatus)
 		}
 
-		return &v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("ns-nm-%02d", id)},
+		return &v1.Pod{Name: fmt.Sprintf("ns-nm-%02d", id),
 			Status: v1.PodStatus{Phase: v1.PodRunning, ContainerStatuses: containerStatuses}}
 	}
 

@@ -646,9 +646,8 @@ func (rcc *CassandraClusterReconciler) updatePodLastOperation(clusterName, dcRac
 	podLastOperation.Pods = k8s.RemoveString(podLastOperation.Pods, podName)
 }
 
-/* finalizeOperation sets the labels on the pod where ran an operation depending on the error status
-   It also updates status.CassandraRackStatus[dcRackName].PodLastOperation
-*/
+// finalizeOperation sets the labels on the pod where ran an operation depending on the error status
+// It also updates status.CassandraRackStatus[dcRackName].PodLastOperation
 func (rcc *CassandraClusterReconciler) finalizeOperation(ctx context.Context, err error, cc *api.CassandraCluster, dcRackName string,
 	pod v1.Pod, status *api.CassandraClusterStatus, operationName string) {
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
@@ -860,7 +859,7 @@ func (rcc *CassandraClusterReconciler) postRunRemove(ctx context.Context, cc *ap
 	if !labelSet {
 		return errors.New("operation-argument is needed to get the pod name to remove from the cluster")
 	}
-	podToRemove := strings.Split(label, "_")[0]
+	podToRemove, _, _ := strings.Cut(label, "_")
 
 	if podToRemove == "" {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name,

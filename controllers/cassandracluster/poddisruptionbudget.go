@@ -20,7 +20,6 @@ import (
 
 	policyv1 "k8s.io/api/policy/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -29,10 +28,8 @@ func (rcc *CassandraClusterReconciler) GetPodDisruptionBudget(ctx context.Contex
 	name string) (*policyv1.PodDisruptionBudget, error) {
 
 	pdb := &policyv1.PodDisruptionBudget{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
+		Name:      name,
+		Namespace: namespace,
 	}
 	return pdb, rcc.Client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, pdb)
 }

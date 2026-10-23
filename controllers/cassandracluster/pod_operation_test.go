@@ -21,7 +21,6 @@ import (
 	api "github.com/cscetbon/casskop/api/v2"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var ctx = context.TODO()
@@ -58,15 +57,11 @@ func TestPodsSlice(t *testing.T) {
 
 	//Create a pod to have something to put in podsSlice
 	pod := &v1.Pod{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Pod",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "cassandra-demo-dc1-rack1-0",
-			Namespace: "ns",
-			Labels:    map[string]string{"app": "cassandracluster"},
-		},
+		Kind:       "Pod",
+		APIVersion: "v1",
+		Name:       "cassandra-demo-dc1-rack1-0",
+		Namespace:  "ns",
+		Labels:     map[string]string{"app": "cassandracluster"},
 	}
 	pod.Status.Phase = v1.PodRunning
 	rcc.CreatePod(ctx, pod)

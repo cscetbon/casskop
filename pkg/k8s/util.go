@@ -17,7 +17,9 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"maps"
 	"regexp"
+	"slices"
 	"time"
 
 	api "github.com/cscetbon/casskop/api/v2"
@@ -82,15 +84,10 @@ func RemoveString(s []string, r string) []string {
 }
 
 func Contains(s []string, e string) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(s, e)
 }
 
-//ContainSlice return true if each element of n exists in ref
+// ContainSlice return true if each element of n exists in ref
 func ContainSlice(ref []string, n []string) bool {
 	for i := range n {
 		if !Contains(ref, n[i]) {
@@ -100,8 +97,8 @@ func ContainSlice(ref []string, n []string) bool {
 	return true
 }
 
-//MergeSlice will add ad the end of old any elements of new which is missing
-//we want to keep the order of elements in old
+// MergeSlice will add ad the end of old any elements of new which is missing
+// we want to keep the order of elements in old
 func MergeSlice(old []string, new []string) []string {
 	var result []string
 
@@ -126,9 +123,7 @@ func MergeLabels(allLabels ...map[string]string) map[string]string {
 	res := map[string]string{}
 
 	for _, labels := range allLabels {
-		for k, v := range labels {
-			res[k] = v
-		}
+		maps.Copy(res, labels)
 	}
 	return res
 }

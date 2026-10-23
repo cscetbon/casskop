@@ -34,7 +34,7 @@ func (r *CassandraBackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			if _, err := meta.Accessor(e.ObjectNew); err != nil {
 				return false
 			}
-			if reflect.TypeOf(e.ObjectNew) != reflect.TypeOf(api.CassandraBackup{}) {
+			if reflect.TypeOf(e.ObjectNew) != reflect.TypeFor[api.CassandraBackup]() {
 				return false
 			}
 			backup := e.ObjectNew.(*api.CassandraBackup)

@@ -17,8 +17,6 @@ import (
 
 	api "github.com/cscetbon/casskop/api/v2"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 var cbyaml = `
@@ -93,6 +91,7 @@ func TestCassandraBackupAlreadyExists(t *testing.T) {
 	reconcileCassandraBackup, cassandraBackup, recorder := HelperInitCassandraBackupController(cbyaml)
 
 	oldBackup := api.CassandraBackup{
+		Name: "prev-test-cassandra-backup",
 		Status: api.BackRestStatus{
 			CoordinatorMember: "node1",
 			Condition: &api.BackRestCondition{
@@ -102,17 +101,14 @@ func TestCassandraBackupAlreadyExists(t *testing.T) {
 		},
 		Spec: cassandraBackup.Spec,
 	}
-	oldBackup.Name = "prev-test-cassandra-backup"
 
 	if err := reconcileCassandraBackup.Client.Create(ctx, &oldBackup); err != nil {
 		assert.Nil(err)
 	}
 
 	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      cassandraBackup.Name,
-			Namespace: cassandraBackup.Namespace,
-		},
+		Name:      cassandraBackup.Name,
+		Namespace: cassandraBackup.Namespace,
 	}
 	res, err := reconcileCassandraBackup.Reconcile(ctx, req)
 
@@ -126,10 +122,8 @@ func TestCassandraBackupSecretNotFound(t *testing.T) {
 	reconcileCassandraBackup, cassandraBackup, recorder := HelperInitCassandraBackupController(cbyaml)
 
 	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      cassandraBackup.Name,
-			Namespace: cassandraBackup.Namespace,
-		},
+		Name:      cassandraBackup.Name,
+		Namespace: cassandraBackup.Namespace,
 	}
 
 	res, err := reconcileCassandraBackup.Reconcile(ctx, req)
@@ -144,10 +138,8 @@ func TestCassandraBackupFile(t *testing.T) {
 	reconcileCassandraBackup, cassandraBackup, recorder := HelperInitCassandraBackupController(cbyamlfile)
 
 	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      cassandraBackup.Name,
-			Namespace: cassandraBackup.Namespace,
-		},
+		Name:      cassandraBackup.Name,
+		Namespace: cassandraBackup.Namespace,
 	}
 
 	res, err := reconcileCassandraBackup.Reconcile(ctx, req)
@@ -185,10 +177,8 @@ func TestCassandraBackupDatacenterNotFound(t *testing.T) {
 	reconcileCassandraBackup, cb, recorder := HelperInitCassandraBackupController(cbyaml)
 
 	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      cb.Spec.Secret,
-			Namespace: cb.Namespace,
-		},
+		Name:      cb.Spec.Secret,
+		Namespace: cb.Namespace,
 		Data: map[string][]byte{
 			"awssecretaccesskey": []byte("a secret"),
 			"awsaccesskeyid":     []byte("an access key"),
@@ -199,10 +189,8 @@ func TestCassandraBackupDatacenterNotFound(t *testing.T) {
 	reconcileCassandraBackup.Client.Create(ctx, secret)
 
 	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      cb.Name,
-			Namespace: cb.Namespace,
-		},
+		Name:      cb.Name,
+		Namespace: cb.Namespace,
 	}
 
 	res, err := reconcileCassandraBackup.Reconcile(ctx, req)

@@ -6,7 +6,6 @@ import (
 	api "github.com/cscetbon/casskop/api/v2"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestCassandraEnvVar_givenEnvVars_thenSet(t *testing.T) {
@@ -105,9 +104,7 @@ func TestBootstrapContainerEnvVar_givenEnvVars_thenSet(t *testing.T) {
 func TestBootstrapContainerEnvVar_givenChangesToCoreEnvVars_thenOverride(t *testing.T) {
 	// given
 	cc := &api.CassandraCluster{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-cluster",
-		},
+		Name: "test-cluster",
 		Spec: api.CassandraClusterSpec{
 			ImageJolokiaSecret: v1.LocalObjectReference{
 				Name: "test-jolokia-secret",

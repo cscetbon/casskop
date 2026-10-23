@@ -2,7 +2,6 @@ package testfixtures
 
 import (
 	api "github.com/cscetbon/casskop/api/v2"
-	"k8s.io/utils/ptr"
 )
 
 var RunningPhase = api.CassandraPhase{
@@ -17,10 +16,10 @@ var PendingPhase = api.CassandraPhase{
 
 var InitialPhase = api.CassandraPhase{
 	Phase:                api.ClusterPhaseInitial.Name,
-	InitializingSubPhase: ptr.To(api.ClusterPhaseInitialSubPhaseFirstPodPerRack),
+	InitializingSubPhase: new(api.ClusterPhaseInitialSubPhaseFirstPodPerRack),
 }
 
 var FirstPodPerRackReadyPhase = api.CassandraPhase{
 	Phase:                api.ClusterPhaseInitial.Name,
-	InitializingSubPhase: ptr.To(api.ClusterPhaseInitialSubPhaseNextPodPerRack),
+	InitializingSubPhase: new(api.ClusterPhaseInitialSubPhaseNextPodPerRack),
 }

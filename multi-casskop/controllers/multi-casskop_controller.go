@@ -24,7 +24,6 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -58,7 +57,7 @@ func NewController(clusters Clusters, namespace string) (*controller.Controller,
 
 	// Configure watch for MultiCassKop on Local only
 	if err := co.WatchResourceReconcileObject(context.TODO(), clusters.Local.Cluster,
-		&cmcv1.MultiCasskop{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
+		&cmcv1.MultiCasskop{Namespace: namespace},
 		controller.WatchOptions{Namespace: namespace}); err != nil {
 		return nil, fmt.Errorf("setting up MultiCasskop watch in Cluster %s Cluster: %v",
 			clusters.Local.Name, err)
@@ -67,7 +66,7 @@ func NewController(clusters Clusters, namespace string) (*controller.Controller,
 	// Configure watch for CassandraCluster on all sites (
 	for _, cluster := range append(clusters.Remotes, clusters.Local) {
 		if err := co.WatchResourceReconcileObject(context.TODO(), cluster.Cluster,
-			&ccv1.CassandraCluster{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
+			&ccv1.CassandraCluster{Namespace: namespace},
 			controller.WatchOptions{Namespace: namespace}); err != nil {
 			return nil, fmt.Errorf("setting up MultiCasskop watch in Cluster %s Cluster: %v", cluster.Name, err)
 		}

@@ -52,10 +52,8 @@ func defaultRetryInterval() time.Duration {
 func (rcc *CassandraClusterReconciler) GetStatefulSet(ctx context.Context, namespace, name string) (*appsv1.StatefulSet, error) {
 
 	ss := &appsv1.StatefulSet{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
+		Name:      name,
+		Namespace: namespace,
 	}
 	return ss, rcc.Client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, ss)
 }
@@ -63,10 +61,8 @@ func (rcc *CassandraClusterReconciler) GetStatefulSet(ctx context.Context, names
 func (rcc *CassandraClusterReconciler) DeleteStatefulSet(ctx context.Context, namespace, name string) error {
 
 	ss := &appsv1.StatefulSet{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
+		Name:      name,
+		Namespace: namespace,
 	}
 	return rcc.Client.Delete(ctx, ss)
 }

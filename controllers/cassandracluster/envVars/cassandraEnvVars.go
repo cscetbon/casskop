@@ -13,7 +13,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-type NodeConfig map[string]map[string]interface{}
+type NodeConfig map[string]map[string]any
 
 /*JvmMemory sets the maximium size of the heap*/
 type JvmMemory struct {
@@ -65,9 +65,7 @@ func deduplicateMerge(envVarSlices ...[]v1.EnvVar) []v1.EnvVar {
 
 	for _, slice := range envVarSlices {
 		envVarMap := toMap(slice)
-		for envName, env := range envVarMap {
-			result[envName] = env
-		}
+		maps.Copy(result, envVarMap)
 	}
 
 	envVars := slices.Collect(maps.Values(result))
@@ -215,7 +213,7 @@ func InitContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 	mergeConfig(dc.Config, parsedConfig, serverVersion)
 	mergeConfig(rack.Config, parsedConfig, serverVersion)
 
-	defaultConfig[jvmOptionName(cc)] = map[string]interface{}{
+	defaultConfig[jvmOptionName(cc)] = map[string]any{
 		"initial_heap_size":       defineJvmMemory(resources).initialHeapSize,
 		"max_heap_size":           defineJvmMemory(resources).maxHeapSize,
 		"cassandra_ring_delay_ms": 30000,
@@ -340,7 +338,7 @@ func mergeConfig(config json.RawMessage, currentParsedConfig *gabs.Container, se
 			parsedConfig.DeleteP("jvm-options")
 		}
 		currentParsedConfig.MergeFn(parsedConfig,
-			func(dest, source interface{}) interface{} { return source })
+			func(dest, source any) any { return source })
 	}
 }
 

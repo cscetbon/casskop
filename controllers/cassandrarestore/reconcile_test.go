@@ -14,7 +14,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/record"
 
@@ -85,10 +84,8 @@ func TestCassandraRestoreWithUnknownCassandraCluster(t *testing.T) {
 	CassandraRestoreReconciler.Client.Create(context.TODO(), cassandraRestore)
 
 	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      cassandraRestore.Name,
-			Namespace: cassandraRestore.Namespace,
-		},
+		Name:      cassandraRestore.Name,
+		Namespace: cassandraRestore.Namespace,
 	}
 
 	res, err := CassandraRestoreReconciler.Reconcile(context.TODO(), req)
@@ -107,19 +104,18 @@ func TestCassandraRestoreWithUnknownCassandraBackup(t *testing.T) {
 
 	CassandraRestoreReconciler, cassandraRestore, recorder := helperInitCassandraRestoreController(cassandraRestoreYaml)
 
-	cassandraCluster := api.CassandraCluster{}
-	cassandraCluster.Name = cassandraRestore.Spec.CassandraCluster
-	cassandraCluster.Namespace = cassandraRestore.Namespace
+	cassandraCluster := api.CassandraCluster{
+		Name:      cassandraRestore.Spec.CassandraCluster,
+		Namespace: cassandraRestore.Namespace,
+	}
 	fmt.Println(cassandraCluster)
 
 	CassandraRestoreReconciler.Client.Create(context.TODO(), &cassandraCluster)
 	CassandraRestoreReconciler.Client.Create(context.TODO(), cassandraRestore)
 
 	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      cassandraRestore.Name,
-			Namespace: cassandraRestore.Namespace,
-		},
+		Name:      cassandraRestore.Name,
+		Namespace: cassandraRestore.Namespace,
 	}
 
 	res, err := CassandraRestoreReconciler.Reconcile(context.TODO(), req)

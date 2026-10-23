@@ -18,16 +18,13 @@ import (
 	"context"
 
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func (rcc *CassandraClusterReconciler) DeleteService(ctx context.Context, namespace, name string) error {
 
 	svc := &v1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
+		Name:      name,
+		Namespace: namespace,
 	}
 	return rcc.Client.Delete(ctx, svc)
 }

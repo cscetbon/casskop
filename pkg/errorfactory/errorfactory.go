@@ -17,11 +17,11 @@ type CassandraBackupSidecarNotReady struct{ error }
 // CassandraBackupOperationRunning states that Sidecar Operation is still running
 type CassandraBackupOperationRunning struct{ error }
 
-//CassandraBackupOperationFailure states that Sidecar Operation was not found (Sidecar restart?) or failed
+// CassandraBackupOperationFailure states that Sidecar Operation was not found (Sidecar restart?) or failed
 type CassandraBackupOperationFailure struct{ error }
 
 // New creates a new error factory error
-func New(t interface{}, err error, msg string, wrapArgs ...interface{}) error {
+func New(t any, err error, msg string, wrapArgs ...any) error {
 	wrapped := errors.WrapIfWithDetails(err, msg, wrapArgs...)
 	switch t.(type) {
 	case ResourceNotReady:
