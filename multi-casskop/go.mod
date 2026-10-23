@@ -1,6 +1,6 @@
 module github.com/cscetbon/casskop/multi-casskop
 
-go 1.26.0
+go 1.27.0
 
 require (
 	admiralty.io/multicluster-controller v0.6.0
