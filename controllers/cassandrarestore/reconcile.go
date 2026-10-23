@@ -3,6 +3,7 @@ package cassandrarestore
 import (
 	"context"
 	"fmt"
+	"math/rand/v2"
 	"time"
 
 	"emperror.dev/errors"
@@ -192,7 +193,7 @@ func (r *CassandraRestoreReconciler) requiredRestore(ctx context.Context, restor
 					Type:               string(v2.RestoreRequired),
 					LastTransitionTime: v12.Now().Format(util.TimeStampLayout),
 				},
-				CoordinatorMember: pods.Items[random.Intn(numberOfPods)].Name,
+				CoordinatorMember: pods.Items[rand.IntN(numberOfPods)].Name,
 			}, reqLogger); err != nil {
 			return errors.WrapIfWithDetails(err, "Could not update status for restore",
 				"restore", restore)

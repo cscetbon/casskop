@@ -134,29 +134,29 @@ func (cc *CassandraCluster) CheckDefaults() {
 	}
 
 	if ccs.ReadOnlyRootFilesystem == nil {
-		ccs.ReadOnlyRootFilesystem = func(b bool) *bool { return &b }(true)
+		ccs.ReadOnlyRootFilesystem = new(true)
 	}
 
 	// LivenessProbe dynamic config
 	if ccs.LivenessInitialDelaySeconds == nil {
-		ccs.LivenessInitialDelaySeconds = func(i int32) *int32 { return &i }(DefaultLivenessInitialDelaySeconds)
+		ccs.LivenessInitialDelaySeconds = new(DefaultLivenessInitialDelaySeconds)
 	}
 	if ccs.LivenessHealthCheckTimeout == nil {
-		ccs.LivenessHealthCheckTimeout = func(i int32) *int32 { return &i }(DefaultLivenessHealthCheckTimeout)
+		ccs.LivenessHealthCheckTimeout = new(DefaultLivenessHealthCheckTimeout)
 	}
 	if ccs.LivenessHealthCheckPeriod == nil {
-		ccs.LivenessHealthCheckPeriod = func(i int32) *int32 { return &i }(DefaultLivenessHealthCheckPeriod)
+		ccs.LivenessHealthCheckPeriod = new(DefaultLivenessHealthCheckPeriod)
 	}
 
 	// ReadinessProbe dynamic config
 	if ccs.ReadinessInitialDelaySeconds == nil {
-		ccs.ReadinessInitialDelaySeconds = func(i int32) *int32 { return &i }(DefaultReadinessInitialDelaySeconds)
+		ccs.ReadinessInitialDelaySeconds = new(DefaultReadinessInitialDelaySeconds)
 	}
 	if ccs.ReadinessHealthCheckTimeout == nil {
-		ccs.ReadinessHealthCheckTimeout = func(i int32) *int32 { return &i }(DefaultReadinessHealthCheckTimeout)
+		ccs.ReadinessHealthCheckTimeout = new(DefaultReadinessHealthCheckTimeout)
 	}
 	if ccs.ReadinessHealthCheckPeriod == nil {
-		ccs.ReadinessHealthCheckPeriod = func(i int32) *int32 { return &i }(DefaultReadinessHealthCheckPeriod)
+		ccs.ReadinessHealthCheckPeriod = new(DefaultReadinessHealthCheckPeriod)
 	}
 
 	// BackupRestore default config
@@ -668,7 +668,7 @@ func (cc *CassandraCluster) GetDCNodesPerRacksFromName(dctarget string) (bool, i
 
 // FindDCWithNodesTo0
 func (cc *CassandraCluster) FindDCWithNodesTo0() (bool, string, int) {
-	for dc := 0; dc < cc.GetDCSize(); dc++ {
+	for dc := range cc.GetDCSize() {
 		if cc.getDCNodesPerRacksFromIndex(dc) == int32(0) {
 			dcName := cc.GetDCName(dc)
 			return true, dcName, dc
@@ -689,9 +689,9 @@ func (cc *CassandraCluster) IsValidDC(dcName string) bool {
 
 func (in *CassandraCluster) IterateRacks() []CompleteRackName {
 	var racks []CompleteRackName
-	for dc := 0; dc < in.GetDCSize(); dc++ {
+	for dc := range in.GetDCSize() {
 		dcName := in.GetDCName(dc)
-		for rack := 0; rack < in.GetRackSize(dc); rack++ {
+		for rack := range in.GetRackSize(dc) {
 			rackName := in.GetRackName(dc, rack)
 			racks = append(racks, CompleteRackName{
 				DcIndex:    dc,

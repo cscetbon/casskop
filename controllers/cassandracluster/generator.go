@@ -16,6 +16,8 @@ package cassandracluster
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/banzaicloud/k8s-objectmatcher/patch"
 	"github.com/cscetbon/casskop/controllers/cassandracluster/consts"
@@ -32,8 +34,6 @@ import (
 	api "github.com/cscetbon/casskop/api/v2"
 
 	"github.com/cscetbon/casskop/pkg/k8s"
-
-	"sort"
 )
 
 /*Bunch of different constants*/
@@ -143,7 +143,7 @@ func generateCassandraVolumes(cc *api.CassandraCluster) []v1.Volume {
 			Name: cassandraConfigMapName,
 			ConfigMap: &v1.ConfigMapVolumeSource{
 				Name:        cc.Spec.ConfigMapName,
-				DefaultMode: func(i int32) *int32 { return &i }(493), //493 is base10 to 0755 base8
+				DefaultMode: new(int32(0o755)),
 			},
 		})
 	}
@@ -328,9 +328,9 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 					},
 					Tolerations: tolerations,
 					SecurityContext: &v1.PodSecurityContext{
-						RunAsUser:    func(i int64) *int64 { return &i }(cc.Spec.RunAsUser),
-						RunAsNonRoot: func(b bool) *bool { return &b }(true),
-						FSGroup:      func(i int64) *int64 { return &i }(cc.Spec.FSGroup),
+						RunAsUser:    new(cc.Spec.RunAsUser),
+						RunAsNonRoot: new(true),
+						FSGroup:      new(cc.Spec.FSGroup),
 					},
 					InitContainers: []v1.Container{
 						createBaseConfigBuilderContainer(cc),
@@ -509,13 +509,8 @@ func createNodeAffinity(labels map[string]string) *v1.NodeAffinity {
 
 	var nodeSelectors []v1.NodeSelectorRequirement
 
-	//we make a new map in order to sort becaus a map is random by design
-	keys := make([]string, 0, len(labels))
-	for key := range labels {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys) //sort by key
-	for _, key := range keys {
+	// iterate over sorted keys because map iteration order is random by design
+	for _, key := range slices.Sorted(maps.Keys(labels)) {
 		selector := v1.NodeSelectorRequirement{
 			Key:      key,
 			Operator: v1.NodeSelectorOpIn,

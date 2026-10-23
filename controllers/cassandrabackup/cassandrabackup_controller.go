@@ -3,9 +3,7 @@ package cassandrabackup
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"reflect"
-	"time"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 
@@ -19,9 +17,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
-
-// initialize local pseudorandom generator
-var random = rand.New(rand.NewSource(time.Now().Unix()))
 
 func (r *CassandraBackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	// Filter event types for BackupCRD

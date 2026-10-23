@@ -15,10 +15,11 @@
 package cassandracluster
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"regexp"
-	"sort"
+	"slices"
 	"strconv"
 
 	api "github.com/cscetbon/casskop/api/v2"
@@ -101,10 +102,10 @@ func GetLastOrFirstPodItem(podsList []v1.Pod, last bool) (*v1.Pod, error) {
 
 // sortPodsList sorts pod list using ending number in field ObjectMeta.Name
 func sortPodsList(items []v1.Pod) {
-	sort.Slice(items, func(i, j int) bool {
-		id1, _ := strconv.Atoi(reEndingNumber.FindString(items[i].ObjectMeta.Name))
-		id2, _ := strconv.Atoi(reEndingNumber.FindString(items[j].ObjectMeta.Name))
-		return id1 < id2
+	slices.SortFunc(items, func(a, b v1.Pod) int {
+		id1, _ := strconv.Atoi(reEndingNumber.FindString(a.Name))
+		id2, _ := strconv.Atoi(reEndingNumber.FindString(b.Name))
+		return cmp.Compare(id1, id2)
 	})
 }
 

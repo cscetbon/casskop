@@ -20,7 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -99,14 +99,14 @@ func (rcc *CassandraClusterReconciler) UpdateStatefulSet(ctx context.Context, st
 }
 
 func sortPVCs(pvcs *[]v1.PersistentVolumeClaim) {
-	sort.Slice(*pvcs, func(i, j int) bool {
-		return (*pvcs)[i].Name < (*pvcs)[j].Name
+	slices.SortFunc(*pvcs, func(a, b v1.PersistentVolumeClaim) int {
+		return strings.Compare(a.Name, b.Name)
 	})
 }
 
 func sortContainers(containers *[]v1.Container) {
-	sort.Slice(*containers, func(i, j int) bool {
-		return (*containers)[i].Name < (*containers)[j].Name
+	slices.SortFunc(*containers, func(a, b v1.Container) int {
+		return strings.Compare(a.Name, b.Name)
 	})
 }
 
@@ -147,7 +147,7 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 	sortContainers(&sts1Spec.Containers)
 	sortContainers(&sts2Spec.Containers)
 
-	for i := 0; i < len(sts1.Spec.VolumeClaimTemplates); i++ {
+	for i := range sts1.Spec.VolumeClaimTemplates {
 		sts2.Spec.VolumeClaimTemplates[i].TypeMeta = sts1.Spec.VolumeClaimTemplates[i].TypeMeta
 		sts2.Spec.VolumeClaimTemplates[i].Status = sts1.Spec.VolumeClaimTemplates[i].Status
 		if sts2.Spec.VolumeClaimTemplates[i].Spec.VolumeMode == nil {

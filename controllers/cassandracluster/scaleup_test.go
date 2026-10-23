@@ -94,7 +94,7 @@ func TestAddTwoNodes(t *testing.T) {
 	for expectedReplicas := 3; expectedReplicas <= 4; expectedReplicas++ {
 		//Reconcile does not update the number of nodes when there are joining nodes
 		registerJolokiaOperationJoiningNodes(firstPod, 1)
-		for reconcileIteration := 0; reconcileIteration <= 2; reconcileIteration++ {
+		for range 3 {
 			reconcileValidation(t, rcc, *req)
 			assert.GreaterOrEqual(jolokiaCallsCount(firstPod), 1)
 			assertStatefulsetReplicas(ctx, t, rcc, expectedReplicas, cassandraCluster.Namespace, stfsName)
@@ -114,7 +114,7 @@ func TestAddTwoNodes(t *testing.T) {
 	//Reconcile does not end the action even when sts and all new pods are ready, because there are joining nodes
 	simulateNewPodsReady(t, rcc, stfsName, dc, 3, 5)
 	registerJolokiaOperationJoiningNodes(firstPod, 1)
-	for reconcileIteration := 0; reconcileIteration <= 2; reconcileIteration++ {
+	for range 3 {
 		reconcileValidation(t, rcc, *req)
 		assert.GreaterOrEqual(jolokiaCallsCount(firstPod), 1)
 		assertClusterStatusPhase(assert, rcc, testfixtures.PendingPhase)

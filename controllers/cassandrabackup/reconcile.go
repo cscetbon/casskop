@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand/v2"
 	"time"
 
 	"github.com/cscetbon/casskop/controllers/common"
@@ -265,7 +266,7 @@ func (r *CassandraBackupReconciler) backupData(ctx context.Context, cassandraBac
 		return nil
 	}
 
-	pod := pods.Items[random.Intn(len(pods.Items))]
+	pod := pods.Items[rand.IntN(len(pods.Items))]
 	cassandraBackup.Status = api.BackRestStatus{CoordinatorMember: pod.Name}
 
 	backrestClient, _ := backrest.NewClient(r.Client, cc, &pod)

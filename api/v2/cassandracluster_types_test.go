@@ -18,7 +18,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 	"testing"
 
@@ -279,7 +279,7 @@ func TestGetStatusDCRackSize_KeepChanges(t *testing.T) {
 
 	deleteRackList := cc.FixCassandraRackList(status)
 
-	sort.Strings(deleteRackList)
+	slices.Sort(deleteRackList)
 	assert.Equal("stats-rack1", deleteRackList[0])
 	assert.Equal("stats-rack2", deleteRackList[1])
 

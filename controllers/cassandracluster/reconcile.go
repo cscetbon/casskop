@@ -145,7 +145,7 @@ func (rcc *CassandraClusterReconciler) CheckNonAllowedChanges(ctx context.Contex
 		needUpdate = true
 	}
 
-	for dc := 0; dc < cc.GetDCSize(); dc++ {
+	for dc := range cc.GetDCSize() {
 		dcName := cc.GetDCNameStrongType(dc)
 
 		oldCapacity := oldCRD.GetDataCapacityForDCName(dcName)
