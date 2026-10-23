@@ -119,14 +119,3 @@ func validateTwoPartArgument(argument []string, inputString string) {
 		os.Exit(1)
 	}
 }
-
-func contains(envVars []EnvVar) func(EnvVar) bool {
-	return func(expected EnvVar) bool {
-		for _, e := range envVars {
-			if expected.Name != e.Name && expected.Value != e.Value {
-				return false
-			}
-		}
-		return true
-	}
-}

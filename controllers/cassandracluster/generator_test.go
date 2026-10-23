@@ -780,3 +780,12 @@ func TestDisableBackRest(t *testing.T) {
 	assert := assert.New(t)
 	assert.Equal(1, len(sts.Spec.Template.Spec.Containers))
 }
+
+func getPos(slice []v1.VolumeMount, value string) int {
+	for i, v := range slice {
+		if v.Name == value {
+			return i
+		}
+	}
+	return -1
+}

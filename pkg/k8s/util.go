@@ -83,16 +83,6 @@ func RemoveString(s []string, r string) []string {
 	return s
 }
 
-// ContainSlice return true if each element of n exists in ref
-func ContainSlice(ref []string, n []string) bool {
-	for i := range n {
-		if !slices.Contains(ref, n[i]) {
-			return false
-		}
-	}
-	return true
-}
-
 // MergeSlice will add ad the end of old any elements of new which is missing
 // we want to keep the order of elements in old
 func MergeSlice(old []string, new []string) []string {
