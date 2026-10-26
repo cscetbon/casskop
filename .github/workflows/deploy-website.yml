@@ -17,9 +17,9 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v7
         with:
           node-version: 18.15.0
           cache: yarn
@@ -32,7 +32,7 @@ jobs:
           yarn build
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
