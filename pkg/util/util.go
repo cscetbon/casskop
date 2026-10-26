@@ -17,13 +17,3 @@ package util
 const (
 	TimeStampLayout = "Mon, 2 Jan 2006 15:04:05 GMT"
 )
-
-// StringSliceRemove will remove s from list
-func StringSliceRemove(list []string, s string) []string {
-	for i, v := range list {
-		if v == s {
-			list = append(list[:i], list[i+1:]...)
-		}
-	}
-	return list
-}

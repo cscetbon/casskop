@@ -40,19 +40,6 @@ const (
 
 var reEndingNumber = regexp.MustCompile("[0-9]+$")
 
-// PodContainersReady returns true if all container in the Pod are ready
-func PodContainersReady(pod *v1.Pod) bool {
-	if pod.Status.ContainerStatuses != nil && len(pod.Status.ContainerStatuses) > 0 {
-		for _, containerStatus := range pod.Status.ContainerStatuses {
-			if !containerStatus.Ready {
-				return false
-			}
-		}
-		return true
-	}
-	return false
-}
-
 func (rcc *CassandraClusterReconciler) GetPod(ctx context.Context, namespace, name string) (*v1.Pod, error) {
 
 	pod := &v1.Pod{

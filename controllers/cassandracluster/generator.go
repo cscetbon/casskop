@@ -599,15 +599,6 @@ func createCassandraBootstrapContainer(cc *api.CassandraCluster, status *api.Cas
 	}
 }
 
-func getPos(slice []v1.VolumeMount, value string) int {
-	for i, v := range slice {
-		if v.Name == value {
-			return i
-		}
-	}
-	return -1
-}
-
 func generateContainers(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	dcRackName string) []v1.Container {
 	var containers []v1.Container
