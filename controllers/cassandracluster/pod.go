@@ -15,10 +15,11 @@
 package cassandracluster
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"regexp"
-	"sort"
+	"slices"
 	"strconv"
 
 	api "github.com/cscetbon/casskop/api/v2"
@@ -27,7 +28,6 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -40,26 +40,11 @@ const (
 
 var reEndingNumber = regexp.MustCompile("[0-9]+$")
 
-// PodContainersReady returns true if all container in the Pod are ready
-func PodContainersReady(pod *v1.Pod) bool {
-	if pod.Status.ContainerStatuses != nil && len(pod.Status.ContainerStatuses) > 0 {
-		for _, containerStatus := range pod.Status.ContainerStatuses {
-			if !containerStatus.Ready {
-				return false
-			}
-		}
-		return true
-	}
-	return false
-}
-
 func (rcc *CassandraClusterReconciler) GetPod(ctx context.Context, namespace, name string) (*v1.Pod, error) {
 
 	pod := &v1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
+		Name:      name,
+		Namespace: namespace,
 	}
 	return pod, rcc.Client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, pod)
 }
@@ -104,10 +89,10 @@ func GetLastOrFirstPodItem(podsList []v1.Pod, last bool) (*v1.Pod, error) {
 
 // sortPodsList sorts pod list using ending number in field ObjectMeta.Name
 func sortPodsList(items []v1.Pod) {
-	sort.Slice(items, func(i, j int) bool {
-		id1, _ := strconv.Atoi(reEndingNumber.FindString(items[i].ObjectMeta.Name))
-		id2, _ := strconv.Atoi(reEndingNumber.FindString(items[j].ObjectMeta.Name))
-		return id1 < id2
+	slices.SortFunc(items, func(a, b v1.Pod) int {
+		id1, _ := strconv.Atoi(reEndingNumber.FindString(a.Name))
+		id2, _ := strconv.Atoi(reEndingNumber.FindString(b.Name))
+		return cmp.Compare(id1, id2)
 	})
 }
 

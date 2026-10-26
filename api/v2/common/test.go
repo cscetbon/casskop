@@ -9,9 +9,9 @@ func MockRestoreResponse(
 	k8sSecretName,
 	storageLocation,
 	restorationPhase,
-	schemaVersion string) map[string]interface{} {
+	schemaVersion string) map[string]any {
 
-	return map[string]interface{}{
+	return map[string]any{
 		"type":                    "restore",
 		"id":                      operationId,
 		"state":                   state,

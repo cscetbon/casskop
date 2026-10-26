@@ -10,7 +10,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-func performResoreOperation(body interface{}, _ *http.Response, err error) (
+func performResoreOperation(body any, _ *http.Response, err error) (
 	response *icarus.RestoreOperationResponse, errout error) {
 	if err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ func (client *client) RestoreOperationByID(operationId string) (*icarus.RestoreO
 	return performResoreOperation(podClient.OperationsApi.OperationsOperationIdGet(context.Background(), operationId))
 }
 
-func performBackupOperation(body interface{}, _ *http.Response, err error) (
+func performBackupOperation(body any, _ *http.Response, err error) (
 	response *icarus.BackupOperationResponse, errout error) {
 	if err != nil {
 		return nil, err

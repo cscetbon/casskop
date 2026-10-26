@@ -3,9 +3,7 @@ package cassandrabackup
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"reflect"
-	"time"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 
@@ -20,9 +18,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-// initialize local pseudorandom generator
-var random = rand.New(rand.NewSource(time.Now().Unix()))
-
 func (r *CassandraBackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	// Filter event types for BackupCRD
 	pred := predicate.Funcs{
@@ -34,7 +29,7 @@ func (r *CassandraBackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			if _, err := meta.Accessor(e.ObjectNew); err != nil {
 				return false
 			}
-			if reflect.TypeOf(e.ObjectNew) != reflect.TypeOf(api.CassandraBackup{}) {
+			if reflect.TypeOf(e.ObjectNew) != reflect.TypeFor[api.CassandraBackup]() {
 				return false
 			}
 			backup := e.ObjectNew.(*api.CassandraBackup)

@@ -35,7 +35,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 )
 
 type gaugeVec struct {
@@ -146,7 +145,7 @@ func (rcc *CassandraClusterReconciler) CheckNonAllowedChanges(ctx context.Contex
 		needUpdate = true
 	}
 
-	for dc := 0; dc < cc.GetDCSize(); dc++ {
+	for dc := range cc.GetDCSize() {
 		dcName := cc.GetDCNameStrongType(dc)
 
 		oldCapacity := oldCRD.GetDataCapacityForDCName(dcName)
@@ -242,14 +241,14 @@ func generatePaths(s string) []string {
 func lookForFilter(path []string, filters [][]string, filtersFound *map[string]bool) {
 	for _, filter := range filters {
 		if 2*len(filter)+1 == len(path) {
-			currentPath := path[0]
+			var b strings.Builder
+			b.WriteString(path[0])
 			for i := 2; i < len(path)-1; i += 2 {
-				currentPath += "." + path[i]
+				b.WriteString(".")
+				b.WriteString(path[i])
 			}
-			if currentPath == strings.Join(filter, ".") {
-				if _, ok := (*filtersFound)[currentPath]; !ok {
-					(*filtersFound)[currentPath] = true
-				}
+			if currentPath := b.String(); currentPath == strings.Join(filter, ".") {
+				(*filtersFound)[currentPath] = true
 			}
 		}
 	}
@@ -592,7 +591,7 @@ func (rcc *CassandraClusterReconciler) initiateRackStatusIfNeeded(status *api.Ca
 		cc.InitCassandraRackStatus(status, completeDcRackName.DcName.String(), completeDcRackName.RackName.String())
 		return true
 	} else if rackStatus.CassandraPhase.IsInitialButNoSubPhase() {
-		rackStatus.CassandraPhase.InitializingSubPhase = ptr.To(api.ClusterPhaseInitialSubPhaseFirstPodPerRack)
+		rackStatus.CassandraPhase.InitializingSubPhase = new(api.ClusterPhaseInitialSubPhaseFirstPodPerRack)
 		return true
 	}
 	return false
@@ -712,7 +711,7 @@ func (rcc *CassandraClusterReconciler) updateClusterFirstPodPerRackInitPhaseStat
 }
 
 func overrideReplicasCountForFirstPodPerRackInitPhase(stsSpec appsv1.StatefulSetSpec) appsv1.StatefulSetSpec {
-	stsSpec.Replicas = ptr.To(int32(1))
+	stsSpec.Replicas = new(int32(1))
 	return stsSpec
 }
 

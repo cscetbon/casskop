@@ -9,7 +9,6 @@ import (
 	json "github.com/json-iterator/go"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 )
 
 func isStatefulSetSnapshottedAlready(dcRackStatus *api.CassandraRackStatus) bool {
@@ -48,7 +47,7 @@ func startUpsizeAction(rack view.RackView) {
 	rack.RackStatus().Phase = api.ClusterPhasePending.Name
 	lastAction.Status = api.StatusOngoing
 	lastAction.Name = api.ActionStorageUpsize.Name
-	lastAction.StartTime = ptr.To(metav1.Now())
+	lastAction.StartTime = new(metav1.Now())
 	lastAction.EndTime = nil
 }
 
@@ -56,6 +55,6 @@ func finalizeUpsizeAction(rackStatus *api.CassandraRackStatus) {
 	lastAction := &rackStatus.CassandraLastAction
 	lastAction.Status = api.StatusDone
 	lastAction.Name = api.ActionStorageUpsize.Name
-	lastAction.EndTime = ptr.To(metav1.Now())
+	lastAction.EndTime = new(metav1.Now())
 	rackStatus.StatefulSetSnapshotBeforeStorageResize = ""
 }

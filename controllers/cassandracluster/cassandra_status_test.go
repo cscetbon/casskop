@@ -34,7 +34,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 
 	appsv1 "k8s.io/api/apps/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	"strconv"
@@ -165,10 +164,8 @@ func helperCreateCassandraCluster(ctx context.Context, t *testing.T, cassandraCl
 	rcc, cc := HelperInitCluster(t, cassandraClusterFileName)
 
 	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      cc.Name,
-			Namespace: cc.Namespace,
-		},
+		Name:      cc.Name,
+		Namespace: cc.Namespace,
 	}
 
 	//The first Reconcile just makes Init
@@ -321,17 +318,15 @@ func simulateStfsAndPodsReady(t *testing.T, ctx context.Context, rcc *CassandraC
 func fakePodTemplate(cc *api.CassandraCluster, dcName, rackName string) v1.Pod {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
 	return v1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "template",
-			Namespace: namespace,
-			Labels: map[string]string{
-				"cluster":                              cc.Labels["cluster"],
-				"dc-rack":                              dcRackName,
-				"cassandraclusters.db.orange.com.dc":   dcName,
-				"cassandraclusters.db.orange.com.rack": rackName,
-				"app":                                  "cassandracluster",
-				"cassandracluster":                     cc.Name,
-			},
+		Name:      "template",
+		Namespace: namespace,
+		Labels: map[string]string{
+			"cluster":                              cc.Labels["cluster"],
+			"dc-rack":                              dcRackName,
+			"cassandraclusters.db.orange.com.dc":   dcName,
+			"cassandraclusters.db.orange.com.rack": rackName,
+			"app":                                  "cassandracluster",
+			"cassandracluster":                     cc.Name,
 		},
 		Status: v1.PodStatus{
 			Phase: v1.PodRunning,

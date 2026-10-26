@@ -16,6 +16,8 @@ package cassandracluster
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/banzaicloud/k8s-objectmatcher/patch"
 	"github.com/cscetbon/casskop/controllers/cassandracluster/consts"
@@ -32,8 +34,6 @@ import (
 	api "github.com/cscetbon/casskop/api/v2"
 
 	"github.com/cscetbon/casskop/pkg/k8s"
-
-	"sort"
 )
 
 /*Bunch of different constants*/
@@ -74,13 +74,11 @@ func generateCassandraService(cc *api.CassandraCluster, labels map[string]string
 	}
 
 	return &v1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            cc.GetName(),
-			Namespace:       cc.GetNamespace(),
-			Labels:          labels,
-			Annotations:     annotations,
-			OwnerReferences: ownerRefs,
-		},
+		Name:            cc.GetName(),
+		Namespace:       cc.GetNamespace(),
+		Labels:          labels,
+		Annotations:     annotations,
+		OwnerReferences: ownerRefs,
 		Spec: v1.ServiceSpec{
 			Type:      v1.ServiceTypeClusterIP,
 			ClusterIP: v1.ClusterIPNone,
@@ -105,12 +103,10 @@ func generateCassandraExporterService(cc *api.CassandraCluster, labels map[strin
 	mlabels := k8s.MergeLabels(labels, map[string]string{"k8s-app": "exporter-cassandra-jmx"})
 
 	return &v1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            fmt.Sprintf("%s-exporter-jmx", name),
-			Namespace:       namespace,
-			Labels:          mlabels,
-			OwnerReferences: ownerRefs,
-		},
+		Name:            fmt.Sprintf("%s-exporter-jmx", name),
+		Namespace:       namespace,
+		Labels:          mlabels,
+		OwnerReferences: ownerRefs,
 		Spec: v1.ServiceSpec{
 			Type:      v1.ServiceTypeClusterIP,
 			ClusterIP: v1.ClusterIPNone,
@@ -128,8 +124,8 @@ func generateCassandraExporterService(cc *api.CassandraCluster, labels map[strin
 
 func emptyDir(name string) v1.Volume {
 	return v1.Volume{
-		Name:         name,
-		VolumeSource: v1.VolumeSource{EmptyDir: &v1.EmptyDirVolumeSource{}},
+		Name:     name,
+		EmptyDir: &v1.EmptyDirVolumeSource{},
 	}
 }
 
@@ -145,13 +141,9 @@ func generateCassandraVolumes(cc *api.CassandraCluster) []v1.Volume {
 	if cc.Spec.ConfigMapName != "" {
 		v = append(v, v1.Volume{
 			Name: cassandraConfigMapName,
-			VolumeSource: v1.VolumeSource{
-				ConfigMap: &v1.ConfigMapVolumeSource{
-					LocalObjectReference: v1.LocalObjectReference{
-						Name: cc.Spec.ConfigMapName,
-					},
-					DefaultMode: func(i int32) *int32 { return &i }(493), //493 is base10 to 0755 base8
-				},
+			ConfigMap: &v1.ConfigMapVolumeSource{
+				Name:        cc.Spec.ConfigMapName,
+				DefaultMode: new(int32(0o755)),
 			},
 		})
 	}
@@ -222,11 +214,9 @@ func generateStorageConfigVolumeClaimTemplates(cc *api.CassandraCluster, labels 
 			return nil, fmt.Errorf("can't create PVC from storageConfig named %s, with mountPath %s, because the PvcSpec is not specified", storage.Name, storage.MountPath)
 		}
 		pvc := v1.PersistentVolumeClaim{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:   storage.Name,
-				Labels: labels,
-			},
-			Spec: *storage.PVCSpec,
+			Name:   storage.Name,
+			Labels: labels,
+			Spec:   *storage.PVCSpec,
 		}
 
 		pvcs = append(pvcs, pvc)
@@ -248,10 +238,8 @@ func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]str
 
 	pvc = []v1.PersistentVolumeClaim{
 		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:   consts.DataPVCName,
-				Labels: labels,
-			},
+			Name:   consts.DataPVCName,
+			Labels: labels,
 			Spec: v1.PersistentVolumeClaimSpec{
 				AccessModes: []v1.PersistentVolumeAccessMode{
 					v1.ReadWriteOnce,
@@ -312,12 +300,10 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 	}
 
 	ss := &appsv1.StatefulSet{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            name + "-" + dcRackName,
-			Namespace:       namespace,
-			Labels:          labels,
-			OwnerReferences: ownerRefs,
-		},
+		Name:            name + "-" + dcRackName,
+		Namespace:       namespace,
+		Labels:          labels,
+		OwnerReferences: ownerRefs,
 		Spec: appsv1.StatefulSetSpec{
 			ServiceName: name,
 			Replicas:    &nodesPerRacks,
@@ -342,9 +328,9 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 					},
 					Tolerations: tolerations,
 					SecurityContext: &v1.PodSecurityContext{
-						RunAsUser:    func(i int64) *int64 { return &i }(cc.Spec.RunAsUser),
-						RunAsNonRoot: func(b bool) *bool { return &b }(true),
-						FSGroup:      func(i int64) *int64 { return &i }(cc.Spec.FSGroup),
+						RunAsUser:    new(cc.Spec.RunAsUser),
+						RunAsNonRoot: new(true),
+						FSGroup:      new(cc.Spec.FSGroup),
 					},
 					InitContainers: []v1.Container{
 						createBaseConfigBuilderContainer(cc),
@@ -476,12 +462,10 @@ func generateResourceQuantity(qs string) resource.Quantity {
 func generatePodDisruptionBudget(name string, namespace string, labels map[string]string,
 	ownerRefs metav1.OwnerReference, maxUnavailable intstr.IntOrString) *policyv1.PodDisruptionBudget {
 	return &policyv1.PodDisruptionBudget{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            name,
-			Namespace:       namespace,
-			Labels:          labels,
-			OwnerReferences: []metav1.OwnerReference{ownerRefs},
-		},
+		Name:            name,
+		Namespace:       namespace,
+		Labels:          labels,
+		OwnerReferences: []metav1.OwnerReference{ownerRefs},
 		Spec: policyv1.PodDisruptionBudgetSpec{
 			MaxUnavailable: &maxUnavailable,
 			Selector: &metav1.LabelSelector{
@@ -525,13 +509,8 @@ func createNodeAffinity(labels map[string]string) *v1.NodeAffinity {
 
 	var nodeSelectors []v1.NodeSelectorRequirement
 
-	//we make a new map in order to sort becaus a map is random by design
-	keys := make([]string, 0, len(labels))
-	for key := range labels {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys) //sort by key
-	for _, key := range keys {
+	// iterate over sorted keys because map iteration order is random by design
+	for _, key := range slices.Sorted(maps.Keys(labels)) {
 		selector := v1.NodeSelectorRequirement{
 			Key:      key,
 			Operator: v1.NodeSelectorOpIn,
@@ -618,15 +597,6 @@ func createCassandraBootstrapContainer(cc *api.CassandraCluster, status *api.Cas
 		VolumeMounts:    volumeMounts,
 		Resources:       initContainerResources(),
 	}
-}
-
-func getPos(slice []v1.VolumeMount, value string) int {
-	for i, v := range slice {
-		if v.Name == value {
-			return i
-		}
-	}
-	return -1
 }
 
 func generateContainers(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
@@ -718,13 +688,11 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 			InitialDelaySeconds: *cc.Spec.ReadinessInitialDelaySeconds,
 			TimeoutSeconds:      *cc.Spec.ReadinessHealthCheckTimeout,
 			PeriodSeconds:       *cc.Spec.ReadinessHealthCheckPeriod,
-			ProbeHandler: v1.ProbeHandler{
-				Exec: &v1.ExecAction{
-					Command: []string{
-						"/bin/bash",
-						"-c",
-						"/etc/cassandra/readiness-probe.sh",
-					},
+			Exec: &v1.ExecAction{
+				Command: []string{
+					"/bin/bash",
+					"-c",
+					"/etc/cassandra/readiness-probe.sh",
 				},
 			},
 		},
@@ -732,13 +700,11 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 			InitialDelaySeconds: *cc.Spec.LivenessInitialDelaySeconds,
 			TimeoutSeconds:      *cc.Spec.LivenessHealthCheckTimeout,
 			PeriodSeconds:       *cc.Spec.LivenessHealthCheckPeriod,
-			ProbeHandler: v1.ProbeHandler{
-				Exec: &v1.ExecAction{
-					Command: []string{
-						"/bin/bash",
-						"-c",
-						"/etc/cassandra/liveness-probe.sh",
-					},
+			Exec: &v1.ExecAction{
+				Command: []string{
+					"/bin/bash",
+					"-c",
+					"/etc/cassandra/liveness-probe.sh",
 				},
 			},
 		},
@@ -783,11 +749,9 @@ func backrestSidecarContainer(cc *api.CassandraCluster) v1.Container {
 			TimeoutSeconds:      5,
 			PeriodSeconds:       10,
 			FailureThreshold:    10,
-			ProbeHandler: v1.ProbeHandler{
-				HTTPGet: &v1.HTTPGetAction{
-					Port: intstr.IntOrString{IntVal: defaultBackRestPort},
-					Path: "/status",
-				},
+			HTTPGet: &v1.HTTPGetAction{
+				Port: intstr.IntOrString{IntVal: defaultBackRestPort},
+				Path: "/status",
 			},
 		},
 		VolumeMounts: cc.Spec.BackRestSidecar.VolumeMounts,

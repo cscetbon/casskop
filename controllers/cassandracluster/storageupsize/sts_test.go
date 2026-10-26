@@ -20,7 +20,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -39,7 +38,7 @@ func Test_applyPVCModification(t *testing.T) {
 	}
 
 	t.Run("no data pvc - error expected", func(t *testing.T) {
-		statefulSet := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: "dc1-rack1"}}
+		statefulSet := &appsv1.StatefulSet{Name: "dc1-rack1"}
 
 		err := applyPVCModification(statefulSet, resource.MustParse(CapacityAfterUpsize))
 
@@ -73,7 +72,7 @@ func Test_applyPVCModification(t *testing.T) {
 
 	t.Run("old sts without data pvc - should just apply new capacity", func(t *testing.T) {
 		oldStsWithoutDataPvc := string(toJson(t, &appsv1.StatefulSet{
-			ObjectMeta: metav1.ObjectMeta{Name: "dc1-rack1"},
+			Name: "dc1-rack1",
 			Spec: appsv1.StatefulSetSpec{
 				VolumeClaimTemplates: []corev1.PersistentVolumeClaim{
 					pvc("some-other-pvc1", "1Gi"),
@@ -139,7 +138,7 @@ func Test_recreateStatefulSetWithNewCapacity(t *testing.T) {
 
 	t.Run("cannot find data PVC - error", func(t *testing.T) {
 		stsSnapshot := string(toJson(t, &appsv1.StatefulSet{
-			ObjectMeta: metav1.ObjectMeta{Name: "dc1-rack1", Namespace: "default"},
+			Name: "dc1-rack1", Namespace: "default",
 			Spec: appsv1.StatefulSetSpec{
 				VolumeClaimTemplates: []corev1.PersistentVolumeClaim{
 					pvc("some other pvc", "9Gi"),
@@ -161,7 +160,7 @@ func Test_recreateStatefulSetWithNewCapacity(t *testing.T) {
 
 	t.Run("statefulSet created successfully - break loop, sts should be created with proper capacity", func(t *testing.T) {
 		stsSnapshot := string(toJson(t, &appsv1.StatefulSet{
-			ObjectMeta: metav1.ObjectMeta{Name: "dc1-rack1", Namespace: "default"},
+			Name: "dc1-rack1", Namespace: "default",
 			Spec: appsv1.StatefulSetSpec{
 				VolumeClaimTemplates: []corev1.PersistentVolumeClaim{
 					pvc(consts.DataPVCName, "9Gi"),
@@ -188,7 +187,7 @@ func Test_recreateStatefulSetWithNewCapacity(t *testing.T) {
 
 	t.Run("statefulSet creation fails - error", func(t *testing.T) {
 		stsSnapshot := string(toJson(t, &appsv1.StatefulSet{
-			ObjectMeta: metav1.ObjectMeta{Name: "dc1-rack1", Namespace: "default"},
+			Name: "dc1-rack1", Namespace: "default",
 			Spec: appsv1.StatefulSetSpec{
 				VolumeClaimTemplates: []corev1.PersistentVolumeClaim{
 					pvc(consts.DataPVCName, "9Gi"),

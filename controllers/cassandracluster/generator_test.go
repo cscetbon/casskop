@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"slices"
 	"testing"
 
 	"github.com/Jeffail/gabs"
@@ -33,7 +34,6 @@ import (
 
 	api "github.com/cscetbon/casskop/api/v2"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/cscetbon/casskop/pkg/k8s"
 
@@ -194,7 +194,7 @@ func TestInitContainerConfiguration(t *testing.T) {
 
 	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
 	cc.Spec.ServerVersion = "4.0.1"
-	cc.Spec.Config, _ = json.Marshal(map[string]map[string]interface{}{
+	cc.Spec.Config, _ = json.Marshal(map[string]map[string]any{
 		"jvm-options": {
 			"initial_heap_size": "800M",
 			"max_heap_size":     "1600M",
@@ -234,7 +234,7 @@ func TestInitContainerConfiguration(t *testing.T) {
 		}
 	}`))
 
-	vars := map[string]interface{}{
+	vars := map[string]any{
 		"CONFIG_FILE_DATA": configFileData.String(),
 		"PRODUCT_NAME":     "cassandra",
 		"PRODUCT_VERSION":  "4.0.1",
@@ -242,7 +242,7 @@ func TestInitContainerConfiguration(t *testing.T) {
 
 	checkInitContainerVarEnv(t, initEnvVar, vars)
 
-	cc.Spec.Config, _ = json.Marshal(map[string]map[string]interface{}{
+	cc.Spec.Config, _ = json.Marshal(map[string]map[string]any{
 		"cassandra-yaml": {
 			"read_request_timeout_in_ms": 10000,
 		},
@@ -253,14 +253,14 @@ func TestInitContainerConfiguration(t *testing.T) {
 		},
 	})
 
-	cc.Spec.Topology.DC[0].Config, _ = json.Marshal(map[string]map[string]interface{}{
+	cc.Spec.Topology.DC[0].Config, _ = json.Marshal(map[string]map[string]any{
 		"jvm-options": {
 			"resize_tlb":        "true",
 			"initial_heap_size": "1024M",
 		},
 	})
 
-	cc.Spec.Topology.DC[0].Rack[0].Config, _ = json.Marshal(map[string]map[string]interface{}{
+	cc.Spec.Topology.DC[0].Rack[0].Config, _ = json.Marshal(map[string]map[string]any{
 		"jvm-options": {
 			"print_tenuring_distribution": "true",
 		},
@@ -282,7 +282,7 @@ func TestInitContainerConfiguration(t *testing.T) {
 	configFileData.SetP("true", "jvm-options.print_tenuring_distribution")
 	configFileData.SetP("remote-no-auth", "jvm-options.jmx-connection-type")
 
-	vars = map[string]interface{}{
+	vars = map[string]any{
 		"CONFIG_FILE_DATA": configFileData.String(),
 		"PRODUCT_NAME":     "cassandra",
 		"PRODUCT_VERSION":  cc.Spec.ServerVersion,
@@ -578,10 +578,8 @@ func generateExpectedDataStoragePVC(expectedlabels map[string]string, dataCapaci
 	expectedDataStorageQuantity, _ := resource.ParseQuantity(dataCapacity)
 
 	return v1.PersistentVolumeClaim{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   "data",
-			Labels: expectedlabels,
-		},
+		Name:   "data",
+		Labels: expectedlabels,
 		Spec: v1.PersistentVolumeClaimSpec{
 			AccessModes: []v1.PersistentVolumeAccessMode{
 				v1.ReadWriteOnce,
@@ -603,10 +601,8 @@ func generateExpectedCassandraLogsStoragePVC(expectedlabels map[string]string) v
 	expectedDataStorageClassName := "standard-wait"
 
 	return v1.PersistentVolumeClaim{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   "cassandra-logs",
-			Labels: expectedlabels,
-		},
+		Name:   "cassandra-logs",
+		Labels: expectedlabels,
 		Spec: v1.PersistentVolumeClaimSpec{
 			AccessModes: []v1.PersistentVolumeAccessMode{
 				v1.ReadWriteOnce,
@@ -643,12 +639,12 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 		for _, volumeMount := range container.VolumeMounts {
 			switch container.Name {
 			case "cassandra":
-				assert.True(t, volumesContains(append(generateContainerVolumeMount(cc, cassandraContainer),
+				assert.True(t, slices.Contains(append(generateContainerVolumeMount(cc, cassandraContainer),
 					generateCassandraStorageConfigVolumeMounts()...), volumeMount))
 			case "gc-logs", "cassandra-logs":
-				assert.True(t, volumesContains([]v1.VolumeMount{{Name: "cassandra-logs", MountPath: "/var/log/cassandra"}}, volumeMount))
+				assert.True(t, slices.Contains([]v1.VolumeMount{{Name: "cassandra-logs", MountPath: "/var/log/cassandra"}}, volumeMount))
 			case "backrest-sidecar":
-				assert.True(t, volumesContains(generateContainerVolumeMount(cc, backrestContainer), volumeMount))
+				assert.True(t, slices.Contains(generateContainerVolumeMount(cc, backrestContainer), volumeMount))
 			default:
 				t.Errorf("unexpected container: %s.", container.Name)
 			}
@@ -678,15 +674,6 @@ func checkDefaultInitContainerResources(t *testing.T, containers []v1.Container)
 		default:
 		}
 	}
-}
-
-func volumesContains(vms []v1.VolumeMount, mount v1.VolumeMount) bool {
-	for _, vm := range vms {
-		if mount == vm {
-			return true
-		}
-	}
-	return false
 }
 
 func generateCassandraStorageConfigVolumeMounts() []v1.VolumeMount {
@@ -733,7 +720,7 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 		}
 	}`))
 
-	vars := map[string]interface{}{
+	vars := map[string]any{
 		"CONFIG_FILE_DATA":       configFileData.String(),
 		"PRODUCT_NAME":           "cassandra",
 		"PRODUCT_VERSION":        "3.11.7",
@@ -772,7 +759,7 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 	}
 }
 
-func checkInitContainerVarEnv(t *testing.T, initContainerEnvVar []v1.EnvVar, vars map[string]interface{}) {
+func checkInitContainerVarEnv(t *testing.T, initContainerEnvVar []v1.EnvVar, vars map[string]any) {
 	assert := assert.New(t)
 	for _, env := range initContainerEnvVar {
 		if value, ok := vars[env.Name]; ok {
@@ -792,4 +779,13 @@ func TestDisableBackRest(t *testing.T) {
 	sts, _ := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
 	assert := assert.New(t)
 	assert.Equal(1, len(sts.Spec.Template.Spec.Containers))
+}
+
+func getPos(slice []v1.VolumeMount, value string) int {
+	for i, v := range slice {
+		if v.Name == value {
+			return i
+		}
+	}
+	return -1
 }

@@ -2,9 +2,7 @@ package cassandrarestore
 
 import (
 	"github.com/sirupsen/logrus"
-	"math/rand"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"time"
 
 	api "github.com/cscetbon/casskop/api/v2"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -16,10 +14,6 @@ import (
 const (
 	AnnotationLastApplied string = "cassandrarestores.db.orange.com/last-applied-configuration"
 )
-
-// initialize local pseudorandom generator
-var random = rand.New(rand.NewSource(time.Now().Unix()))
-
 
 func (r *CassandraRestoreReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	pred := predicate.Funcs{

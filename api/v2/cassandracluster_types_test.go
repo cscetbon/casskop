@@ -18,17 +18,15 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 	"testing"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/utils/ptr"
 
 	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func helperLoadBytes(t *testing.T, name string) []byte {
@@ -208,7 +206,7 @@ func TestInitCassandraRackinStatus(t *testing.T) {
 
 	initialCassandraPhase := CassandraPhase{
 		Phase:                ClusterPhaseInitial.Name,
-		InitializingSubPhase: ptr.To(ClusterPhaseInitialSubPhaseFirstPodPerRack),
+		InitializingSubPhase: new(ClusterPhaseInitialSubPhaseFirstPodPerRack),
 	}
 
 	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name)
@@ -281,7 +279,7 @@ func TestGetStatusDCRackSize_KeepChanges(t *testing.T) {
 
 	deleteRackList := cc.FixCassandraRackList(status)
 
-	sort.Strings(deleteRackList)
+	slices.Sort(deleteRackList)
 	assert.Equal("stats-rack1", deleteRackList[0])
 	assert.Equal("stats-rack2", deleteRackList[1])
 
@@ -452,14 +450,10 @@ func TestSetDefaults(t *testing.T) {
 	assert := assert.New(t)
 
 	cluster := CassandraCluster{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "CassandraCluster",
-			APIVersion: "db.orange.com/v2",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "defaults-test",
-			Namespace: "default",
-		},
+		Kind:       "CassandraCluster",
+		APIVersion: "db.orange.com/v2",
+		Name:       "defaults-test",
+		Namespace:  "default",
 		Spec: CassandraClusterSpec{
 			Resources: v1.ResourceRequirements{
 				Requests: v1.ResourceList{
@@ -485,7 +479,7 @@ func TestSetDefaults(t *testing.T) {
 
 	initialCassandraPhase := CassandraPhase{
 		Phase:                ClusterPhaseInitial.Name,
-		InitializingSubPhase: ptr.To(ClusterPhaseInitialSubPhaseFirstPodPerRack),
+		InitializingSubPhase: new(ClusterPhaseInitialSubPhaseFirstPodPerRack),
 	}
 	assert.Equal(initialCassandraPhase, cluster.Status.CassandraPhase)
 	assert.Equal(int32(defaultMaxPodUnavailable), cluster.Spec.MaxPodUnavailable)
@@ -512,7 +506,7 @@ func TestAddSubPhase(t *testing.T) {
 
 	initialCassandraPhase := CassandraPhase{
 		Phase:                ClusterPhaseInitial.Name,
-		InitializingSubPhase: ptr.To(ClusterPhaseInitialSubPhaseFirstPodPerRack),
+		InitializingSubPhase: new(ClusterPhaseInitialSubPhaseFirstPodPerRack),
 	}
 	assert.Equal(initialCassandraPhase, cluster.Status.CassandraPhase)
 }

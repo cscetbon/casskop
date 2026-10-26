@@ -129,7 +129,7 @@ func main() {
 	}
 	// Set up local cluster
 	clusters.Local = &controllers.Cluster{Name: opts.Local, Cluster: cluster.New(opts.Local, cfg,
-		cluster.Options{CacheOptions: cluster.CacheOptions{Namespace: namespace}})}
+		cluster.Options{Namespace: namespace})}
 
 	// Configuring Remotes clusters
 	for i, remote := range opts.Remotes {
@@ -147,7 +147,7 @@ func main() {
 		// Set up Remotes clusters
 		clusters.Remotes = append(clusters.Remotes,
 			&controllers.Cluster{Name: remote, Cluster: cluster.New(remote, cfg,
-				cluster.Options{CacheOptions: cluster.CacheOptions{Namespace: namespace}})})
+				cluster.Options{Namespace: namespace})})
 	}
 
 	logrus.Info("Creating Controller")

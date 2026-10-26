@@ -25,7 +25,6 @@ import (
 	"github.com/swarvanusg/go_jolokia"
 	funk "github.com/thoas/go-funk"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -48,7 +47,7 @@ func (jolokiaClient *JolokiaClient) executeReadRequest(jolokiaRequest *go_joloki
 }
 
 func (jolokiaClient *JolokiaClient) executeOperation(mBean, operation string,
-	arguments interface{}, pattern string) (*go_jolokia.JolokiaReadResponse, error) {
+	arguments any, pattern string) (*go_jolokia.JolokiaReadResponse, error) {
 	return (*go_jolokia.JolokiaClient)(jolokiaClient.client).ExecuteOperation(mBean, operation, arguments, pattern)
 }
 
@@ -62,10 +61,8 @@ func NewJolokiaClient(ctx context.Context, host string, port int, rcc *Cassandra
 		logrus.WithFields(logrus.Fields{"host": host, "port": port,
 			"secretRef": secretRef, "namespace": namespace}).Debug("Using Secret for Jolokia connection")
 		secret := &v1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      secretRef.Name,
-				Namespace: namespace,
-			},
+			Name:      secretRef.Name,
+			Namespace: namespace,
 		}
 		err := rcc.Client.Get(ctx, types.NamespacedName{Name: secretRef.Name, Namespace: namespace}, secret)
 
@@ -96,7 +93,7 @@ func (jolokiaClient *JolokiaClient) leavingNodes() ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot get list of leaving nodes: %v", err.Error())
 	}
-	v, isSlice := result.Value.([]interface{})
+	v, isSlice := result.Value.([]any)
 	if isSlice {
 		leavingNodes := []string{}
 		for _, value := range v {
@@ -118,7 +115,7 @@ func (jolokiaClient *JolokiaClient) hostIDMap() (map[string]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot get host id map: %v", err.Error())
 	}
-	if m, ok := result.Value.(map[string]interface{}); ok {
+	if m, ok := result.Value.(map[string]any); ok {
 		hostIDMap := map[string]string{}
 		for k, v := range m {
 			str, isString := v.(string)
@@ -139,7 +136,7 @@ func (jolokiaClient *JolokiaClient) keyspaces() ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot get list of keyspaces: %v", err.Error())
 	}
-	v, isSlice := result.Value.([]interface{})
+	v, isSlice := result.Value.([]any)
 	if isSlice {
 		keyspaces := []string{}
 		for _, value := range v {
@@ -188,7 +185,7 @@ func (jolokiaClient *JolokiaClient) NodeCleanupKeyspaces(threads int32, keyspace
 		logrus.Infof("[%s]: Cleanup of keyspace %s", jolokiaClient.host, keyspace)
 		_, err := checkJolokiaErrors(jolokiaClient.executeOperation("org.apache.cassandra.db:type=StorageService",
 			"forceKeyspaceCleanup(int,java.lang.String,[Ljava.lang.String;)",
-			[]interface{}{threads, keyspace, []string{}}, ""))
+			[]any{threads, keyspace, []string{}}, ""))
 		if err != nil {
 			logrus.Errorf("Cleanup of keyspace %s failed: %v", keyspace, err.Error())
 			return err
@@ -217,7 +214,7 @@ func (jolokiaClient *JolokiaClient) NodeUpgradeSSTablesKeyspaces(keyspaces []str
 		_, err := checkJolokiaErrors(jolokiaClient.executeOperation(
 			"org.apache.cassandra.db:type=StorageService",
 			"upgradeSSTables(java.lang.String,boolean,int,[Ljava.lang.String;)",
-			[]interface{}{keyspace, true, threads, []string{}}, ""))
+			[]any{keyspace, true, threads, []string{}}, ""))
 		if err != nil {
 			logrus.Errorf("Upgrade SSTables of keyspace %s failed: %v", keyspace, err.Error())
 			return err
@@ -230,7 +227,7 @@ func (jolokiaClient *JolokiaClient) NodeUpgradeSSTablesKeyspaces(keyspaces []str
 func (jolokiaClient *JolokiaClient) NodeRebuild(dc string) error {
 	_, err := checkJolokiaErrors(jolokiaClient.executeOperation("org.apache.cassandra.db:type=StorageService",
 		"rebuild(java.lang.String)",
-		[]interface{}{dc}, ""))
+		[]any{dc}, ""))
 	if err != nil {
 		return fmt.Errorf("cannot rebuild from %s: %v", dc, err.Error())
 	}
@@ -239,7 +236,7 @@ func (jolokiaClient *JolokiaClient) NodeRebuild(dc string) error {
 
 /*NodeDecommission decommissions a node using a jolokia client and returns any error*/
 func (jolokiaClient *JolokiaClient) NodeDecommission(v4 bool) error {
-	args := []interface{}{}
+	args := []any{}
 	if v4 {
 		args = append(args, true)
 	}
@@ -255,7 +252,7 @@ func (jolokiaClient *JolokiaClient) NodeDecommission(v4 bool) error {
 func (jolokiaClient *JolokiaClient) NodeRemove(hostid string) error {
 	_, err := checkJolokiaErrors(jolokiaClient.executeOperation("org.apache.cassandra.db:type=StorageService",
 		"removeNode",
-		[]interface{}{hostid}, ""))
+		[]any{hostid}, ""))
 
 	if err != nil {
 		return fmt.Errorf("cannot remove node %s: %v", hostid, err.Error())
@@ -283,7 +280,7 @@ func (jolokiaClient *JolokiaClient) hasStreamingSessions() (bool, error) {
 	if err != nil {
 		return true, fmt.Errorf("cannot get list of current streams: %v", err.Error())
 	}
-	val, _ := result.Value.([]interface{})
+	val, _ := result.Value.([]any)
 	return len(val) > 0, nil
 }
 
@@ -295,9 +292,9 @@ func (jolokiaClient *JolokiaClient) hasCompactions(name string) (bool, error) {
 		logrus.Error(err.Error())
 		return true, fmt.Errorf("cannot get list of current compactions: %v", err.Error())
 	}
-	compactions, _ := result.Value.([]interface{})
+	compactions, _ := result.Value.([]any)
 	for _, compaction := range compactions {
-		c := compaction.(map[string]interface{})
+		c := compaction.(map[string]any)
 		if c["taskType"] == name {
 			return true, nil
 		}
@@ -346,13 +343,13 @@ func (jolokiaClient *JolokiaClient) NonLocalKeyspacesInDC(dc string) ([]string, 
 
 func (jolokiaClient *JolokiaClient) hasKeyspaceDataInDC(keyspace, dc string) (bool, error) {
 	result, err := checkJolokiaErrors(jolokiaClient.executeOperation(
-		"org.apache.cassandra.db:type=StorageService", "describeRingJMX", []interface{}{keyspace},
+		"org.apache.cassandra.db:type=StorageService", "describeRingJMX", []any{keyspace},
 		""))
 	if err != nil {
 		return false, fmt.Errorf("cannot describe ring using keyspace %s: %v", keyspace, err.Error())
 	}
 	regexDc := regexp.MustCompile(fmt.Sprintf("datacenter:%s", dc))
-	tokenRanges, _ := result.Value.([]interface{})
+	tokenRanges, _ := result.Value.([]any)
 	for _, tokenRange := range tokenRanges {
 		// Returns true as soon as we find one token range that is replicated to the chosen datacenter
 		if regexDc.MatchString(tokenRange.(string)) {
@@ -369,6 +366,6 @@ func (jolokiaClient *JolokiaClient) hasJoiningNodes() (bool, error) {
 	if err != nil {
 		return true, fmt.Errorf("cannot check if there are joining nodes: %v", err.Error())
 	}
-	v, _ := result.Value.([]interface{})
+	v, _ := result.Value.([]any)
 	return len(v) > 0, nil
 }

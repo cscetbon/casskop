@@ -18,8 +18,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -36,11 +34,11 @@ func TestGetLastOrFirstPod(t *testing.T) {
 		if running {
 			podStatus = v1.PodRunning
 		}
-		return &v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("ns-nm-%02d", id)},
+		return &v1.Pod{Name: fmt.Sprintf("ns-nm-%02d", id),
 			Status: v1.PodStatus{Phase: podStatus}}
 	}
 	mkList := func(pods ...*v1.Pod) *v1.PodList {
-		list := &v1.PodList{ListMeta: metav1.ListMeta{ResourceVersion: "1"}}
+		list := &v1.PodList{ResourceVersion: "1"}
 		for _, pod := range pods {
 			list.Items = append(list.Items, *pod)
 		}
@@ -78,33 +76,6 @@ func TestGetLastOrFirstPod(t *testing.T) {
 		err = fmt.Errorf("pod is not running")
 	}
 	assertPodIsNotRunning(t, err)
-}
-
-func TestAllPodContainerReady(t *testing.T) {
-
-	mkPod := func(id int, containers ...bool) *v1.Pod {
-		containerStatuses := []v1.ContainerStatus{}
-		var containerIndex = 0
-		for _, c := range containers {
-			containerStatus := v1.ContainerStatus{Name: fmt.Sprintf("ns-nm-%02d-%02d", id, containerIndex), Ready: c}
-			containerIndex++
-			containerStatuses = append(containerStatuses, containerStatus)
-		}
-
-		return &v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("ns-nm-%02d", id)},
-			Status: v1.PodStatus{Phase: v1.PodRunning, ContainerStatuses: containerStatuses}}
-	}
-
-	assert.Equal(t, true, PodContainersReady(mkPod(1, true)))
-	//No container can't be ready
-	assert.Equal(t, false, PodContainersReady(mkPod(1)))
-
-	assert.Equal(t, true, PodContainersReady(mkPod(1, true, true)))
-	assert.Equal(t, true, PodContainersReady(mkPod(1, true, true, true)))
-
-	assert.Equal(t, false, PodContainersReady(mkPod(1, true, false, true)))
-	assert.Equal(t, false, PodContainersReady(mkPod(1, true, true, false)))
-
 }
 
 /*

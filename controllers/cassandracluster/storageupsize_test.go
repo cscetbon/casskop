@@ -14,7 +14,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -106,11 +105,9 @@ func simulatePVCsReadyForWholeCluster(assert *assert.Assertions, rcc *CassandraC
 			for i := int32(0); i < rcc.cc.Spec.NodesPerRacks; i++ {
 				pvcName := fmt.Sprintf("%s-%s-%d", "data", stfsName, i)
 				pvc := corev1.PersistentVolumeClaim{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      pvcName,
-						Namespace: rcc.cc.Namespace,
-						Labels:    k8s.LabelsForCassandraDCRack(rcc.cc, dc.Name, rack.Name),
-					},
+					Name:      pvcName,
+					Namespace: rcc.cc.Namespace,
+					Labels:    k8s.LabelsForCassandraDCRack(rcc.cc, dc.Name, rack.Name),
 					Spec: corev1.PersistentVolumeClaimSpec{
 						Resources: corev1.VolumeResourceRequirements{
 							Requests: corev1.ResourceList{

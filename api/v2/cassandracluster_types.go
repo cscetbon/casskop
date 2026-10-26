@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 )
 
 const (
@@ -134,29 +134,29 @@ func (cc *CassandraCluster) CheckDefaults() {
 	}
 
 	if ccs.ReadOnlyRootFilesystem == nil {
-		ccs.ReadOnlyRootFilesystem = func(b bool) *bool { return &b }(true)
+		ccs.ReadOnlyRootFilesystem = new(true)
 	}
 
 	// LivenessProbe dynamic config
 	if ccs.LivenessInitialDelaySeconds == nil {
-		ccs.LivenessInitialDelaySeconds = func(i int32) *int32 { return &i }(DefaultLivenessInitialDelaySeconds)
+		ccs.LivenessInitialDelaySeconds = new(DefaultLivenessInitialDelaySeconds)
 	}
 	if ccs.LivenessHealthCheckTimeout == nil {
-		ccs.LivenessHealthCheckTimeout = func(i int32) *int32 { return &i }(DefaultLivenessHealthCheckTimeout)
+		ccs.LivenessHealthCheckTimeout = new(DefaultLivenessHealthCheckTimeout)
 	}
 	if ccs.LivenessHealthCheckPeriod == nil {
-		ccs.LivenessHealthCheckPeriod = func(i int32) *int32 { return &i }(DefaultLivenessHealthCheckPeriod)
+		ccs.LivenessHealthCheckPeriod = new(DefaultLivenessHealthCheckPeriod)
 	}
 
 	// ReadinessProbe dynamic config
 	if ccs.ReadinessInitialDelaySeconds == nil {
-		ccs.ReadinessInitialDelaySeconds = func(i int32) *int32 { return &i }(DefaultReadinessInitialDelaySeconds)
+		ccs.ReadinessInitialDelaySeconds = new(DefaultReadinessInitialDelaySeconds)
 	}
 	if ccs.ReadinessHealthCheckTimeout == nil {
-		ccs.ReadinessHealthCheckTimeout = func(i int32) *int32 { return &i }(DefaultReadinessHealthCheckTimeout)
+		ccs.ReadinessHealthCheckTimeout = new(DefaultReadinessHealthCheckTimeout)
 	}
 	if ccs.ReadinessHealthCheckPeriod == nil {
-		ccs.ReadinessHealthCheckPeriod = func(i int32) *int32 { return &i }(DefaultReadinessHealthCheckPeriod)
+		ccs.ReadinessHealthCheckPeriod = new(DefaultReadinessHealthCheckPeriod)
 	}
 
 	// BackupRestore default config
@@ -185,7 +185,7 @@ func (cc *CassandraCluster) SetDefaults() bool {
 	if cc.Status.CassandraPhase.IsEmpty() {
 		cc.Status.CassandraPhase = CassandraPhase{
 			Phase:                ClusterPhaseInitial.Name,
-			InitializingSubPhase: ptr.To(ClusterPhaseInitialSubPhaseFirstPodPerRack),
+			InitializingSubPhase: new(ClusterPhaseInitialSubPhaseFirstPodPerRack),
 		}
 		if cc.InitCassandraRackList() < 1 {
 			logrus.Errorf("[%s]: We should have at list One Rack, Please correct the Error", cc.Name)
@@ -196,7 +196,7 @@ func (cc *CassandraCluster) SetDefaults() bool {
 		changed = true
 	}
 	if cc.Status.CassandraPhase.IsInitialButNoSubPhase() {
-		cc.Status.CassandraPhase.InitializingSubPhase = ptr.To(ClusterPhaseInitialSubPhaseFirstPodPerRack)
+		cc.Status.CassandraPhase.InitializingSubPhase = new(ClusterPhaseInitialSubPhaseFirstPodPerRack)
 		changed = true
 	}
 	if ccs.MaxPodUnavailable == 0 {
@@ -233,7 +233,7 @@ func (cc *CassandraCluster) GetDCSize() int {
 func (cc *CassandraCluster) GetDCRackSize() int {
 	var nb int = 0
 	dcsize := cc.GetDCSize()
-	for dc := 0; dc < dcsize; dc++ {
+	for dc := range dcsize {
 		nb += cc.GetRackSize(dc)
 	}
 	return nb
@@ -337,10 +337,8 @@ func (cc *CassandraCluster) initTopology(dcName string, rackName string) {
 func (cc *CassandraCluster) InitCassandraRackStatus(status *CassandraClusterStatus, dcName string, rackName string) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
 	rackStatus := CassandraRackStatus{
-		CassandraPhase: CassandraPhase{
-			Phase:                ClusterPhaseInitial.Name,
-			InitializingSubPhase: ptr.To(ClusterPhaseInitialSubPhaseFirstPodPerRack),
-		},
+		Phase:                ClusterPhaseInitial.Name,
+		InitializingSubPhase: new(ClusterPhaseInitialSubPhaseFirstPodPerRack),
 		CassandraLastAction: CassandraLastAction{
 			Name:   ClusterPhaseInitial.Name,
 			Status: StatusOngoing,
@@ -368,7 +366,7 @@ func (cc *CassandraCluster) InitSeedList() []string {
 		}
 		return seedList
 	}
-	for dc := 0; dc < dcsize; dc++ {
+	for dc := range dcsize {
 		dcName = cc.GetDCName(dc)
 		var nbSeedInDC int = 0
 		racksize := cc.GetRackSize(dc)
@@ -380,7 +378,7 @@ func (cc *CassandraCluster) InitSeedList() []string {
 			}
 			continue
 		}
-		for rack := 0; rack < racksize; rack++ {
+		for rack := range racksize {
 			rackName = cc.GetRackName(dc, rack)
 			dcRackName := cc.GetDCRackName(dcName, rackName)
 			nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
@@ -415,12 +413,7 @@ func (cc *CassandraCluster) addNewSeed(seedList *[]string, dcName string, rackNa
 }
 
 func (cc *CassandraCluster) IsPodInSeedList(podName string) bool {
-	for i := range cc.Status.SeedList {
-		if cc.Status.SeedList[i] == podName {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(cc.Status.SeedList, podName)
 }
 
 // FixCassandraRackList will remove additional rack-list that don't exists anymore in Topology
@@ -445,7 +438,7 @@ func (cc *CassandraCluster) GetRemovedDCName(oldCRD *CassandraCluster) string {
 	//dcsize := cc.GetDCSize()
 	olddcsize := oldCRD.GetDCSize()
 
-	for dc := 0; dc < olddcsize; dc++ {
+	for dc := range olddcsize {
 		olddcName := oldCRD.GetDCName(dc)
 		dcName := cc.GetDCName(dc)
 		if olddcName != dcName {
@@ -470,7 +463,7 @@ func (cc *CassandraCluster) InitCassandraRackList() int {
 		cc.InitCassandraRackStatus(&cc.Status, dcName, rackName)
 		cc.initTopology(dcName, rackName)
 	} else {
-		for dc := 0; dc < dcsize; dc++ {
+		for dc := range dcsize {
 			dcName = cc.GetDCName(dc)
 			racksize := cc.GetRackSize(dc)
 			if racksize < 1 {
@@ -479,7 +472,7 @@ func (cc *CassandraCluster) InitCassandraRackList() int {
 				cc.InitCassandraRackStatus(&cc.Status, dcName, rackName)
 				cc.initTopology(dcName, rackName)
 			} else {
-				for rack := 0; rack < racksize; rack++ {
+				for rack := range racksize {
 					rackName = cc.GetRackName(dc, rack)
 					nbRack++
 					cc.InitCassandraRackStatus(&cc.Status, dcName, rackName)
@@ -543,7 +536,7 @@ func (cc *CassandraCluster) GetDCIndexFromDCName(dcName string) int {
 		return -1
 	}
 
-	for dc := 0; dc < dcSize; dc++ {
+	for dc := range dcSize {
 		if dcName == cc.GetDCName(dc) {
 			return dc
 		}
@@ -596,13 +589,13 @@ func (cc *CassandraCluster) GetDCRackNames() []string {
 	if dcsize < 1 {
 		return dcRackNames
 	}
-	for dc := 0; dc < dcsize; dc++ {
+	for dc := range dcsize {
 		dcName := cc.GetDCName(dc)
 		racksize := cc.GetRackSize(dc)
 		if racksize < 1 {
 			return dcRackNames
 		}
-		for rack := 0; rack < racksize; rack++ {
+		for rack := range racksize {
 			rackName := cc.GetRackName(dc, rack)
 			dcRackNames = append(dcRackNames, cc.GetDCRackName(dcName, rackName))
 		}
@@ -617,13 +610,13 @@ func (cc *CassandraCluster) GetDCNodesPerRacksFromDCRackName(dcRackName string) 
 	if dcsize < 1 {
 		return cc.Spec.NodesPerRacks
 	}
-	for dc := 0; dc < dcsize; dc++ {
+	for dc := range dcsize {
 		dcName := cc.GetDCName(dc)
 		racksize := cc.GetRackSize(dc)
 		if racksize < 1 {
 			return cc.Spec.NodesPerRacks
 		}
-		for rack := 0; rack < racksize; rack++ {
+		for rack := range racksize {
 			rackName := cc.GetRackName(dc, rack)
 			if dcRackName == cc.GetDCRackName(dcName, rackName) {
 				return cc.getDCNodesPerRacksFromIndex(dc)
@@ -640,13 +633,13 @@ func (cc *CassandraCluster) GetRollingPartitionPerRacks(dcRackName string) int32
 	if dcsize < 1 {
 		return 0
 	}
-	for dc := 0; dc < dcsize; dc++ {
+	for dc := range dcsize {
 		dcName := cc.GetDCName(dc)
 		racksize := cc.GetRackSize(dc)
 		if racksize < 1 {
 			return 0
 		}
-		for rack := 0; rack < racksize; rack++ {
+		for rack := range racksize {
 			rackName := cc.GetRackName(dc, rack)
 			if dcRackName == cc.GetDCRackName(dcName, rackName) {
 				return cc.Spec.Topology.DC[dc].Rack[rack].RollingPartition
@@ -664,7 +657,7 @@ func (cc *CassandraCluster) GetDCNodesPerRacksFromName(dctarget string) (bool, i
 	if dcsize < 1 {
 		return false, cc.Spec.NodesPerRacks
 	}
-	for dc := 0; dc < dcsize; dc++ {
+	for dc := range dcsize {
 		dcName := cc.GetDCName(dc)
 		if dctarget == dcName {
 			return true, cc.getDCNodesPerRacksFromIndex(dc)
@@ -675,7 +668,7 @@ func (cc *CassandraCluster) GetDCNodesPerRacksFromName(dctarget string) (bool, i
 
 // FindDCWithNodesTo0
 func (cc *CassandraCluster) FindDCWithNodesTo0() (bool, string, int) {
-	for dc := 0; dc < cc.GetDCSize(); dc++ {
+	for dc := range cc.GetDCSize() {
 		if cc.getDCNodesPerRacksFromIndex(dc) == int32(0) {
 			dcName := cc.GetDCName(dc)
 			return true, dcName, dc
@@ -696,9 +689,9 @@ func (cc *CassandraCluster) IsValidDC(dcName string) bool {
 
 func (in *CassandraCluster) IterateRacks() []CompleteRackName {
 	var racks []CompleteRackName
-	for dc := 0; dc < in.GetDCSize(); dc++ {
+	for dc := range in.GetDCSize() {
 		dcName := in.GetDCName(dc)
-		for rack := 0; rack < in.GetRackSize(dc); rack++ {
+		for rack := range in.GetRackSize(dc) {
 			rackName := in.GetRackName(dc, rack)
 			racks = append(racks, CompleteRackName{
 				DcIndex:    dc,
@@ -1076,7 +1069,7 @@ type CassandraRackStatus struct {
 func (in *CassandraRackStatus) SetNextPodPerRackInitPhase() {
 	in.CassandraPhase = CassandraPhase{
 		Phase:                ClusterPhaseInitial.Name,
-		InitializingSubPhase: ptr.To(ClusterPhaseInitialSubPhaseNextPodPerRack),
+		InitializingSubPhase: new(ClusterPhaseInitialSubPhaseNextPodPerRack),
 	}
 }
 
@@ -1122,7 +1115,7 @@ func (in *CassandraClusterStatus) SetClusterPhaseFromRackPhase(rackStatus *Cassa
 func (in *CassandraClusterStatus) SetNextPodPerRackInitPhase() {
 	in.CassandraPhase = CassandraPhase{
 		Phase:                ClusterPhaseInitial.Name,
-		InitializingSubPhase: ptr.To(ClusterPhaseInitialSubPhaseNextPodPerRack),
+		InitializingSubPhase: new(ClusterPhaseInitialSubPhaseNextPodPerRack),
 	}
 }
 

@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -104,10 +103,8 @@ func pvc(name, capacity string) corev1.PersistentVolumeClaim {
 		}
 	}
 	return corev1.PersistentVolumeClaim{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: "default",
-		},
+		Name:      name,
+		Namespace: "default",
 		Spec: corev1.PersistentVolumeClaimSpec{
 			Resources: corev1.VolumeResourceRequirements{
 				Requests: resources,
@@ -118,11 +115,9 @@ func pvc(name, capacity string) corev1.PersistentVolumeClaim {
 
 func pvcWithoutSpecifiedResources(name string) corev1.PersistentVolumeClaim {
 	return corev1.PersistentVolumeClaim{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: "default",
-		},
-		Spec: corev1.PersistentVolumeClaimSpec{},
+		Name:      name,
+		Namespace: "default",
+		Spec:      corev1.PersistentVolumeClaimSpec{},
 	}
 }
 

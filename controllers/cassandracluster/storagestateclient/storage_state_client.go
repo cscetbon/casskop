@@ -4,7 +4,6 @@ import (
 	"context"
 
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -30,10 +29,8 @@ type storageStateClient struct {
 
 func (c *storageStateClient) GetPVC(ctx context.Context, namespace, name string) (*v1.PersistentVolumeClaim, error) {
 	o := &v1.PersistentVolumeClaim{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
+		Name:      name,
+		Namespace: namespace,
 	}
 	return o, c.k8sClient.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, o)
 }

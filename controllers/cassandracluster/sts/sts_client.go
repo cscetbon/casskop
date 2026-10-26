@@ -38,10 +38,8 @@ func (c *stsClient) CreateStatefulSet(ctx context.Context, statefulSet *appsv1.S
 
 func (c *stsClient) DeleteStatefulSetWithOrphanOption(ctx context.Context, namespace, name string) error {
 	ss := &appsv1.StatefulSet{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
+		Name:      name,
+		Namespace: namespace,
 	}
 	return c.client.Delete(ctx, ss, client.PropagationPolicy(metav1.DeletePropagationOrphan))
 }

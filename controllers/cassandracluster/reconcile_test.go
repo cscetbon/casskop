@@ -31,7 +31,6 @@ import (
 	"github.com/r3labs/diff"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2(t *testing.T) {
@@ -531,17 +530,15 @@ func TestCheckNonAllowedChangesScaleDown(t *testing.T) {
 
 	//Create the Pods wanted by the statefulset dc2-rack1 (1 node)
 	pod := &v1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "cassandra-demo-dc2-rack1-0",
-			Namespace: "ns",
-			Labels: map[string]string{
-				"app":                                  "cassandracluster",
-				"cassandracluster":                     "cassandra-demo",
-				"cassandraclusters.db.orange.com.dc":   "dc2",
-				"cassandraclusters.db.orange.com.rack": "rack1",
-				"cluster":                              "k8s.pic",
-				"dc-rack":                              "dc2-rack1",
-			},
+		Name:      "cassandra-demo-dc2-rack1-0",
+		Namespace: "ns",
+		Labels: map[string]string{
+			"app":                                  "cassandracluster",
+			"cassandracluster":                     "cassandra-demo",
+			"cassandraclusters.db.orange.com.dc":   "dc2",
+			"cassandraclusters.db.orange.com.rack": "rack1",
+			"cluster":                              "k8s.pic",
+			"dc-rack":                              "dc2-rack1",
 		},
 	}
 	pod.Status.Phase = v1.PodRunning
@@ -674,7 +671,7 @@ func TestUpdateCassandraNodesStatusForPod(t *testing.T) {
 
 	mkPod := func(podName string, podIp string, ccReady bool) *v1.Pod {
 		return &v1.Pod{
-			ObjectMeta: metav1.ObjectMeta{Name: podName},
+			Name: podName,
 			Status: v1.PodStatus{
 				Phase: v1.PodRunning,
 				ContainerStatuses: []v1.ContainerStatus{
@@ -739,7 +736,7 @@ func TestCheckPodCrossIpUseCaseForPodKey(t *testing.T) {
 
 	mkPod := func(podName string, podIp string, ccReady bool) *v1.Pod {
 		return &v1.Pod{
-			ObjectMeta: metav1.ObjectMeta{Name: podName},
+			Name: podName,
 			Status: v1.PodStatus{
 				Phase: v1.PodRunning,
 				ContainerStatuses: []v1.ContainerStatus{
@@ -802,7 +799,7 @@ func TestProcessingPods(t *testing.T) {
 
 	mkPod := func(podName string, podIp string, restartCount int32) *v1.Pod {
 		return &v1.Pod{
-			ObjectMeta: metav1.ObjectMeta{Name: podName},
+			Name: podName,
 			Status: v1.PodStatus{
 				Phase: v1.PodRunning,
 				ContainerStatuses: []v1.ContainerStatus{
