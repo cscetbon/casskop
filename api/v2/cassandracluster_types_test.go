@@ -510,3 +510,27 @@ func TestAddSubPhase(t *testing.T) {
 	}
 	assert.Equal(initialCassandraPhase, cluster.Status.CassandraPhase)
 }
+
+func TestGetDataStorageClassForDCName(t *testing.T) {
+	assert := assert.New(t)
+	cc := &CassandraCluster{Spec: CassandraClusterSpec{
+		DataStorageClass: "default-class",
+		Topology: Topology{DC: DCSlice{
+			{Name: "dc1", DataStorageClass: "dc1-class"},
+			{Name: "dc2", DataCapacity: "10Gi"},
+		}},
+	}}
+
+	assert.Equal("dc1-class", cc.GetDataStorageClassForDCName("dc1"))
+	assert.Equal("default-class", cc.GetDataStorageClassForDCName("dc2"))
+	assert.Equal("default-class", cc.GetDataStorageClassForDCName("unknown"))
+}
+
+func TestGetRackFromDCRackName_UnknownDC(t *testing.T) {
+	cc := &CassandraCluster{Spec: CassandraClusterSpec{
+		Topology: Topology{DC: DCSlice{{Name: "dc1", Rack: RackSlice{{Name: "rack1"}}}}},
+	}}
+
+	assert.Nil(t, cc.GetRackFromDCRackName("unknown-rack1"))
+	assert.Equal(t, "rack1", cc.GetRackFromDCRackName("dc1-rack1").Name)
+}

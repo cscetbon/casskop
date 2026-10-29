@@ -3,7 +3,6 @@ package cassandrabackup
 import (
 	"context"
 	"fmt"
-	"reflect"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 
@@ -11,7 +10,6 @@ import (
 
 	api "github.com/cscetbon/casskop/api/v2"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/meta"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -26,13 +24,10 @@ func (r *CassandraBackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			return true
 		},
 		UpdateFunc: func(e event.UpdateEvent) bool {
-			if _, err := meta.Accessor(e.ObjectNew); err != nil {
+			backup, ok := e.ObjectNew.(*api.CassandraBackup)
+			if !ok {
 				return false
 			}
-			if reflect.TypeOf(e.ObjectNew) != reflect.TypeFor[api.CassandraBackup]() {
-				return false
-			}
-			backup := e.ObjectNew.(*api.CassandraBackup)
 			reqLogger := logrus.WithFields(logrus.Fields{"Request.Namespace": backup.Namespace,
 				"Request.Name": backup.Name})
 			if backup.Status.Condition == nil {
