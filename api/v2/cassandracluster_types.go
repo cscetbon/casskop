@@ -449,82 +449,49 @@ func (cc *CassandraCluster) GetRemovedDCName(oldCRD *CassandraCluster) string {
 
 // InitCassandraRackList initiate the Status structure for CassandraRack
 func (cc *CassandraCluster) InitCassandraRackList() int {
-	var dcName, rackName string
-	var nbRack = 0
-
 	cc.Status.CassandraRackStatus = make(map[string]*CassandraRackStatus)
 	dcsize := cc.GetDCSize()
 
 	if dcsize < 1 {
-		dcName = DefaultCassandraDC
-		rackName = DefaultCassandraRack
-		nbRack++
-		cc.InitCassandraRackStatus(&cc.Status, dcName, rackName)
-		cc.initTopology(dcName, rackName)
-	} else {
-		for dc := range dcsize {
-			dcName = cc.GetDCName(dc)
-			racksize := cc.GetRackSize(dc)
-			if racksize < 1 {
-				rackName = DefaultCassandraRack
-				nbRack++
-				cc.InitCassandraRackStatus(&cc.Status, dcName, rackName)
-				cc.initTopology(dcName, rackName)
-			} else {
-				for rack := range racksize {
-					rackName = cc.GetRackName(dc, rack)
-					nbRack++
-					cc.InitCassandraRackStatus(&cc.Status, dcName, rackName)
-				}
-			}
-		}
+		cc.initDefaultRack(DefaultCassandraDC)
+		return 1
+	}
 
+	nbRack := 0
+	for dc := range dcsize {
+		dcName := cc.GetDCName(dc)
+		racksize := cc.GetRackSize(dc)
+		if racksize < 1 {
+			cc.initDefaultRack(dcName)
+			nbRack++
+			continue
+		}
+		for rack := range racksize {
+			cc.InitCassandraRackStatus(&cc.Status, dcName, cc.GetRackName(dc, rack))
+			nbRack++
+		}
 	}
 	return nbRack
 }
 
-// GetDataCapacityForDC sends back the data capacity of cassandra nodes to uses for this dc
-func (cc *CassandraCluster) GetDataCapacityForDC(dcName string) string {
-	return cc.GetDataCapacityFromDCName(dcName)
+// initDefaultRack initializes the status and the topology with the default rack of dcName
+func (cc *CassandraCluster) initDefaultRack(dcName string) {
+	cc.InitCassandraRackStatus(&cc.Status, dcName, DefaultCassandraRack)
+	cc.initTopology(dcName, DefaultCassandraRack)
 }
 
-// GetDataCapacityForDC sends back the data capacity of cassandra nodes for the given strongly-typed dcName
+// GetDataCapacityForDCName sends back the data capacity of cassandra nodes for the given dcName
 func (cc *CassandraCluster) GetDataCapacityForDCName(dcName DcName) string {
-	return cc.GetDataCapacityFromDCName(dcName.String())
-}
-
-// GetDataCapacityFromDCName send DataCapacity used for the given dcName
-func (cc *CassandraCluster) GetDataCapacityFromDCName(dcName string) string {
-	dcIndex := cc.GetDCIndexFromDCName(dcName)
-	if dcIndex >= 0 {
-		dc := cc.getDCFromIndex(dcIndex)
-		if dc != nil && dc.DataCapacity != "" {
-			return dc.DataCapacity
-		}
-		return cc.Spec.DataCapacity
+	if dc := cc.getDCFromIndex(cc.GetDCIndexFromDCName(dcName.String())); dc != nil && dc.DataCapacity != "" {
+		return dc.DataCapacity
 	}
 	return cc.Spec.DataCapacity
 }
 
-// GetDataCapacityForDC sends back the data storage class of cassandra nodes to uses for this dc
-func (cc *CassandraCluster) GetDataStorageClassForDC(dcName string) string {
-	return cc.GetDataStorageClassFromDCName(dcName)
-}
-
-// GetDataStorageClassForDCName send DataStorageClass used for the given strongly-typed dcName
+// GetDataStorageClassForDCName sends back the data storage class of cassandra nodes for the given dcName
 func (cc *CassandraCluster) GetDataStorageClassForDCName(dcName DcName) string {
-	return cc.GetDataStorageClassFromDCName(dcName.String())
-}
-
-// GetDataCapacityFromDCName send DataStorageClass used for the given dcName
-func (cc *CassandraCluster) GetDataStorageClassFromDCName(dcName string) string {
-	dcIndex := cc.GetDCIndexFromDCName(dcName)
-	if dcIndex >= 0 {
-		dc := cc.getDCFromIndex(dcIndex)
-		if dc != nil && dc.DataCapacity != "" {
-			return dc.DataStorageClass
-		}
-		return cc.Spec.DataStorageClass
+	if dc := cc.getDCFromIndex(cc.GetDCIndexFromDCName(dcName.String())); dc != nil && dc.DataCapacity != "" {
+		return dc.DataStorageClass
 	}
 	return cc.Spec.DataStorageClass
 }
@@ -540,7 +507,7 @@ func (cc *CassandraCluster) GetDCIndexFromDCName(dcName string) int {
 
 // getDCFromIndex send DC for the given index
 func (cc *CassandraCluster) getDCFromIndex(dc int) *DC {
-	if dc >= cc.GetDCSize() {
+	if dc < 0 || dc >= cc.GetDCSize() {
 		return nil
 	}
 	return &cc.Spec.Topology.DC[dc]
@@ -566,8 +533,10 @@ func (cc *CassandraCluster) GetRackFromDCRackName(dcRackName string) *Rack {
 
 // GetNodesPerRacks sends back the number of cassandra nodes to uses for this dc-rack
 func (cc *CassandraCluster) GetNodesPerRacks(dcRackName string) int32 {
-	nodesPerRacks := cc.GetDCNodesPerRacksFromDCRackName(dcRackName)
-	return nodesPerRacks
+	if dc, _, ok := cc.findRackIndexes(dcRackName); ok {
+		return cc.getDCNodesPerRacksFromIndex(dc)
+	}
+	return cc.Spec.NodesPerRacks
 }
 
 // GetNodesPerRacks sends back the number of cassandra nodes to uses for this strongly-typed dc-rack
@@ -575,7 +544,7 @@ func (cc *CassandraCluster) GetNodesPerRacksStrongType(dcRackName DcRackName) in
 	return cc.GetNodesPerRacks(dcRackName.String())
 }
 
-// GetDCNodesPerRacksFromDCRackName send NodesPerRack used for the given dcRackName
+// GetDCRackNames returns the dc-rack names of the topology
 func (cc *CassandraCluster) GetDCRackNames() []string {
 	dcsize := cc.GetDCSize()
 
@@ -612,14 +581,6 @@ func (cc *CassandraCluster) findRackIndexes(dcRackName string) (int, int, bool) 
 		}
 	}
 	return 0, 0, false
-}
-
-// GetDCNodesPerRacksFromDCRackName send NodesPerRack used for the given dcRackName
-func (cc *CassandraCluster) GetDCNodesPerRacksFromDCRackName(dcRackName string) int32 {
-	if dc, _, ok := cc.findRackIndexes(dcRackName); ok {
-		return cc.getDCNodesPerRacksFromIndex(dc)
-	}
-	return cc.Spec.NodesPerRacks
 }
 
 // GetRollingPartitionPerRacks return rollingPartition defined in spec.topology.dc[].rack[].rollingPartition
@@ -675,12 +636,12 @@ func (in *CassandraCluster) IterateRacks() []CompleteRackName {
 
 // Remove elements from DC slice
 func (dc *DCSlice) Remove(idx int) {
-	*dc = append((*dc)[:idx], (*dc)[idx+1:]...)
+	*dc = slices.Delete(*dc, idx, idx+1)
 }
 
 // Remove elements from Rack slice
 func (rack *RackSlice) Remove(idx int) {
-	*rack = append((*rack)[:idx], (*rack)[idx+1:]...)
+	*rack = slices.Delete(*rack, idx, idx+1)
 }
 
 // CassandraClusterSpec defines the configuration of CassandraCluster
