@@ -29,6 +29,11 @@ import (
 	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	dcLabelKey   = "cassandraclusters.db.orange.com.dc"
+	rackLabelKey = "cassandraclusters.db.orange.com.rack"
+)
+
 // Regex to extract date from label
 var ReLabelTime = regexp.MustCompile(`(?P<y>\d{4})(?P<m>\d{2})(?P<d>\d{2})T(?P<hh>\d{2})(?P<mm>\d{2})(?P<ss>\d{2})`)
 
@@ -44,26 +49,19 @@ func LabelsForCassandraDCRackStrongTypes(cc *api.CassandraCluster, dcName api.Dc
 // labelsForCassandra returns the labels for selecting the resources
 // belonging to the given name.
 func LabelsForCassandraDCRack(cc *api.CassandraCluster, dcName string, rackName string) map[string]string {
-	m := map[string]string{
-		"app":                                  "cassandracluster",
-		"cassandracluster":                     cc.GetName(),
-		"dc-rack":                              cc.GetDCRackName(dcName, rackName),
-		"cassandraclusters.db.orange.com.dc":   dcName,
-		"cassandraclusters.db.orange.com.rack": rackName,
-	}
-	return MergeLabels(cc.GetLabels(), m)
+	return MergeLabels(LabelsForCassandra(cc), map[string]string{
+		"dc-rack":    cc.GetDCRackName(dcName, rackName),
+		dcLabelKey:   dcName,
+		rackLabelKey: rackName,
+	})
 }
 
 func LabelsForCassandraDC(cc *api.CassandraCluster, dcName string) map[string]string {
-	m := map[string]string{
-		"app":              "cassandracluster",
-		"cassandracluster": cc.GetName(),
+	labels := LabelsForCassandra(cc)
+	if dcName != "" {
+		labels[dcLabelKey] = dcName
 	}
-
-	if len(dcName) > 0 {
-		m["cassandraclusters.db.orange.com.dc"] = dcName
-	}
-	return MergeLabels(cc.GetLabels(), m)
+	return labels
 }
 
 func LabelsForCassandra(cc *api.CassandraCluster) map[string]string {
@@ -160,12 +158,7 @@ func DCRackLabelsAndNodeSelectorForStatefulSet(cc *api.CassandraCluster, dc int,
 		}
 	}
 
-	labels := MergeLabels(LabelsForCassandraDCRack(cc, dcName, rackName), map[string]string{
-		"cassandraclusters.db.orange.com.dc":   dcName,
-		"cassandraclusters.db.orange.com.rack": rackName,
-	})
-
-	return labels, nodeSelector
+	return LabelsForCassandraDCRack(cc, dcName, rackName), nodeSelector
 }
 
 // LookupCassandra Cluster returns the running cluster instance based on its name and namespace
