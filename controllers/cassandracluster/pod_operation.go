@@ -126,7 +126,7 @@ func (rcc *CassandraClusterReconciler) handlePodOperation(ctx context.Context, c
 		// && status.LastClusterAction == api.ActionScaleUp {
 
 		// Finalize operations that are done
-		rcc.finalizeOperations(ctx, cc)
+		rcc.finalizeOperations(ctx, cc, status)
 
 		// We run approximately a different operation each time
 		rcc.ensureOperation(ctx, cc, dcName, rackName, status, randomPodOperationKey())
@@ -280,7 +280,7 @@ func (rcc *CassandraClusterReconciler) ensureOperation(ctx context.Context, cc *
 		hostName := k8s.PodHostname(pod)
 		// We check if an operation is running
 		if checkOnly {
-			go rcc.monitorOperation(ctx, hostName, cc, dcRackName, pod, operationName)
+			go rcc.monitorOperation(ctx, hostName, cc.DeepCopy(), dcRackName, pod, operationName)
 			continue
 		}
 		// Add the operatorName to the last pod operation in case the operator pod is replaced
@@ -291,15 +291,16 @@ func (rcc *CassandraClusterReconciler) ensureOperation(ctx context.Context, cc *
 				"pod": pod.Name, "err": err}).Debug("Failed to start operation on pod")
 			continue
 		}
-		go rcc.runOperation(ctx, operationName, hostName, cc, dcRackName, pod, status)
+		go rcc.runOperation(ctx, operationName, hostName, cc.DeepCopy(), dcRackName, pod, status)
 	}
 }
 
-func (rcc *CassandraClusterReconciler) finalizeOperations(ctx context.Context, cc *api.CassandraCluster) {
+func (rcc *CassandraClusterReconciler) finalizeOperations(ctx context.Context, cc *api.CassandraCluster,
+	status *api.CassandraClusterStatus) {
 	// Finalize all operations here to avoid update conflicts
 	for range len(chanRunningOp) {
 		op := <-chanRunningOp
-		rcc.finalizeOperation(ctx, op.err, cc, op.dcRackName, op.pod, &rcc.cc.Status,
+		rcc.finalizeOperation(ctx, op.err, cc, op.dcRackName, op.pod, status,
 			title(op.operationName))
 	}
 }
@@ -519,15 +520,16 @@ func (rcc *CassandraClusterReconciler) ensureDecommissionToDo(ctx context.Contex
 
 	logrus.WithFields(logrusFields).Debug("Decommissioning cassandra node")
 
-	go func() {
-		logrus.WithFields(logrusFields).Debug("Node decommission starts")
-		err = jolokiaClient.NodeDecommission(cc.Spec.ServerVersion >= "4.0")
-		logrus.WithFields(logrusFields).Debug("Node decommission ended")
+	isCassandra4 := cc.Spec.ServerVersion >= "4.0"
+	go func(fields logrus.Fields) {
+		logrus.WithFields(fields).Debug("Node decommission starts")
+		err := jolokiaClient.NodeDecommission(isCassandra4)
+		logrus.WithFields(fields).Debug("Node decommission ended")
 		if err != nil {
-			logrusFields["err"] = err
-			logrus.WithFields(logrusFields).Debug("Node decommission failed")
+			fields["err"] = err
+			logrus.WithFields(fields).Debug("Node decommission failed")
 		}
-	}()
+	}(maps.Clone(logrusFields))
 
 	return breakResyncLoop, nil
 }
@@ -656,22 +658,21 @@ func (rcc *CassandraClusterReconciler) finalizeOperation(ctx context.Context, er
 		labels["operation-status"] = api.StatusError
 	}
 
-	ccRefreshed := cc.DeepCopy()
-
 	rcc.updatePodLastOperation(cc.Name, dcRackName, pod.Name, title(operationName), status, err)
 
 	for {
-		if err = rcc.UpdatePodLabel(ctx, &pod, labels); err != nil {
+		if err = rcc.UpdatePodLabel(ctx, &pod, labels); err != nil && !apierrors.IsNotFound(err) {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 				"labels": labels, "error": err}).Error("Can't update labels")
+			time.Sleep(retryInterval())
 			continue
 		}
-		if err = rcc.updateCassandraStatus(ctx, ccRefreshed, status); err == nil {
+		if err = rcc.updateCassandraStatus(ctx, cc, status); err == nil {
 			break
 		}
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 			"status": status, "error": err}).Debug("Got an error. Getting a new version of Cassandra Cluster")
-		if rcc.Client.Get(ctx, types.NamespacedName{Name: cc.Name, Namespace: cc.Namespace}, ccRefreshed) == nil {
+		if rcc.Client.Get(ctx, types.NamespacedName{Name: cc.Name, Namespace: cc.Namespace}, cc) == nil {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 				"status": status}).Debug("Got a new version of Cassandra Cluster")
 			continue
@@ -732,7 +733,10 @@ func (rcc *CassandraClusterReconciler) runRebuild(ctx context.Context, hostName 
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 		"hostName": hostName, "operation": operation}).Info("Operation start")
 
-	jolokiaClient, _ := NewJolokiaClient(ctx, hostName, JolokiaPort, rcc, cc.Spec.ImageJolokiaSecret, cc.Namespace)
+	jolokiaClient, err := NewJolokiaClient(ctx, hostName, JolokiaPort, rcc, cc.Spec.ImageJolokiaSecret, cc.Namespace)
+	if err != nil {
+		return err
+	}
 
 	if !labelSet {
 		err = errors.New("operation-argument is needed to get the datacenter name to rebuild from")
@@ -883,10 +887,13 @@ func (rcc *CassandraClusterReconciler) postRunRemove(ctx context.Context, cc *ap
 
 	// We delete the pod that is no longer part of the cluster
 	lostPod, err := rcc.GetPod(ctx, cc.Namespace, podToRemove)
+	if apierrors.IsNotFound(err) {
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
+			"pod": podToRemove}).Info("Pod already deleted")
+		return nil
+	}
 	if err != nil {
-		if !apierrors.IsNotFound(err) {
-			return fmt.Errorf("failed to get pod '%s': %v", podToRemove, err)
-		}
+		return fmt.Errorf("failed to get pod '%s': %w", podToRemove, err)
 	}
 	err = rcc.ForceDeletePod(ctx, lostPod)
 

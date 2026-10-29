@@ -390,6 +390,12 @@ func TestReplicateData(t *testing.T) {
 
 	jolokiaClient, _ := NewJolokiaClient(ctx, host, JolokiaPort, nil,
 		v1.LocalObjectReference{}, "ns")
+	// "dc" is a prefix of dc1 and dc2 but is not a datacenter: no keyspace must match
+	if noData, err := jolokiaClient.NonLocalKeyspacesInDC("dc"); err != nil || len(noData) != 0 {
+		t.Errorf("expected no keyspace with data in unknown dc, got %v (err: %v)", noData, err)
+	}
+	keyspacesDescribed = []string{}
+
 	keyspacesWithData, err := jolokiaClient.NonLocalKeyspacesInDC("dc2")
 
 	if err != nil {
