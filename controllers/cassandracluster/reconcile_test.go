@@ -866,3 +866,18 @@ func TestProcessingPods(t *testing.T) {
 	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIp, HostId: dc2Rack10HostId}
 	assert.True(t, returnedPod == nil)
 }
+
+func TestCheckNonAllowedChangesNewDCWithSmallerCapacity(t *testing.T) {
+	assert := assert.New(t)
+	rcc, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
+	status := cc.Status.DeepCopy()
+	rcc.updateCassandraStatus(ctx, cc, status)
+
+	// A new DC is not in the previous CRD: refusing its downsized capacity must not panic
+	cc.Spec.Topology.DC = append(cc.Spec.Topology.DC, api.DC{Name: "dc3", DataCapacity: "1Gi",
+		DataStorageClass: "fast", Rack: api.RackSlice{{Name: "rack1"}}})
+
+	assert.True(rcc.CheckNonAllowedChanges(ctx, cc, status))
+	assert.Equal("", cc.Spec.Topology.DC[2].DataCapacity)
+	assert.Equal("", cc.Spec.Topology.DC[2].DataStorageClass)
+}
