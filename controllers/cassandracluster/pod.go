@@ -89,15 +89,6 @@ func sortPodsList(items []v1.Pod) {
 	})
 }
 
-// GetFirstPod returns the first pod satisfying the selector and being in the namespace
-func (rcc *CassandraClusterReconciler) GetFirstPod(ctx context.Context, namespace string, selector map[string]string) (*v1.Pod, error) {
-	podsList, err := rcc.ListPods(ctx, namespace, selector)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get cassandra's pods: %v", err)
-	}
-	return GetLastOrFirstPod(podsList, first)
-}
-
 // GetLastPod returns the last pod satisfying the selector and being in the namespace
 func (rcc *CassandraClusterReconciler) GetLastPod(ctx context.Context, namespace string, selector map[string]string) (*v1.Pod, error) {
 	podsList, err := rcc.ListPods(ctx, namespace, selector)

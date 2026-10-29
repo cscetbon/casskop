@@ -474,7 +474,7 @@ func (cc *CassandraCluster) initDefaultRack(dcName string) {
 
 // GetDataCapacityForDCName sends back the data capacity of cassandra nodes for the given dcName
 func (cc *CassandraCluster) GetDataCapacityForDCName(dcName DcName) string {
-	if dc := cc.getDCFromIndex(cc.GetDCIndexFromDCName(dcName.String())); dc != nil && dc.DataCapacity != "" {
+	if dc := cc.getDCFromName(dcName.String()); dc != nil && dc.DataCapacity != "" {
 		return dc.DataCapacity
 	}
 	return cc.Spec.DataCapacity
@@ -482,7 +482,7 @@ func (cc *CassandraCluster) GetDataCapacityForDCName(dcName DcName) string {
 
 // GetDataStorageClassForDCName sends back the data storage class of cassandra nodes for the given dcName
 func (cc *CassandraCluster) GetDataStorageClassForDCName(dcName DcName) string {
-	if dc := cc.getDCFromIndex(cc.GetDCIndexFromDCName(dcName.String())); dc != nil && dc.DataCapacity != "" {
+	if dc := cc.getDCFromName(dcName.String()); dc != nil && dc.DataCapacity != "" {
 		return dc.DataStorageClass
 	}
 	return cc.Spec.DataStorageClass
@@ -505,10 +505,14 @@ func (cc *CassandraCluster) getDCFromIndex(dc int) *DC {
 	return &cc.Spec.Topology.DC[dc]
 }
 
+// getDCFromName send DC for the given name
+func (cc *CassandraCluster) getDCFromName(dcName string) *DC {
+	return cc.getDCFromIndex(cc.GetDCIndexFromDCName(dcName))
+}
+
 // Get DC by one of its rack name
 func (cc *CassandraCluster) GetDCFromDCRackName(dcRackName string) *DC {
-	index := cc.GetDCIndexFromDCName(cc.GetDCNameFromDCRackName(dcRackName))
-	return cc.getDCFromIndex(index)
+	return cc.getDCFromName(cc.GetDCNameFromDCRackName(dcRackName))
 }
 
 // Get Rack by its rack name
@@ -534,28 +538,6 @@ func (cc *CassandraCluster) GetNodesPerRacks(dcRackName string) int32 {
 // GetNodesPerRacks sends back the number of cassandra nodes to uses for this strongly-typed dc-rack
 func (cc *CassandraCluster) GetNodesPerRacksStrongType(dcRackName DcRackName) int32 {
 	return cc.GetNodesPerRacks(dcRackName.String())
-}
-
-// GetDCRackNames returns the dc-rack names of the topology
-func (cc *CassandraCluster) GetDCRackNames() []string {
-	dcsize := cc.GetDCSize()
-
-	var dcRackNames = []string{}
-	if dcsize < 1 {
-		return dcRackNames
-	}
-	for dc := range dcsize {
-		dcName := cc.GetDCName(dc)
-		racksize := cc.GetRackSize(dc)
-		if racksize < 1 {
-			return dcRackNames
-		}
-		for rack := range racksize {
-			rackName := cc.GetRackName(dc, rack)
-			dcRackNames = append(dcRackNames, cc.GetDCRackName(dcName, rackName))
-		}
-	}
-	return dcRackNames
 }
 
 // findRackIndexes returns the dc and rack indexes of dcRackName in the topology
