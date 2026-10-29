@@ -126,7 +126,7 @@ func (rcc *CassandraClusterReconciler) handlePodOperation(ctx context.Context, c
 		// && status.LastClusterAction == api.ActionScaleUp {
 
 		// Finalize operations that are done
-		rcc.finalizeOperations(ctx, cc)
+		rcc.finalizeOperations(ctx, cc, status)
 
 		// We run approximately a different operation each time
 		rcc.ensureOperation(ctx, cc, dcName, rackName, status, randomPodOperationKey())
@@ -295,11 +295,12 @@ func (rcc *CassandraClusterReconciler) ensureOperation(ctx context.Context, cc *
 	}
 }
 
-func (rcc *CassandraClusterReconciler) finalizeOperations(ctx context.Context, cc *api.CassandraCluster) {
+func (rcc *CassandraClusterReconciler) finalizeOperations(ctx context.Context, cc *api.CassandraCluster,
+	status *api.CassandraClusterStatus) {
 	// Finalize all operations here to avoid update conflicts
 	for range len(chanRunningOp) {
 		op := <-chanRunningOp
-		rcc.finalizeOperation(ctx, op.err, cc, op.dcRackName, op.pod, &rcc.cc.Status,
+		rcc.finalizeOperation(ctx, op.err, cc, op.dcRackName, op.pod, status,
 			title(op.operationName))
 	}
 }
@@ -661,9 +662,10 @@ func (rcc *CassandraClusterReconciler) finalizeOperation(ctx context.Context, er
 	rcc.updatePodLastOperation(cc.Name, dcRackName, pod.Name, title(operationName), status, err)
 
 	for {
-		if err = rcc.UpdatePodLabel(ctx, &pod, labels); err != nil {
+		if err = rcc.UpdatePodLabel(ctx, &pod, labels); err != nil && !apierrors.IsNotFound(err) {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 				"labels": labels, "error": err}).Error("Can't update labels")
+			time.Sleep(retryInterval())
 			continue
 		}
 		if err = rcc.updateCassandraStatus(ctx, ccRefreshed, status); err == nil {
@@ -732,7 +734,10 @@ func (rcc *CassandraClusterReconciler) runRebuild(ctx context.Context, hostName 
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 		"hostName": hostName, "operation": operation}).Info("Operation start")
 
-	jolokiaClient, _ := NewJolokiaClient(ctx, hostName, JolokiaPort, rcc, cc.Spec.ImageJolokiaSecret, cc.Namespace)
+	jolokiaClient, err := NewJolokiaClient(ctx, hostName, JolokiaPort, rcc, cc.Spec.ImageJolokiaSecret, cc.Namespace)
+	if err != nil {
+		return err
+	}
 
 	if !labelSet {
 		err = errors.New("operation-argument is needed to get the datacenter name to rebuild from")
@@ -883,10 +888,13 @@ func (rcc *CassandraClusterReconciler) postRunRemove(ctx context.Context, cc *ap
 
 	// We delete the pod that is no longer part of the cluster
 	lostPod, err := rcc.GetPod(ctx, cc.Namespace, podToRemove)
+	if apierrors.IsNotFound(err) {
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
+			"pod": podToRemove}).Info("Pod already deleted")
+		return nil
+	}
 	if err != nil {
-		if !apierrors.IsNotFound(err) {
-			return fmt.Errorf("failed to get pod '%s': %v", podToRemove, err)
-		}
+		return fmt.Errorf("failed to get pod '%s': %w", podToRemove, err)
 	}
 	err = rcc.ForceDeletePod(ctx, lostPod)
 
