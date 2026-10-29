@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	"time"
 )
@@ -74,17 +75,19 @@ func NewController(clusters Clusters, namespace string) (*controller.Controller,
 	return co, nil
 }
 
+const multiCasskopFinalizer = "kubernetes.io/multi-casskop"
+
 func (r *reconciler) preventClusterDeletion(value bool) {
 	if value {
-		r.cmc.SetFinalizers([]string{"kubernetes.io/multi-casskop"})
+		controllerutil.AddFinalizer(r.cmc, multiCasskopFinalizer)
 		return
 	}
-	r.cmc.SetFinalizers([]string{})
+	controllerutil.RemoveFinalizer(r.cmc, multiCasskopFinalizer)
 }
 func (r *reconciler) updateDeletetrategy() bool {
 
 	// Add Finalizer if DeleteCassandraCluster is enabled so that we can delete CassandraCluster
-	if *r.cmc.Spec.DeleteCassandraCluster && len(r.cmc.Finalizers) == 0 {
+	if r.cmc.Spec.DeleteCassandraCluster != nil && *r.cmc.Spec.DeleteCassandraCluster && len(r.cmc.Finalizers) == 0 {
 		logrus.WithFields(logrus.Fields{"cluster": r.cmc.Name}).Info(
 			"updateDeletetrategy: Will delete CassandraClusters when MultiCasskop is removed")
 		r.preventClusterDeletion(true)
@@ -99,7 +102,7 @@ func (r *reconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) 
 	requeue := reconcile.Result{Requeue: true}
 	forget := reconcile.Result{}
 
-	if req.Namespace != r.namespace {
+	if r.namespace != "" && req.Namespace != r.namespace {
 		logrus.Warningf("We don't watch the object in this namespace %s/%s", req.Name, req.Namespace)
 		return forget, nil
 	}
@@ -138,7 +141,11 @@ func (r *reconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) 
 
 		// If deletion is asked
 		if r.cmc.DeletionTimestamp != nil {
-			r.deleteCassandraCluster(client, cc)
+			if err := r.deleteCassandraCluster(client, cc); err != nil {
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "namespace": cc.Namespace,
+					"kubernetes": client.Name}).Errorf("error deleting CassandraCluster, keeping the finalizer: %v", err)
+				return requeue5, err
+			}
 			continue
 		}
 
@@ -187,7 +194,11 @@ func (r *reconciler) computeCassandraClusterForContext(client *Client) (bool, *c
 	base := r.cmc.Spec.Base.DeepCopy()
 	for cmcclName, override := range r.cmc.Spec.Override {
 		if client.Name == cmcclName {
-			mergo.Merge(base, override, mergo.WithOverride)
+			if err := mergo.Merge(base, override, mergo.WithOverride); err != nil {
+				logrus.WithFields(logrus.Fields{"cluster": r.cmc.Name, "kubernetes": client.Name}).
+					Errorf("cannot apply the override: %v", err)
+				return false, nil
+			}
 			//Force default values if missing
 			base.CheckDefaults()
 			return true, base
