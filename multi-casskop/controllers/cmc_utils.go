@@ -26,6 +26,9 @@ func (r *reconciler) CreateOrUpdateCassandraCluster(client *Client,
 	cc *ccv1.CassandraCluster) (bool, *ccv1.CassandraCluster, error) {
 	storedCC := &ccv1.CassandraCluster{}
 
+	//Multi-CassKop manages the Seedlist, we ensure that managed Casskop won't deal with it
+	cc.Spec.AutoUpdateSeedList = false
+
 	if err := client.Client.Get(context.TODO(), r.namespacedName(cc.Name, cc.Namespace), storedCC); err != nil {
 		if errors.IsNotFound(err) {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "namespace": cc.Namespace,
@@ -60,22 +63,27 @@ func (r *reconciler) CreateOrUpdateCassandraCluster(client *Client,
 		needUpdate = true
 	}
 
-	//Multi-CassKop manages the Seedlist, we ensure that managed Casskop won't deal with it
-	cc.Spec.AutoUpdateSeedList = false
-
-	if cc.Status.SeedList != nil &&
-		!apiequality.Semantic.DeepEqual(storedCC.Status.SeedList, cc.Status.SeedList) {
+	seedListChanged := cc.Status.SeedList != nil &&
+		!apiequality.Semantic.DeepEqual(storedCC.Status.SeedList, cc.Status.SeedList)
+	if seedListChanged {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "namespace": cc.Namespace, "kubernetes": client.Name}).
 			Info("SeedList is different: " + pretty.Compare(storedCC.Status.SeedList, cc.Status.SeedList))
-		storedCC.Status.SeedList = cc.Status.SeedList
-		needUpdate = true
 	}
 
 	if needUpdate {
 		newCC, err := r.UpdateCassandraCluster(client, storedCC)
-		return true, newCC, err
+		if err != nil {
+			return true, newCC, err
+		}
+		storedCC = newCC
 	}
-	return false, storedCC, nil
+	if seedListChanged {
+		// The seed list is part of the status subresource and is ignored by a regular Update
+		storedCC.Status.SeedList = cc.Status.SeedList
+		err := client.Client.Status().Update(context.TODO(), storedCC)
+		return true, storedCC, err
+	}
+	return needUpdate, storedCC, nil
 }
 
 func UnsetRollingRestart(storedCC *ccv1.CassandraCluster) {

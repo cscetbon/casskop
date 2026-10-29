@@ -280,7 +280,7 @@ func (rcc *CassandraClusterReconciler) ensureOperation(ctx context.Context, cc *
 		hostName := k8s.PodHostname(pod)
 		// We check if an operation is running
 		if checkOnly {
-			go rcc.monitorOperation(ctx, hostName, cc, dcRackName, pod, operationName)
+			go rcc.monitorOperation(ctx, hostName, cc.DeepCopy(), dcRackName, pod, operationName)
 			continue
 		}
 		// Add the operatorName to the last pod operation in case the operator pod is replaced
@@ -291,7 +291,7 @@ func (rcc *CassandraClusterReconciler) ensureOperation(ctx context.Context, cc *
 				"pod": pod.Name, "err": err}).Debug("Failed to start operation on pod")
 			continue
 		}
-		go rcc.runOperation(ctx, operationName, hostName, cc, dcRackName, pod, status)
+		go rcc.runOperation(ctx, operationName, hostName, cc.DeepCopy(), dcRackName, pod, status)
 	}
 }
 
@@ -520,15 +520,16 @@ func (rcc *CassandraClusterReconciler) ensureDecommissionToDo(ctx context.Contex
 
 	logrus.WithFields(logrusFields).Debug("Decommissioning cassandra node")
 
-	go func() {
-		logrus.WithFields(logrusFields).Debug("Node decommission starts")
-		err = jolokiaClient.NodeDecommission(cc.Spec.ServerVersion >= "4.0")
-		logrus.WithFields(logrusFields).Debug("Node decommission ended")
+	isCassandra4 := cc.Spec.ServerVersion >= "4.0"
+	go func(fields logrus.Fields) {
+		logrus.WithFields(fields).Debug("Node decommission starts")
+		err := jolokiaClient.NodeDecommission(isCassandra4)
+		logrus.WithFields(fields).Debug("Node decommission ended")
 		if err != nil {
-			logrusFields["err"] = err
-			logrus.WithFields(logrusFields).Debug("Node decommission failed")
+			fields["err"] = err
+			logrus.WithFields(fields).Debug("Node decommission failed")
 		}
-	}()
+	}(maps.Clone(logrusFields))
 
 	return breakResyncLoop, nil
 }
@@ -657,8 +658,6 @@ func (rcc *CassandraClusterReconciler) finalizeOperation(ctx context.Context, er
 		labels["operation-status"] = api.StatusError
 	}
 
-	ccRefreshed := cc.DeepCopy()
-
 	rcc.updatePodLastOperation(cc.Name, dcRackName, pod.Name, title(operationName), status, err)
 
 	for {
@@ -668,12 +667,12 @@ func (rcc *CassandraClusterReconciler) finalizeOperation(ctx context.Context, er
 			time.Sleep(retryInterval())
 			continue
 		}
-		if err = rcc.updateCassandraStatus(ctx, ccRefreshed, status); err == nil {
+		if err = rcc.updateCassandraStatus(ctx, cc, status); err == nil {
 			break
 		}
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 			"status": status, "error": err}).Debug("Got an error. Getting a new version of Cassandra Cluster")
-		if rcc.Client.Get(ctx, types.NamespacedName{Name: cc.Name, Namespace: cc.Namespace}, ccRefreshed) == nil {
+		if rcc.Client.Get(ctx, types.NamespacedName{Name: cc.Name, Namespace: cc.Namespace}, cc) == nil {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 				"status": status}).Debug("Got a new version of Cassandra Cluster")
 			continue

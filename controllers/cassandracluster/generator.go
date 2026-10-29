@@ -284,10 +284,6 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 
 	volumes = RemoveDuplicateVolumesAndVolumeMounts(containers, volumeClaimTemplate, volumes)
 
-	for _, pvc := range volumeClaimTemplate {
-		k8s.AddOwnerRefToObject(&pvc, k8s.AsOwner(cc))
-	}
-
 	nodeAffinity := createNodeAffinity(nodeSelector)
 	nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
 	rollingPartition := cc.GetRollingPartitionPerRacks(dcRackName)

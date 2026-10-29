@@ -59,12 +59,12 @@ func (rcc *CassandraClusterReconciler) updateCassandraStatus(ctx context.Context
 	//make also deepcopy to avoid pointer conflict
 	cc.Annotations[api.AnnotationLastApplied] = string(lastApplied)
 
-	err := rcc.Client.Update(ctx, cc)
-	if err != nil {
+	if err := rcc.Client.Update(ctx, cc); err != nil {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "err": err}).Errorf("Issue when updating CassandraCluster")
+		return err
 	}
 	cc.Status = *status.DeepCopy()
-	err = rcc.Client.Status().Update(ctx, cc)
+	err := rcc.Client.Status().Update(ctx, cc)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "err": err}).Errorf("Issue when updating CassandraCluster Status")
 	}
@@ -389,8 +389,8 @@ func (rcc *CassandraClusterReconciler) UpdateStatusIfActionEnded(ctx context.Con
 		case api.ActionScaleDown.Name:
 
 			if nodesPerRacks == storedStatefulSet.Status.Replicas {
-				if cc.Status.GetCassandraRackStatus(completeDcRackName.DcRackName).PodLastOperation.Name == api.OperationDecommission &&
-					cc.Status.GetCassandraRackStatus(completeDcRackName.DcRackName).PodLastOperation.Status == api.StatusDone {
+				if podLastOperation := status.GetCassandraRackStatus(completeDcRackName.DcRackName).PodLastOperation; podLastOperation.Name == api.OperationDecommission &&
+					podLastOperation.Status == api.StatusDone {
 					logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": completeDcRackName.DcRackName}).Info("ScaleDown is Done")
 					rackLastAction.Status = api.StatusDone
 					rackLastAction.EndTime = &now

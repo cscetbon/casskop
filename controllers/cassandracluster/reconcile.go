@@ -828,11 +828,10 @@ func EnsureSeedListIsUpdatedWhenRequired(cc *api.CassandraCluster, status *api.C
 		for _, rack := range cc.IterateRacks() {
 			dcRackStatus := status.GetCassandraRackStatus(rack.DcRackName)
 
-			if !(dcRackStatus.CassandraLastAction.Name == api.ActionUpdateSeedList.Name &&
-				dcRackStatus.CassandraLastAction.Status == api.StatusConfiguring) {
-				if dcRackStatus.CassandraLastAction.Name != api.ClusterPhaseInitial.Name {
-					setOperationToDo = false
-				}
+			configuringSeedList := dcRackStatus.CassandraLastAction.Name == api.ActionUpdateSeedList.Name &&
+				dcRackStatus.CassandraLastAction.Status == api.StatusConfiguring
+			if !configuringSeedList && dcRackStatus.CassandraLastAction.Name != api.ClusterPhaseInitial.Name {
+				setOperationToDo = false
 				break
 			}
 		}
