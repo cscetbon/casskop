@@ -38,10 +38,7 @@ func (rcc *CassandraClusterReconciler) GetPodDisruptionBudget(ctx context.Contex
 func (rcc *CassandraClusterReconciler) CreatePodDisruptionBudget(ctx context.Context, pdb *policyv1.PodDisruptionBudget) error {
 	err := rcc.Client.Create(ctx, pdb)
 	if err != nil {
-		if !apierrors.IsAlreadyExists(err) {
-			return fmt.Errorf("PodDisruptionBudget already exists: %cc", err)
-		}
-		return fmt.Errorf("failed to create cassandra PodDisruptionBudget: %cc", err)
+		return fmt.Errorf("failed to create cassandra PodDisruptionBudget: %w", err)
 	}
 	return nil
 }
@@ -50,7 +47,7 @@ func (rcc *CassandraClusterReconciler) CreatePodDisruptionBudget(ctx context.Con
 func (rcc *CassandraClusterReconciler) DeletePodDisruptionBudget(ctx context.Context, pdb *policyv1.PodDisruptionBudget) error {
 	err := rcc.Client.Delete(ctx, pdb)
 	if err != nil {
-		return fmt.Errorf("failed to delete cassandra PodDisruptionBudget: %cc", err)
+		return fmt.Errorf("failed to delete cassandra PodDisruptionBudget: %w", err)
 	}
 	return nil
 }
@@ -59,10 +56,7 @@ func (rcc *CassandraClusterReconciler) DeletePodDisruptionBudget(ctx context.Con
 func (rcc *CassandraClusterReconciler) UpdatePodDisruptionBudget(ctx context.Context, pdb *policyv1.PodDisruptionBudget) error {
 	err := rcc.Client.Update(ctx, pdb)
 	if err != nil {
-		if !apierrors.IsAlreadyExists(err) {
-			return fmt.Errorf("PodDisruptionBudget already exists: %cc", err)
-		}
-		return fmt.Errorf("failed to update cassandra PodDisruptionBudget: %cc", err)
+		return fmt.Errorf("failed to update cassandra PodDisruptionBudget: %w", err)
 	}
 	return nil
 }
