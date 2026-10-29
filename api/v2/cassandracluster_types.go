@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -113,64 +114,29 @@ const (
 func (cc *CassandraCluster) CheckDefaults() {
 	ccs := &cc.Spec
 
-	if len(ccs.CassandraImage) == 0 {
-		ccs.CassandraImage = defaultCassandraImage
-	}
-
-	if len(ccs.ImagePullPolicy) == 0 {
-		ccs.ImagePullPolicy = defaultImagePullPolicy
-	}
-
-	if len(ccs.BootstrapImage) == 0 {
-		ccs.BootstrapImage = defaultBootstrapImage
-	}
-
-	if len(ccs.ConfigBuilderImage) == 0 {
-		ccs.ConfigBuilderImage = defaultConfigBuilderImage
-	}
-
-	if len(ccs.ServiceAccountName) == 0 {
-		ccs.ServiceAccountName = defaultServiceAccountName
-	}
-
-	if ccs.ReadOnlyRootFilesystem == nil {
-		ccs.ReadOnlyRootFilesystem = new(true)
-	}
+	ccs.CassandraImage = cmp.Or(ccs.CassandraImage, defaultCassandraImage)
+	ccs.ImagePullPolicy = cmp.Or(ccs.ImagePullPolicy, defaultImagePullPolicy)
+	ccs.BootstrapImage = cmp.Or(ccs.BootstrapImage, defaultBootstrapImage)
+	ccs.ConfigBuilderImage = cmp.Or(ccs.ConfigBuilderImage, defaultConfigBuilderImage)
+	ccs.ServiceAccountName = cmp.Or(ccs.ServiceAccountName, defaultServiceAccountName)
+	ccs.ReadOnlyRootFilesystem = cmp.Or(ccs.ReadOnlyRootFilesystem, new(true))
 
 	// LivenessProbe dynamic config
-	if ccs.LivenessInitialDelaySeconds == nil {
-		ccs.LivenessInitialDelaySeconds = new(DefaultLivenessInitialDelaySeconds)
-	}
-	if ccs.LivenessHealthCheckTimeout == nil {
-		ccs.LivenessHealthCheckTimeout = new(DefaultLivenessHealthCheckTimeout)
-	}
-	if ccs.LivenessHealthCheckPeriod == nil {
-		ccs.LivenessHealthCheckPeriod = new(DefaultLivenessHealthCheckPeriod)
-	}
+	ccs.LivenessInitialDelaySeconds = cmp.Or(ccs.LivenessInitialDelaySeconds, new(DefaultLivenessInitialDelaySeconds))
+	ccs.LivenessHealthCheckTimeout = cmp.Or(ccs.LivenessHealthCheckTimeout, new(DefaultLivenessHealthCheckTimeout))
+	ccs.LivenessHealthCheckPeriod = cmp.Or(ccs.LivenessHealthCheckPeriod, new(DefaultLivenessHealthCheckPeriod))
 
 	// ReadinessProbe dynamic config
-	if ccs.ReadinessInitialDelaySeconds == nil {
-		ccs.ReadinessInitialDelaySeconds = new(DefaultReadinessInitialDelaySeconds)
-	}
-	if ccs.ReadinessHealthCheckTimeout == nil {
-		ccs.ReadinessHealthCheckTimeout = new(DefaultReadinessHealthCheckTimeout)
-	}
-	if ccs.ReadinessHealthCheckPeriod == nil {
-		ccs.ReadinessHealthCheckPeriod = new(DefaultReadinessHealthCheckPeriod)
-	}
+	ccs.ReadinessInitialDelaySeconds = cmp.Or(ccs.ReadinessInitialDelaySeconds, new(DefaultReadinessInitialDelaySeconds))
+	ccs.ReadinessHealthCheckTimeout = cmp.Or(ccs.ReadinessHealthCheckTimeout, new(DefaultReadinessHealthCheckTimeout))
+	ccs.ReadinessHealthCheckPeriod = cmp.Or(ccs.ReadinessHealthCheckPeriod, new(DefaultReadinessHealthCheckPeriod))
 
 	// BackupRestore default config
-	enabled := true
 	if ccs.BackRestSidecar == nil {
-		ccs.BackRestSidecar = &BackRestSidecar{Enabled: &enabled, Image: DefaultBackRestImage}
-	} else {
-		if ccs.BackRestSidecar.Enabled == nil {
-			ccs.BackRestSidecar.Enabled = &enabled
-		}
-		if ccs.BackRestSidecar.Image == "" {
-			ccs.BackRestSidecar.Image = DefaultBackRestImage
-		}
+		ccs.BackRestSidecar = &BackRestSidecar{}
 	}
+	ccs.BackRestSidecar.Enabled = cmp.Or(ccs.BackRestSidecar.Enabled, new(true))
+	ccs.BackRestSidecar.Image = cmp.Or(ccs.BackRestSidecar.Image, DefaultBackRestImage)
 }
 
 // SetDefaults sets the default values for the cassandra spec and returns true if the spec was changed
@@ -968,25 +934,19 @@ type CassandraRackStatus struct {
 	StatefulSetSnapshotBeforeStorageResize string `json:"statefulSetSnapshotBeforeStorageResize,omitempty"`
 }
 
-func (in *CassandraRackStatus) SetNextPodPerRackInitPhase() {
-	in.CassandraPhase = CassandraPhase{
+func (in *CassandraPhase) SetNextPodPerRackInitPhase() {
+	*in = CassandraPhase{
 		Phase:                ClusterPhaseInitial.Name,
 		InitializingSubPhase: new(ClusterPhaseInitialSubPhaseNextPodPerRack),
 	}
 }
 
-func (in *CassandraRackStatus) SetPendingPhase() {
-	in.CassandraPhase = CassandraPhase{
-		Phase:                ClusterPhasePending.Name,
-		InitializingSubPhase: nil,
-	}
+func (in *CassandraPhase) SetPendingPhase() {
+	*in = CassandraPhase{Phase: ClusterPhasePending.Name}
 }
 
-func (in *CassandraRackStatus) SetRunningPhase() {
-	in.CassandraPhase = CassandraPhase{
-		Phase:                ClusterPhaseRunning.Name,
-		InitializingSubPhase: nil,
-	}
+func (in *CassandraPhase) SetRunningPhase() {
+	*in = CassandraPhase{Phase: ClusterPhaseRunning.Name}
 }
 
 // CassandraClusterStatus defines Global state of CassandraCluster
@@ -1012,20 +972,6 @@ type CassandraClusterStatus struct {
 
 func (in *CassandraClusterStatus) SetClusterPhaseFromRackPhase(rackStatus *CassandraRackStatus) {
 	in.CassandraPhase = *rackStatus.CassandraPhase.DeepCopy()
-}
-
-func (in *CassandraClusterStatus) SetNextPodPerRackInitPhase() {
-	in.CassandraPhase = CassandraPhase{
-		Phase:                ClusterPhaseInitial.Name,
-		InitializingSubPhase: new(ClusterPhaseInitialSubPhaseNextPodPerRack),
-	}
-}
-
-func (in *CassandraClusterStatus) SetRunningPhase() {
-	in.CassandraPhase = CassandraPhase{
-		Phase:                ClusterPhaseRunning.Name,
-		InitializingSubPhase: nil,
-	}
 }
 
 func (in *CassandraClusterStatus) HasRackPhaseChanged(dcRackName DcRackName, cassandraPhase CassandraPhase) bool {
