@@ -233,8 +233,6 @@ github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD
 github.com/swarvanusg/go_jolokia v0.0.0-20190213021437-3cd2b3fc4f36 h1:ePA8jiIU9AWpv9jQFjA3iokytYoqLs/QPgKXHl2CGAI=
 github.com/swarvanusg/go_jolokia v0.0.0-20190213021437-3cd2b3fc4f36/go.mod h1:L3LcER9PmnZhT1zT0ZMiJP7S8SKOKa5HefyyOj/5byg=
 github.com/syndtr/goleveldb v0.0.0-20181127023241-353a9fca669c/go.mod h1:Z4AUp2Km+PwemOoO/VB5AOx9XSsIItzFjoJlOSiYmn0=
-github.com/thoas/go-funk v0.4.0 h1:KBaa5NL7NMtsFlQaD8nQMbDt1wuM+OOaNQyYNYQFhVo=
-github.com/thoas/go-funk v0.4.0/go.mod h1:mlR+dHGb+4YgXkf13rkQTuzrneeHANxOm6+ZnEV9HsA=
 github.com/ugorji/go v1.1.4/go.mod h1:uQMGLiO92mf5W77hV/PUCpI3pbzQx3CRekS0kk+RGrc=
 github.com/wendal/errors v0.0.0-20130201093226-f66c77a7882b/go.mod h1:Q12BUT7DqIlHRmgv3RskH+UCM/4eqVMgI0EMmlSpAXc=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=

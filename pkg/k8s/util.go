@@ -75,29 +75,27 @@ func LabelsForCassandra(cc *api.CassandraCluster) map[string]string {
 }
 
 func RemoveString(s []string, r string) []string {
-	for i, v := range s {
-		if v == r {
-			return append(s[:i], s[i+1:]...)
-		}
+	if i := slices.Index(s, r); i >= 0 {
+		return slices.Delete(s, i, i+1)
 	}
 	return s
 }
 
 // MergeSlice will add ad the end of old any elements of new which is missing
 // we want to keep the order of elements in old
-func MergeSlice(old []string, new []string) []string {
+func MergeSlice(old []string, newer []string) []string {
 	var result []string
 
-	//result start from old but we don't add if elem don't exists in new
+	//result start from old but we don't add if elem don't exists in newer
 	for i := range old {
-		if slices.Contains(new, old[i]) {
+		if slices.Contains(newer, old[i]) {
 			result = append(result, old[i])
 		}
 	}
-	//Do we need to add more elements from new ?
-	for i := range new {
-		if !slices.Contains(old, new[i]) {
-			result = append(result, new[i])
+	//Do we need to add more elements from newer ?
+	for i := range newer {
+		if !slices.Contains(old, newer[i]) {
+			result = append(result, newer[i])
 		}
 	}
 
@@ -116,13 +114,12 @@ func MergeLabels(allLabels ...map[string]string) map[string]string {
 
 // asOwner returns an owner reference set as the cassandra cluster CRD
 func AsOwner(cc *api.CassandraCluster) metav1.OwnerReference {
-	trueVar := true
 	return metav1.OwnerReference{
 		APIVersion: api.GroupVersion.String(),
 		Kind:       "CassandraCluster",
 		Name:       cc.Name,
 		UID:        cc.UID,
-		Controller: &trueVar,
+		Controller: new(true),
 	}
 }
 

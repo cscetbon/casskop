@@ -18,12 +18,12 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"slices"
 
 	"context"
 
 	"github.com/sirupsen/logrus"
 	"github.com/swarvanusg/go_jolokia"
-	funk "github.com/thoas/go-funk"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -157,7 +157,7 @@ func (jolokiaClient *JolokiaClient) nonLocalKeyspaces() ([]string, error) {
 	}
 	nonLocalKeyspaces := []string{}
 	for _, keyspace := range keyspaces {
-		if !funk.Contains(localSystemKeyspaces, keyspace) {
+		if !slices.Contains(localSystemKeyspaces, keyspace) {
 			nonLocalKeyspaces = append(nonLocalKeyspaces, keyspace)
 		}
 	}

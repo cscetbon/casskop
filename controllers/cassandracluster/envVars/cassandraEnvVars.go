@@ -64,8 +64,9 @@ func deduplicateMerge(envVarSlices ...[]v1.EnvVar) []v1.EnvVar {
 	result := make(map[string]v1.EnvVar)
 
 	for _, slice := range envVarSlices {
-		envVarMap := toMap(slice)
-		maps.Copy(result, envVarMap)
+		for _, env := range slice {
+			result[env.Name] = env
+		}
 	}
 
 	envVars := slices.Collect(maps.Values(result))
@@ -74,14 +75,6 @@ func deduplicateMerge(envVarSlices ...[]v1.EnvVar) []v1.EnvVar {
 		return strings.Compare(a.Name, b.Name)
 	})
 	return envVars
-}
-
-func toMap(slice []v1.EnvVar) map[string]v1.EnvVar {
-	result := make(map[string]v1.EnvVar)
-	for _, env := range slice {
-		result[env.Name] = env
-	}
-	return result
 }
 
 func baseCassandraEnvVars(cc *api.CassandraCluster, status *api.CassandraClusterStatus) []v1.EnvVar {

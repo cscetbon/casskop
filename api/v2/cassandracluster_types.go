@@ -231,9 +231,8 @@ func (cc *CassandraCluster) GetDCSize() int {
 }
 
 func (cc *CassandraCluster) GetDCRackSize() int {
-	var nb int = 0
-	dcsize := cc.GetDCSize()
-	for dc := range dcsize {
+	nb := 0
+	for dc := range cc.GetDCSize() {
 		nb += cc.GetRackSize(dc)
 	}
 	return nb
@@ -531,12 +530,7 @@ func (cc *CassandraCluster) GetDataStorageClassFromDCName(dcName string) string 
 }
 
 func (cc *CassandraCluster) GetDCIndexFromDCName(dcName string) int {
-	dcSize := cc.GetDCSize()
-	if dcSize < 1 {
-		return -1
-	}
-
-	for dc := range dcSize {
+	for dc := range cc.GetDCSize() {
 		if dcName == cc.GetDCName(dc) {
 			return dc
 		}
@@ -603,48 +597,35 @@ func (cc *CassandraCluster) GetDCRackNames() []string {
 	return dcRackNames
 }
 
-// GetDCNodesPerRacksFromDCRackName send NodesPerRack used for the given dcRackName
-func (cc *CassandraCluster) GetDCNodesPerRacksFromDCRackName(dcRackName string) int32 {
-	dcsize := cc.GetDCSize()
-
-	if dcsize < 1 {
-		return cc.Spec.NodesPerRacks
-	}
-	for dc := range dcsize {
+// findRackIndexes returns the dc and rack indexes of dcRackName in the topology
+// The search stops at the first DC without racks
+func (cc *CassandraCluster) findRackIndexes(dcRackName string) (int, int, bool) {
+	for dc := range cc.GetDCSize() {
 		dcName := cc.GetDCName(dc)
-		racksize := cc.GetRackSize(dc)
-		if racksize < 1 {
-			return cc.Spec.NodesPerRacks
+		if cc.GetRackSize(dc) < 1 {
+			return 0, 0, false
 		}
-		for rack := range racksize {
-			rackName := cc.GetRackName(dc, rack)
-			if dcRackName == cc.GetDCRackName(dcName, rackName) {
-				return cc.getDCNodesPerRacksFromIndex(dc)
+		for rack := range cc.GetRackSize(dc) {
+			if dcRackName == cc.GetDCRackName(dcName, cc.GetRackName(dc, rack)) {
+				return dc, rack, true
 			}
 		}
+	}
+	return 0, 0, false
+}
+
+// GetDCNodesPerRacksFromDCRackName send NodesPerRack used for the given dcRackName
+func (cc *CassandraCluster) GetDCNodesPerRacksFromDCRackName(dcRackName string) int32 {
+	if dc, _, ok := cc.findRackIndexes(dcRackName); ok {
+		return cc.getDCNodesPerRacksFromIndex(dc)
 	}
 	return cc.Spec.NodesPerRacks
 }
 
 // GetRollingPartitionPerRacks return rollingPartition defined in spec.topology.dc[].rack[].rollingPartition
 func (cc *CassandraCluster) GetRollingPartitionPerRacks(dcRackName string) int32 {
-	dcsize := cc.GetDCSize()
-
-	if dcsize < 1 {
-		return 0
-	}
-	for dc := range dcsize {
-		dcName := cc.GetDCName(dc)
-		racksize := cc.GetRackSize(dc)
-		if racksize < 1 {
-			return 0
-		}
-		for rack := range racksize {
-			rackName := cc.GetRackName(dc, rack)
-			if dcRackName == cc.GetDCRackName(dcName, rackName) {
-				return cc.Spec.Topology.DC[dc].Rack[rack].RollingPartition
-			}
-		}
+	if dc, rack, ok := cc.findRackIndexes(dcRackName); ok {
+		return cc.Spec.Topology.DC[dc].Rack[rack].RollingPartition
 	}
 	return 0
 }
@@ -652,16 +633,8 @@ func (cc *CassandraCluster) GetRollingPartitionPerRacks(dcRackName string) int32
 // GetDCNodesPerRacksFromName send NodesPerRack which is applied for the specified dc name
 // return true if we found, and false if not
 func (cc *CassandraCluster) GetDCNodesPerRacksFromName(dctarget string) (bool, int32) {
-	dcsize := cc.GetDCSize()
-
-	if dcsize < 1 {
-		return false, cc.Spec.NodesPerRacks
-	}
-	for dc := range dcsize {
-		dcName := cc.GetDCName(dc)
-		if dctarget == dcName {
-			return true, cc.getDCNodesPerRacksFromIndex(dc)
-		}
+	if dc := cc.GetDCIndexFromDCName(dctarget); dc >= 0 {
+		return true, cc.getDCNodesPerRacksFromIndex(dc)
 	}
 	return false, cc.Spec.NodesPerRacks
 }
@@ -679,12 +652,7 @@ func (cc *CassandraCluster) FindDCWithNodesTo0() (bool, string, int) {
 
 // IsValidDC returns true if dcName is known
 func (cc *CassandraCluster) IsValidDC(dcName string) bool {
-	for _, dc := range cc.Spec.Topology.DC {
-		if dc.Name == dcName {
-			return true
-		}
-	}
-	return false
+	return cc.GetDCIndexFromDCName(dcName) >= 0
 }
 
 func (in *CassandraCluster) IterateRacks() []CompleteRackName {

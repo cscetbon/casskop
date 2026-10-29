@@ -18,9 +18,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"math/rand/v2"
 	"net"
 	"os"
+	"slices"
 	"strings"
 
 	"time"
@@ -77,14 +79,8 @@ const deletedPvcTimeout = 30 * time.Second
 var chanRunningOp = make(chan finalizedOp, 100)
 
 func randomPodOperationKey() string {
-	r := rand.IntN(len(podOperationMap))
-	for k := range podOperationMap {
-		if r == 0 {
-			return k
-		}
-		r--
-	}
-	return "" // will never happen but make the compiler happy ¯\_(ツ)_/¯
+	keys := slices.Collect(maps.Keys(podOperationMap))
+	return keys[rand.IntN(len(keys))]
 }
 
 func title(s string) string {

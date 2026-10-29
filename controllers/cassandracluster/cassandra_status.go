@@ -154,8 +154,7 @@ func (rcc *CassandraClusterReconciler) getNextCassandraClusterStatus(ctx context
 	}
 
 	if lastAction.Status == api.StatusToDo && lastAction.Name == api.ActionUpdateResources.Name {
-		now := metav1.Now()
-		lastAction.StartTime = &now
+		lastAction.StartTime = new(metav1.Now())
 		lastAction.Status = api.StatusOngoing
 	}
 
@@ -352,8 +351,7 @@ func UpdateStatusIfStatefulSetChanged(dcRackName api.DcRackName, storedStatefulS
 	if storedStatefulSet.Status.CurrentRevision != storedStatefulSet.Status.UpdateRevision {
 		lastAction.Name = api.ActionUpdateStatefulSet.Name
 		lastAction.Status = api.StatusOngoing
-		now := metav1.Now()
-		lastAction.StartTime = &now
+		lastAction.StartTime = new(metav1.Now())
 		lastAction.EndTime = nil
 		return true
 	}
@@ -446,8 +444,7 @@ func (rcc *CassandraClusterReconciler) UpdateStatusIfActionEnded(ctx context.Con
 			if storedStatefulSet.Status.CurrentRevision == storedStatefulSet.Status.UpdateRevision {
 				logrus.Infof("[%s][%s]: Update %s is Done", cc.Name, completeDcRackName.DcRackName, rackLastAction.Name)
 				rackLastAction.Status = api.StatusDone
-				now := metav1.Now()
-				rackLastAction.EndTime = &now
+				rackLastAction.EndTime = new(metav1.Now())
 				return true
 			}
 
@@ -499,8 +496,7 @@ func (rcc *CassandraClusterReconciler) UpdateCassandraRackStatusPhase(ctx contex
 		if cassandrapod.IsReady(&pod) {
 			status.GetCassandraRackStatus(dcRackName).SetRunningPhase()
 			ClusterPhaseMetric.set(api.ClusterPhaseRunning, cc.Name)
-			now := metav1.Now()
-			lastAction.EndTime = &now
+			lastAction.EndTime = new(metav1.Now())
 			lastAction.Status = api.StatusDone
 			logrus.WithFields(logrusFields).Infof("StatefulSet: Replicas count is okay")
 		}

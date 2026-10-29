@@ -98,14 +98,14 @@ func (rcc *CassandraClusterReconciler) UpdateStatefulSet(ctx context.Context, st
 	return nil
 }
 
-func sortPVCs(pvcs *[]v1.PersistentVolumeClaim) {
-	slices.SortFunc(*pvcs, func(a, b v1.PersistentVolumeClaim) int {
+func sortPVCs(pvcs []v1.PersistentVolumeClaim) {
+	slices.SortFunc(pvcs, func(a, b v1.PersistentVolumeClaim) int {
 		return strings.Compare(a.Name, b.Name)
 	})
 }
 
-func sortContainers(containers *[]v1.Container) {
-	slices.SortFunc(*containers, func(a, b v1.Container) int {
+func sortContainers(containers []v1.Container) {
+	slices.SortFunc(containers, func(a, b v1.Container) int {
 		return strings.Compare(a.Name, b.Name)
 	})
 }
@@ -141,11 +141,11 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 		return false
 	}
 
-	sortPVCs(&sts1.Spec.VolumeClaimTemplates)
-	sortPVCs(&sts2.Spec.VolumeClaimTemplates)
+	sortPVCs(sts1.Spec.VolumeClaimTemplates)
+	sortPVCs(sts2.Spec.VolumeClaimTemplates)
 
-	sortContainers(&sts1Spec.Containers)
-	sortContainers(&sts2Spec.Containers)
+	sortContainers(sts1Spec.Containers)
+	sortContainers(sts2Spec.Containers)
 
 	for i := range sts1.Spec.VolumeClaimTemplates {
 		sts2.Spec.VolumeClaimTemplates[i].TypeMeta = sts1.Spec.VolumeClaimTemplates[i].TypeMeta
