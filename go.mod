@@ -22,7 +22,6 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.11.1
 	github.com/swarvanusg/go_jolokia v0.0.0-20190213021437-3cd2b3fc4f36
-	github.com/thoas/go-funk v0.4.0
 	github.com/zput/zxcTool v1.3.6
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.27.0

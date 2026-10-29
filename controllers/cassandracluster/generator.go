@@ -228,8 +228,8 @@ func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]str
 	dcName string) ([]v1.PersistentVolumeClaim, error) {
 
 	var pvc []v1.PersistentVolumeClaim
-	dataCapacity := cc.GetDataCapacityForDC(dcName)
-	dataStorageClass := cc.GetDataStorageClassForDC(dcName)
+	dataCapacity := cc.GetDataCapacityForDCName(api.DcName(dcName))
+	dataStorageClass := cc.GetDataStorageClassForDCName(api.DcName(dcName))
 
 	if dataCapacity == "" {
 		logrus.Warnf("[%s]: No Spec.DataCapacity was specified -> You Cluster WILL NOT HAVE PERSISTENT DATA!!!!!", cc.Name)

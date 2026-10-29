@@ -224,8 +224,7 @@ func (rcc *CassandraClusterReconciler) CheckNonAllowedChanges(ctx context.Contex
 			dcRackStatus.CassandraLastAction.Name = api.ActionUpdateResources.Name
 			ClusterActionMetric.set(api.ActionUpdateResources, cc.Name)
 			dcRackStatus.CassandraLastAction.Status = api.StatusToDo
-			now := metav1.Now()
-			dcRackStatus.CassandraLastAction.StartTime = &now
+			dcRackStatus.CassandraLastAction.StartTime = new(metav1.Now())
 			dcRackStatus.CassandraLastAction.EndTime = nil
 		}
 	}
@@ -238,18 +237,20 @@ func generatePaths(s string) []string {
 }
 
 // lookForFilter checks if filters are found in path and add the information to filtersFound if that's the case
-func lookForFilter(path []string, filters [][]string, filtersFound *map[string]bool) {
+func lookForFilter(path []string, filters [][]string, filtersFound map[string]bool) {
 	for _, filter := range filters {
-		if 2*len(filter)+1 == len(path) {
-			var b strings.Builder
-			b.WriteString(path[0])
-			for i := 2; i < len(path)-1; i += 2 {
-				b.WriteString(".")
-				b.WriteString(path[i])
+		if 2*len(filter)+1 != len(path) {
+			continue
+		}
+		matches := true
+		for i, f := range filter {
+			if path[2*i] != f {
+				matches = false
+				break
 			}
-			if currentPath := b.String(); currentPath == strings.Join(filter, ".") {
-				(*filtersFound)[currentPath] = true
-			}
+		}
+		if matches {
+			filtersFound[strings.Join(filter, ".")] = true
 		}
 	}
 }
@@ -293,10 +294,10 @@ func hasChange(changelog diff.Changelog, changeType string, paths ...string) boo
 			}
 
 			// We look for all matching filters
-			lookForFilter(cl.Path, includeFilters, &includedFiltersFound)
+			lookForFilter(cl.Path, includeFilters, includedFiltersFound)
 
 			// We look for all excluding filters
-			lookForFilter(cl.Path, excludeFilters, &excludedFiltersFound)
+			lookForFilter(cl.Path, excludeFilters, excludedFiltersFound)
 
 			if len(includedFiltersFound) == len(includeFilters) && len(excludedFiltersFound) == 0 {
 				return true

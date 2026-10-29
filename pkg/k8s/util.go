@@ -29,6 +29,11 @@ import (
 	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	dcLabelKey   = "cassandraclusters.db.orange.com.dc"
+	rackLabelKey = "cassandraclusters.db.orange.com.rack"
+)
+
 // Regex to extract date from label
 var ReLabelTime = regexp.MustCompile(`(?P<y>\d{4})(?P<m>\d{2})(?P<d>\d{2})T(?P<hh>\d{2})(?P<mm>\d{2})(?P<ss>\d{2})`)
 
@@ -44,26 +49,19 @@ func LabelsForCassandraDCRackStrongTypes(cc *api.CassandraCluster, dcName api.Dc
 // labelsForCassandra returns the labels for selecting the resources
 // belonging to the given name.
 func LabelsForCassandraDCRack(cc *api.CassandraCluster, dcName string, rackName string) map[string]string {
-	m := map[string]string{
-		"app":                                  "cassandracluster",
-		"cassandracluster":                     cc.GetName(),
-		"dc-rack":                              cc.GetDCRackName(dcName, rackName),
-		"cassandraclusters.db.orange.com.dc":   dcName,
-		"cassandraclusters.db.orange.com.rack": rackName,
-	}
-	return MergeLabels(cc.GetLabels(), m)
+	return MergeLabels(LabelsForCassandra(cc), map[string]string{
+		"dc-rack":    cc.GetDCRackName(dcName, rackName),
+		dcLabelKey:   dcName,
+		rackLabelKey: rackName,
+	})
 }
 
 func LabelsForCassandraDC(cc *api.CassandraCluster, dcName string) map[string]string {
-	m := map[string]string{
-		"app":              "cassandracluster",
-		"cassandracluster": cc.GetName(),
+	labels := LabelsForCassandra(cc)
+	if dcName != "" {
+		labels[dcLabelKey] = dcName
 	}
-
-	if len(dcName) > 0 {
-		m["cassandraclusters.db.orange.com.dc"] = dcName
-	}
-	return MergeLabels(cc.GetLabels(), m)
+	return labels
 }
 
 func LabelsForCassandra(cc *api.CassandraCluster) map[string]string {
@@ -75,29 +73,27 @@ func LabelsForCassandra(cc *api.CassandraCluster) map[string]string {
 }
 
 func RemoveString(s []string, r string) []string {
-	for i, v := range s {
-		if v == r {
-			return append(s[:i], s[i+1:]...)
-		}
+	if i := slices.Index(s, r); i >= 0 {
+		return slices.Delete(s, i, i+1)
 	}
 	return s
 }
 
 // MergeSlice will add ad the end of old any elements of new which is missing
 // we want to keep the order of elements in old
-func MergeSlice(old []string, new []string) []string {
+func MergeSlice(old []string, newer []string) []string {
 	var result []string
 
-	//result start from old but we don't add if elem don't exists in new
+	//result start from old but we don't add if elem don't exists in newer
 	for i := range old {
-		if slices.Contains(new, old[i]) {
+		if slices.Contains(newer, old[i]) {
 			result = append(result, old[i])
 		}
 	}
-	//Do we need to add more elements from new ?
-	for i := range new {
-		if !slices.Contains(old, new[i]) {
-			result = append(result, new[i])
+	//Do we need to add more elements from newer ?
+	for i := range newer {
+		if !slices.Contains(old, newer[i]) {
+			result = append(result, newer[i])
 		}
 	}
 
@@ -116,13 +112,12 @@ func MergeLabels(allLabels ...map[string]string) map[string]string {
 
 // asOwner returns an owner reference set as the cassandra cluster CRD
 func AsOwner(cc *api.CassandraCluster) metav1.OwnerReference {
-	trueVar := true
 	return metav1.OwnerReference{
 		APIVersion: api.GroupVersion.String(),
 		Kind:       "CassandraCluster",
 		Name:       cc.Name,
 		UID:        cc.UID,
-		Controller: &trueVar,
+		Controller: new(true),
 	}
 }
 
@@ -163,12 +158,7 @@ func DCRackLabelsAndNodeSelectorForStatefulSet(cc *api.CassandraCluster, dc int,
 		}
 	}
 
-	labels := MergeLabels(LabelsForCassandraDCRack(cc, dcName, rackName), map[string]string{
-		"cassandraclusters.db.orange.com.dc":   dcName,
-		"cassandraclusters.db.orange.com.rack": rackName,
-	})
-
-	return labels, nodeSelector
+	return LabelsForCassandraDCRack(cc, dcName, rackName), nodeSelector
 }
 
 // LookupCassandra Cluster returns the running cluster instance based on its name and namespace

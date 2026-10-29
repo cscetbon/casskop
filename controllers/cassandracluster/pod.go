@@ -67,23 +67,16 @@ func GetLastOrFirstPodReady(podsList []v1.Pod, last bool) (*v1.Pod, error) {
 
 // GetLastOrFirstPod returns the last or first pod.
 func GetLastOrFirstPodItem(podsList []v1.Pod, last bool) (*v1.Pod, error) {
-	nb := len(podsList)
-
-	if nb < 1 {
+	if len(podsList) == 0 {
 		return nil, fmt.Errorf("there is no pod")
 	}
 
-	items := podsList[:]
+	sortPodsList(podsList)
 
-	sortPodsList(items)
-
-	idx := 0
+	pod := podsList[0]
 	if last {
-		idx = nb - 1
+		pod = podsList[len(podsList)-1]
 	}
-
-	pod := podsList[idx]
-
 	return &pod, nil
 }
 
@@ -96,15 +89,6 @@ func sortPodsList(items []v1.Pod) {
 	})
 }
 
-// GetFirstPod returns the first pod satisfying the selector and being in the namespace
-func (rcc *CassandraClusterReconciler) GetFirstPod(ctx context.Context, namespace string, selector map[string]string) (*v1.Pod, error) {
-	podsList, err := rcc.ListPods(ctx, namespace, selector)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get cassandra's pods: %v", err)
-	}
-	return GetLastOrFirstPod(podsList, first)
-}
-
 // GetLastPod returns the last pod satisfying the selector and being in the namespace
 func (rcc *CassandraClusterReconciler) GetLastPod(ctx context.Context, namespace string, selector map[string]string) (*v1.Pod, error) {
 	podsList, err := rcc.ListPods(ctx, namespace, selector)
@@ -112,24 +96,6 @@ func (rcc *CassandraClusterReconciler) GetLastPod(ctx context.Context, namespace
 		return nil, fmt.Errorf("failed to get cassandra's pods: %v", err)
 	}
 	return GetLastOrFirstPod(podsList, last)
-}
-
-// GetFirstPod returns the first pod satisfying the selector, being in the namespace and being ready
-func (rcc *CassandraClusterReconciler) GetFirstPodReady(ctx context.Context, namespace string, selector map[string]string) (*v1.Pod, error) {
-	podsList, err := rcc.ListPods(ctx, namespace, selector)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get cassandra's pods: %v", err)
-	}
-	return GetLastOrFirstPodReady(podsList.Items, first)
-}
-
-// GetLastPod returns the last pod satisfying the selector and being in the namespace
-func (rcc *CassandraClusterReconciler) GetLastPodReady(ctx context.Context, namespace string, selector map[string]string) (*v1.Pod, error) {
-	podsList, err := rcc.ListPods(ctx, namespace, selector)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get cassandra's pods: %v", err)
-	}
-	return GetLastOrFirstPodReady(podsList.Items, last)
 }
 
 func (rcc *CassandraClusterReconciler) UpdatePodLabel(ctx context.Context, pod *v1.Pod, label map[string]string) error {

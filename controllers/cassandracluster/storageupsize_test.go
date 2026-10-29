@@ -102,7 +102,7 @@ func simulatePVCsReadyForWholeCluster(assert *assert.Assertions, rcc *CassandraC
 	for _, dc := range datacenters {
 		for _, rack := range dc.Rack {
 			stfsName := rcc.cc.Name + fmt.Sprintf("-%s-%s", dc.Name, rack.Name)
-			for i := int32(0); i < rcc.cc.Spec.NodesPerRacks; i++ {
+			for i := range rcc.cc.Spec.NodesPerRacks {
 				pvcName := fmt.Sprintf("%s-%s-%d", "data", stfsName, i)
 				pvc := corev1.PersistentVolumeClaim{
 					Name:      pvcName,

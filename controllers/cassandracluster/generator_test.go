@@ -782,10 +782,5 @@ func TestDisableBackRest(t *testing.T) {
 }
 
 func getPos(slice []v1.VolumeMount, value string) int {
-	for i, v := range slice {
-		if v.Name == value {
-			return i
-		}
-	}
-	return -1
+	return slices.IndexFunc(slice, func(v v1.VolumeMount) bool { return v.Name == value })
 }

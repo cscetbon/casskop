@@ -188,8 +188,8 @@ func helperCreateCassandraCluster(ctx context.Context, t *testing.T, cassandraCl
 	}
 
 	assertClusterStatusPhase(assert, rcc, testfixtures.InitialPhase)
-	for _, dcRackName := range cc.GetDCRackNames() {
-		assertRackStatusPhase(assert, rcc, dcRackName, testfixtures.InitialPhase)
+	for _, rack := range cc.IterateRacks() {
+		assertRackStatusPhase(assert, rcc, rack.DcRackName.String(), testfixtures.InitialPhase)
 	}
 
 	//Second Reconcile creates objects
@@ -270,9 +270,9 @@ func helperCreateCassandraCluster(ctx context.Context, t *testing.T, cassandraCl
 	}
 	assertClusterStatusPhase(assert, rcc, testfixtures.RunningPhase)
 	assertClusterStatusLastAction(assert, rcc, api.ClusterPhaseInitial, api.StatusDone)
-	for _, dcRackName := range cc.GetDCRackNames() {
-		assertRackStatusPhase(assert, rcc, dcRackName, testfixtures.RunningPhase)
-		assertRackStatusLastAction(assert, rcc, dcRackName, api.ClusterPhaseInitial, api.StatusDone)
+	for _, rack := range cc.IterateRacks() {
+		assertRackStatusPhase(assert, rcc, rack.DcRackName.String(), testfixtures.RunningPhase)
+		assertRackStatusLastAction(assert, rcc, rack.DcRackName.String(), api.ClusterPhaseInitial, api.StatusDone)
 	}
 
 	return rcc, &req

@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -113,64 +114,29 @@ const (
 func (cc *CassandraCluster) CheckDefaults() {
 	ccs := &cc.Spec
 
-	if len(ccs.CassandraImage) == 0 {
-		ccs.CassandraImage = defaultCassandraImage
-	}
-
-	if len(ccs.ImagePullPolicy) == 0 {
-		ccs.ImagePullPolicy = defaultImagePullPolicy
-	}
-
-	if len(ccs.BootstrapImage) == 0 {
-		ccs.BootstrapImage = defaultBootstrapImage
-	}
-
-	if len(ccs.ConfigBuilderImage) == 0 {
-		ccs.ConfigBuilderImage = defaultConfigBuilderImage
-	}
-
-	if len(ccs.ServiceAccountName) == 0 {
-		ccs.ServiceAccountName = defaultServiceAccountName
-	}
-
-	if ccs.ReadOnlyRootFilesystem == nil {
-		ccs.ReadOnlyRootFilesystem = new(true)
-	}
+	ccs.CassandraImage = cmp.Or(ccs.CassandraImage, defaultCassandraImage)
+	ccs.ImagePullPolicy = cmp.Or(ccs.ImagePullPolicy, defaultImagePullPolicy)
+	ccs.BootstrapImage = cmp.Or(ccs.BootstrapImage, defaultBootstrapImage)
+	ccs.ConfigBuilderImage = cmp.Or(ccs.ConfigBuilderImage, defaultConfigBuilderImage)
+	ccs.ServiceAccountName = cmp.Or(ccs.ServiceAccountName, defaultServiceAccountName)
+	ccs.ReadOnlyRootFilesystem = cmp.Or(ccs.ReadOnlyRootFilesystem, new(true))
 
 	// LivenessProbe dynamic config
-	if ccs.LivenessInitialDelaySeconds == nil {
-		ccs.LivenessInitialDelaySeconds = new(DefaultLivenessInitialDelaySeconds)
-	}
-	if ccs.LivenessHealthCheckTimeout == nil {
-		ccs.LivenessHealthCheckTimeout = new(DefaultLivenessHealthCheckTimeout)
-	}
-	if ccs.LivenessHealthCheckPeriod == nil {
-		ccs.LivenessHealthCheckPeriod = new(DefaultLivenessHealthCheckPeriod)
-	}
+	ccs.LivenessInitialDelaySeconds = cmp.Or(ccs.LivenessInitialDelaySeconds, new(DefaultLivenessInitialDelaySeconds))
+	ccs.LivenessHealthCheckTimeout = cmp.Or(ccs.LivenessHealthCheckTimeout, new(DefaultLivenessHealthCheckTimeout))
+	ccs.LivenessHealthCheckPeriod = cmp.Or(ccs.LivenessHealthCheckPeriod, new(DefaultLivenessHealthCheckPeriod))
 
 	// ReadinessProbe dynamic config
-	if ccs.ReadinessInitialDelaySeconds == nil {
-		ccs.ReadinessInitialDelaySeconds = new(DefaultReadinessInitialDelaySeconds)
-	}
-	if ccs.ReadinessHealthCheckTimeout == nil {
-		ccs.ReadinessHealthCheckTimeout = new(DefaultReadinessHealthCheckTimeout)
-	}
-	if ccs.ReadinessHealthCheckPeriod == nil {
-		ccs.ReadinessHealthCheckPeriod = new(DefaultReadinessHealthCheckPeriod)
-	}
+	ccs.ReadinessInitialDelaySeconds = cmp.Or(ccs.ReadinessInitialDelaySeconds, new(DefaultReadinessInitialDelaySeconds))
+	ccs.ReadinessHealthCheckTimeout = cmp.Or(ccs.ReadinessHealthCheckTimeout, new(DefaultReadinessHealthCheckTimeout))
+	ccs.ReadinessHealthCheckPeriod = cmp.Or(ccs.ReadinessHealthCheckPeriod, new(DefaultReadinessHealthCheckPeriod))
 
 	// BackupRestore default config
-	enabled := true
 	if ccs.BackRestSidecar == nil {
-		ccs.BackRestSidecar = &BackRestSidecar{Enabled: &enabled, Image: DefaultBackRestImage}
-	} else {
-		if ccs.BackRestSidecar.Enabled == nil {
-			ccs.BackRestSidecar.Enabled = &enabled
-		}
-		if ccs.BackRestSidecar.Image == "" {
-			ccs.BackRestSidecar.Image = DefaultBackRestImage
-		}
+		ccs.BackRestSidecar = &BackRestSidecar{}
 	}
+	ccs.BackRestSidecar.Enabled = cmp.Or(ccs.BackRestSidecar.Enabled, new(true))
+	ccs.BackRestSidecar.Image = cmp.Or(ccs.BackRestSidecar.Image, DefaultBackRestImage)
 }
 
 // SetDefaults sets the default values for the cassandra spec and returns true if the spec was changed
@@ -231,9 +197,8 @@ func (cc *CassandraCluster) GetDCSize() int {
 }
 
 func (cc *CassandraCluster) GetDCRackSize() int {
-	var nb int = 0
-	dcsize := cc.GetDCSize()
-	for dc := range dcsize {
+	nb := 0
+	for dc := range cc.GetDCSize() {
 		nb += cc.GetRackSize(dc)
 	}
 	return nb
@@ -351,41 +316,30 @@ func (cc *CassandraCluster) InitCassandraRackStatus(status *CassandraClusterStat
 // Initialisation of the Cassandra SeedList
 // We want 3 seed nodes for each DC
 func (cc *CassandraCluster) InitSeedList() []string {
-
-	var dcName, rackName string
-	var indice int32
 	var seedList []string
 
 	dcsize := cc.GetDCSize()
 
 	if dcsize < 1 {
-		dcName = DefaultCassandraDC
-		rackName = DefaultCassandraRack
-		for indice = 0; indice < cc.Spec.NodesPerRacks && indice < 3; indice++ {
-			cc.addNewSeed(&seedList, dcName, rackName, indice)
-		}
+		cc.addDefaultRackSeeds(&seedList, DefaultCassandraDC)
 		return seedList
 	}
 	for dc := range dcsize {
-		dcName = cc.GetDCName(dc)
-		var nbSeedInDC int = 0
+		dcName := cc.GetDCName(dc)
+		nbSeedInDC := 0
 		racksize := cc.GetRackSize(dc)
 
 		if racksize < 1 {
-			rackName = DefaultCassandraRack
-			for indice = 0; indice < cc.Spec.NodesPerRacks && indice < 3; indice++ {
-				cc.addNewSeed(&seedList, dcName, rackName, indice)
-			}
+			cc.addDefaultRackSeeds(&seedList, dcName)
 			continue
 		}
 		for rack := range racksize {
-			rackName = cc.GetRackName(dc, rack)
-			dcRackName := cc.GetDCRackName(dcName, rackName)
-			nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
+			rackName := cc.GetRackName(dc, rack)
+			nodesPerRacks := cc.GetNodesPerRacks(cc.GetDCRackName(dcName, rackName))
 
 			switch racksize {
 			case 1, 2:
-				for indice = 0; indice < nodesPerRacks && indice < int32(4-racksize) &&
+				for indice := int32(0); indice < nodesPerRacks && indice < int32(4-racksize) &&
 					nbSeedInDC < 3; indice++ {
 					cc.addNewSeed(&seedList, dcName, rackName, indice)
 					nbSeedInDC++
@@ -402,8 +356,14 @@ func (cc *CassandraCluster) InitSeedList() []string {
 }
 
 func (cc *CassandraCluster) SeedList(seedListTab *[]string) string {
-	seedList := strings.Join(*seedListTab, ",")
-	return seedList
+	return strings.Join(*seedListTab, ",")
+}
+
+// addDefaultRackSeeds adds up to 3 seeds from the default rack of dcName
+func (cc *CassandraCluster) addDefaultRackSeeds(seedList *[]string, dcName string) {
+	for indice := range min(cc.Spec.NodesPerRacks, 3) {
+		cc.addNewSeed(seedList, dcName, DefaultCassandraRack, indice)
+	}
 }
 
 func (cc *CassandraCluster) addNewSeed(seedList *[]string, dcName string, rackName string, indice int32) {
@@ -435,10 +395,7 @@ func (cc *CassandraCluster) FixCassandraRackList(status *CassandraClusterStatus)
 }
 
 func (cc *CassandraCluster) GetRemovedDCName(oldCRD *CassandraCluster) string {
-	//dcsize := cc.GetDCSize()
-	olddcsize := oldCRD.GetDCSize()
-
-	for dc := range olddcsize {
+	for dc := range oldCRD.GetDCSize() {
 		olddcName := oldCRD.GetDCName(dc)
 		dcName := cc.GetDCName(dc)
 		if olddcName != dcName {
@@ -450,93 +407,55 @@ func (cc *CassandraCluster) GetRemovedDCName(oldCRD *CassandraCluster) string {
 
 // InitCassandraRackList initiate the Status structure for CassandraRack
 func (cc *CassandraCluster) InitCassandraRackList() int {
-	var dcName, rackName string
-	var nbRack = 0
-
 	cc.Status.CassandraRackStatus = make(map[string]*CassandraRackStatus)
 	dcsize := cc.GetDCSize()
 
 	if dcsize < 1 {
-		dcName = DefaultCassandraDC
-		rackName = DefaultCassandraRack
-		nbRack++
-		cc.InitCassandraRackStatus(&cc.Status, dcName, rackName)
-		cc.initTopology(dcName, rackName)
-	} else {
-		for dc := range dcsize {
-			dcName = cc.GetDCName(dc)
-			racksize := cc.GetRackSize(dc)
-			if racksize < 1 {
-				rackName = DefaultCassandraRack
-				nbRack++
-				cc.InitCassandraRackStatus(&cc.Status, dcName, rackName)
-				cc.initTopology(dcName, rackName)
-			} else {
-				for rack := range racksize {
-					rackName = cc.GetRackName(dc, rack)
-					nbRack++
-					cc.InitCassandraRackStatus(&cc.Status, dcName, rackName)
-				}
-			}
-		}
+		cc.initDefaultRack(DefaultCassandraDC)
+		return 1
+	}
 
+	nbRack := 0
+	for dc := range dcsize {
+		dcName := cc.GetDCName(dc)
+		racksize := cc.GetRackSize(dc)
+		if racksize < 1 {
+			cc.initDefaultRack(dcName)
+			nbRack++
+			continue
+		}
+		for rack := range racksize {
+			cc.InitCassandraRackStatus(&cc.Status, dcName, cc.GetRackName(dc, rack))
+			nbRack++
+		}
 	}
 	return nbRack
 }
 
-// GetDataCapacityForDC sends back the data capacity of cassandra nodes to uses for this dc
-func (cc *CassandraCluster) GetDataCapacityForDC(dcName string) string {
-	return cc.GetDataCapacityFromDCName(dcName)
+// initDefaultRack initializes the status and the topology with the default rack of dcName
+func (cc *CassandraCluster) initDefaultRack(dcName string) {
+	cc.InitCassandraRackStatus(&cc.Status, dcName, DefaultCassandraRack)
+	cc.initTopology(dcName, DefaultCassandraRack)
 }
 
-// GetDataCapacityForDC sends back the data capacity of cassandra nodes for the given strongly-typed dcName
+// GetDataCapacityForDCName sends back the data capacity of cassandra nodes for the given dcName
 func (cc *CassandraCluster) GetDataCapacityForDCName(dcName DcName) string {
-	return cc.GetDataCapacityFromDCName(dcName.String())
-}
-
-// GetDataCapacityFromDCName send DataCapacity used for the given dcName
-func (cc *CassandraCluster) GetDataCapacityFromDCName(dcName string) string {
-	dcIndex := cc.GetDCIndexFromDCName(dcName)
-	if dcIndex >= 0 {
-		dc := cc.getDCFromIndex(dcIndex)
-		if dc != nil && dc.DataCapacity != "" {
-			return dc.DataCapacity
-		}
-		return cc.Spec.DataCapacity
+	if dc := cc.getDCFromName(dcName.String()); dc != nil && dc.DataCapacity != "" {
+		return dc.DataCapacity
 	}
 	return cc.Spec.DataCapacity
 }
 
-// GetDataCapacityForDC sends back the data storage class of cassandra nodes to uses for this dc
-func (cc *CassandraCluster) GetDataStorageClassForDC(dcName string) string {
-	return cc.GetDataStorageClassFromDCName(dcName)
-}
-
-// GetDataStorageClassForDCName send DataStorageClass used for the given strongly-typed dcName
+// GetDataStorageClassForDCName sends back the data storage class of cassandra nodes for the given dcName
 func (cc *CassandraCluster) GetDataStorageClassForDCName(dcName DcName) string {
-	return cc.GetDataStorageClassFromDCName(dcName.String())
-}
-
-// GetDataCapacityFromDCName send DataStorageClass used for the given dcName
-func (cc *CassandraCluster) GetDataStorageClassFromDCName(dcName string) string {
-	dcIndex := cc.GetDCIndexFromDCName(dcName)
-	if dcIndex >= 0 {
-		dc := cc.getDCFromIndex(dcIndex)
-		if dc != nil && dc.DataCapacity != "" {
-			return dc.DataStorageClass
-		}
-		return cc.Spec.DataStorageClass
+	if dc := cc.getDCFromName(dcName.String()); dc != nil && dc.DataCapacity != "" {
+		return dc.DataStorageClass
 	}
 	return cc.Spec.DataStorageClass
 }
 
 func (cc *CassandraCluster) GetDCIndexFromDCName(dcName string) int {
-	dcSize := cc.GetDCSize()
-	if dcSize < 1 {
-		return -1
-	}
-
-	for dc := range dcSize {
+	for dc := range cc.GetDCSize() {
 		if dcName == cc.GetDCName(dc) {
 			return dc
 		}
@@ -546,16 +465,20 @@ func (cc *CassandraCluster) GetDCIndexFromDCName(dcName string) int {
 
 // getDCFromIndex send DC for the given index
 func (cc *CassandraCluster) getDCFromIndex(dc int) *DC {
-	if dc >= cc.GetDCSize() {
+	if dc < 0 || dc >= cc.GetDCSize() {
 		return nil
 	}
 	return &cc.Spec.Topology.DC[dc]
 }
 
+// getDCFromName send DC for the given name
+func (cc *CassandraCluster) getDCFromName(dcName string) *DC {
+	return cc.getDCFromIndex(cc.GetDCIndexFromDCName(dcName))
+}
+
 // Get DC by one of its rack name
 func (cc *CassandraCluster) GetDCFromDCRackName(dcRackName string) *DC {
-	index := cc.GetDCIndexFromDCName(cc.GetDCNameFromDCRackName(dcRackName))
-	return cc.getDCFromIndex(index)
+	return cc.getDCFromName(cc.GetDCNameFromDCRackName(dcRackName))
 }
 
 // Get Rack by its rack name
@@ -572,8 +495,10 @@ func (cc *CassandraCluster) GetRackFromDCRackName(dcRackName string) *Rack {
 
 // GetNodesPerRacks sends back the number of cassandra nodes to uses for this dc-rack
 func (cc *CassandraCluster) GetNodesPerRacks(dcRackName string) int32 {
-	nodesPerRacks := cc.GetDCNodesPerRacksFromDCRackName(dcRackName)
-	return nodesPerRacks
+	if dc, _, ok := cc.findRackIndexes(dcRackName); ok {
+		return cc.getDCNodesPerRacksFromIndex(dc)
+	}
+	return cc.Spec.NodesPerRacks
 }
 
 // GetNodesPerRacks sends back the number of cassandra nodes to uses for this strongly-typed dc-rack
@@ -581,70 +506,27 @@ func (cc *CassandraCluster) GetNodesPerRacksStrongType(dcRackName DcRackName) in
 	return cc.GetNodesPerRacks(dcRackName.String())
 }
 
-// GetDCNodesPerRacksFromDCRackName send NodesPerRack used for the given dcRackName
-func (cc *CassandraCluster) GetDCRackNames() []string {
-	dcsize := cc.GetDCSize()
-
-	var dcRackNames = []string{}
-	if dcsize < 1 {
-		return dcRackNames
-	}
-	for dc := range dcsize {
+// findRackIndexes returns the dc and rack indexes of dcRackName in the topology
+// The search stops at the first DC without racks
+func (cc *CassandraCluster) findRackIndexes(dcRackName string) (int, int, bool) {
+	for dc := range cc.GetDCSize() {
 		dcName := cc.GetDCName(dc)
-		racksize := cc.GetRackSize(dc)
-		if racksize < 1 {
-			return dcRackNames
+		if cc.GetRackSize(dc) < 1 {
+			return 0, 0, false
 		}
-		for rack := range racksize {
-			rackName := cc.GetRackName(dc, rack)
-			dcRackNames = append(dcRackNames, cc.GetDCRackName(dcName, rackName))
-		}
-	}
-	return dcRackNames
-}
-
-// GetDCNodesPerRacksFromDCRackName send NodesPerRack used for the given dcRackName
-func (cc *CassandraCluster) GetDCNodesPerRacksFromDCRackName(dcRackName string) int32 {
-	dcsize := cc.GetDCSize()
-
-	if dcsize < 1 {
-		return cc.Spec.NodesPerRacks
-	}
-	for dc := range dcsize {
-		dcName := cc.GetDCName(dc)
-		racksize := cc.GetRackSize(dc)
-		if racksize < 1 {
-			return cc.Spec.NodesPerRacks
-		}
-		for rack := range racksize {
-			rackName := cc.GetRackName(dc, rack)
-			if dcRackName == cc.GetDCRackName(dcName, rackName) {
-				return cc.getDCNodesPerRacksFromIndex(dc)
+		for rack := range cc.GetRackSize(dc) {
+			if dcRackName == cc.GetDCRackName(dcName, cc.GetRackName(dc, rack)) {
+				return dc, rack, true
 			}
 		}
 	}
-	return cc.Spec.NodesPerRacks
+	return 0, 0, false
 }
 
 // GetRollingPartitionPerRacks return rollingPartition defined in spec.topology.dc[].rack[].rollingPartition
 func (cc *CassandraCluster) GetRollingPartitionPerRacks(dcRackName string) int32 {
-	dcsize := cc.GetDCSize()
-
-	if dcsize < 1 {
-		return 0
-	}
-	for dc := range dcsize {
-		dcName := cc.GetDCName(dc)
-		racksize := cc.GetRackSize(dc)
-		if racksize < 1 {
-			return 0
-		}
-		for rack := range racksize {
-			rackName := cc.GetRackName(dc, rack)
-			if dcRackName == cc.GetDCRackName(dcName, rackName) {
-				return cc.Spec.Topology.DC[dc].Rack[rack].RollingPartition
-			}
-		}
+	if dc, rack, ok := cc.findRackIndexes(dcRackName); ok {
+		return cc.Spec.Topology.DC[dc].Rack[rack].RollingPartition
 	}
 	return 0
 }
@@ -652,16 +534,8 @@ func (cc *CassandraCluster) GetRollingPartitionPerRacks(dcRackName string) int32
 // GetDCNodesPerRacksFromName send NodesPerRack which is applied for the specified dc name
 // return true if we found, and false if not
 func (cc *CassandraCluster) GetDCNodesPerRacksFromName(dctarget string) (bool, int32) {
-	dcsize := cc.GetDCSize()
-
-	if dcsize < 1 {
-		return false, cc.Spec.NodesPerRacks
-	}
-	for dc := range dcsize {
-		dcName := cc.GetDCName(dc)
-		if dctarget == dcName {
-			return true, cc.getDCNodesPerRacksFromIndex(dc)
-		}
+	if dc := cc.GetDCIndexFromDCName(dctarget); dc >= 0 {
+		return true, cc.getDCNodesPerRacksFromIndex(dc)
 	}
 	return false, cc.Spec.NodesPerRacks
 }
@@ -669,9 +543,8 @@ func (cc *CassandraCluster) GetDCNodesPerRacksFromName(dctarget string) (bool, i
 // FindDCWithNodesTo0
 func (cc *CassandraCluster) FindDCWithNodesTo0() (bool, string, int) {
 	for dc := range cc.GetDCSize() {
-		if cc.getDCNodesPerRacksFromIndex(dc) == int32(0) {
-			dcName := cc.GetDCName(dc)
-			return true, dcName, dc
+		if cc.getDCNodesPerRacksFromIndex(dc) == 0 {
+			return true, cc.GetDCName(dc), dc
 		}
 	}
 	return false, "", 0
@@ -679,12 +552,7 @@ func (cc *CassandraCluster) FindDCWithNodesTo0() (bool, string, int) {
 
 // IsValidDC returns true if dcName is known
 func (cc *CassandraCluster) IsValidDC(dcName string) bool {
-	for _, dc := range cc.Spec.Topology.DC {
-		if dc.Name == dcName {
-			return true
-		}
-	}
-	return false
+	return cc.GetDCIndexFromDCName(dcName) >= 0
 }
 
 func (in *CassandraCluster) IterateRacks() []CompleteRackName {
@@ -707,12 +575,12 @@ func (in *CassandraCluster) IterateRacks() []CompleteRackName {
 
 // Remove elements from DC slice
 func (dc *DCSlice) Remove(idx int) {
-	*dc = append((*dc)[:idx], (*dc)[idx+1:]...)
+	*dc = slices.Delete(*dc, idx, idx+1)
 }
 
 // Remove elements from Rack slice
 func (rack *RackSlice) Remove(idx int) {
-	*rack = append((*rack)[:idx], (*rack)[idx+1:]...)
+	*rack = slices.Delete(*rack, idx, idx+1)
 }
 
 // CassandraClusterSpec defines the configuration of CassandraCluster
@@ -1066,25 +934,19 @@ type CassandraRackStatus struct {
 	StatefulSetSnapshotBeforeStorageResize string `json:"statefulSetSnapshotBeforeStorageResize,omitempty"`
 }
 
-func (in *CassandraRackStatus) SetNextPodPerRackInitPhase() {
-	in.CassandraPhase = CassandraPhase{
+func (in *CassandraPhase) SetNextPodPerRackInitPhase() {
+	*in = CassandraPhase{
 		Phase:                ClusterPhaseInitial.Name,
 		InitializingSubPhase: new(ClusterPhaseInitialSubPhaseNextPodPerRack),
 	}
 }
 
-func (in *CassandraRackStatus) SetPendingPhase() {
-	in.CassandraPhase = CassandraPhase{
-		Phase:                ClusterPhasePending.Name,
-		InitializingSubPhase: nil,
-	}
+func (in *CassandraPhase) SetPendingPhase() {
+	*in = CassandraPhase{Phase: ClusterPhasePending.Name}
 }
 
-func (in *CassandraRackStatus) SetRunningPhase() {
-	in.CassandraPhase = CassandraPhase{
-		Phase:                ClusterPhaseRunning.Name,
-		InitializingSubPhase: nil,
-	}
+func (in *CassandraPhase) SetRunningPhase() {
+	*in = CassandraPhase{Phase: ClusterPhaseRunning.Name}
 }
 
 // CassandraClusterStatus defines Global state of CassandraCluster
@@ -1110,20 +972,6 @@ type CassandraClusterStatus struct {
 
 func (in *CassandraClusterStatus) SetClusterPhaseFromRackPhase(rackStatus *CassandraRackStatus) {
 	in.CassandraPhase = *rackStatus.CassandraPhase.DeepCopy()
-}
-
-func (in *CassandraClusterStatus) SetNextPodPerRackInitPhase() {
-	in.CassandraPhase = CassandraPhase{
-		Phase:                ClusterPhaseInitial.Name,
-		InitializingSubPhase: new(ClusterPhaseInitialSubPhaseNextPodPerRack),
-	}
-}
-
-func (in *CassandraClusterStatus) SetRunningPhase() {
-	in.CassandraPhase = CassandraPhase{
-		Phase:                ClusterPhaseRunning.Name,
-		InitializingSubPhase: nil,
-	}
 }
 
 func (in *CassandraClusterStatus) HasRackPhaseChanged(dcRackName DcRackName, cassandraPhase CassandraPhase) bool {
