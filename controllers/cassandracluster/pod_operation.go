@@ -158,19 +158,14 @@ func (rcc *CassandraClusterReconciler) addPodOperationLabels(ctx context.Context
 	completeDcRackName api.CompleteRackName, labels map[string]string) {
 
 	//Select all Pods in the Rack
-	selector := k8s.MergeLabels(k8s.LabelsForCassandraDCRackStrongTypes(cc, completeDcRackName.DcName, completeDcRackName.RackName))
+	selector := k8s.LabelsForCassandraDCRackStrongTypes(cc, completeDcRackName.DcName, completeDcRackName.RackName)
 
 	podsList, err := rcc.ListPods(ctx, cc.Namespace, selector)
-
-	if err != nil || len(podsList.Items) < 1 {
+	if err != nil {
 		return
 	}
 
-	for _, pod := range podsList.Items {
-		if pod.Status.Phase != v1.PodRunning || pod.DeletionTimestamp != nil {
-			continue
-		}
-
+	for _, pod := range runningPods(podsList.Items) {
 		newlabels := k8s.MergeLabels(pod.GetLabels(), labels)
 
 		pod.SetLabels(newlabels)
@@ -226,16 +221,23 @@ func (rcc *CassandraClusterReconciler) initOperation(ctx context.Context, cc *ap
 		rcc.updateCassandraStatus(ctx, cc, status)
 	}
 
-	return func(podsList *v1.PodList) []v1.Pod {
-		podsSlice := make([]v1.Pod, 0)
-		for _, pod := range podsList.Items {
-			if pod.Status.Phase != v1.PodRunning || pod.DeletionTimestamp != nil {
-				continue
-			}
-			podsSlice = append(podsSlice, pod)
+	return runningPods(podsList.Items)
+}
+
+// isRunning returns true if the pod is running and not being deleted
+func isRunning(pod *v1.Pod) bool {
+	return pod.Status.Phase == v1.PodRunning && pod.DeletionTimestamp == nil
+}
+
+// runningPods returns the pods that are running and not being deleted
+func runningPods(pods []v1.Pod) []v1.Pod {
+	running := make([]v1.Pod, 0, len(pods))
+	for _, pod := range pods {
+		if isRunning(&pod) {
+			running = append(running, pod)
 		}
-		return podsSlice
-	}(podsList)
+	}
+	return running
 }
 
 func (rcc *CassandraClusterReconciler) startOperation(ctx context.Context, cc *api.CassandraCluster, status *api.CassandraClusterStatus,
@@ -311,8 +313,14 @@ func (rcc *CassandraClusterReconciler) runOperation(ctx context.Context, operati
 		chanRunningOp <- finalizedOp{err, dcRackName, pod, operationName}
 		return
 	}
-	postAction := podOperationMap[operationName].PostAction
-	if postAction != nil {
+	rcc.finishOperation(ctx, cc, dcRackName, pod, operationName)
+}
+
+// finishOperation runs the operation post action if any and queues the operation to be finalized
+func (rcc *CassandraClusterReconciler) finishOperation(ctx context.Context, cc *api.CassandraCluster, dcRackName string,
+	pod v1.Pod, operationName string) {
+	var err error
+	if postAction := podOperationMap[operationName].PostAction; postAction != nil {
 		err = postAction(rcc, ctx, cc, dcRackName, pod)
 	}
 	chanRunningOp <- finalizedOp{err, dcRackName, pod, operationName}
@@ -566,8 +574,6 @@ func SetStatusForMoreDecommissions(podLastOperation *api.PodLastOperation, moreD
 
 func (rcc *CassandraClusterReconciler) podsSlice(ctx context.Context, cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	podLastOperation api.PodLastOperation, dcRackName, operationName, operatorName string) ([]v1.Pod, bool) {
-	checkOnly := false
-	podsSlice := make([]v1.Pod, 0)
 	// Operator is different from when the previous operation was started
 	// Set checkOnly to restart the monitoring function to wait until the operation is done
 	if podLastOperation.Name == operationName && podLastOperation.Status == api.StatusOngoing &&
@@ -577,19 +583,18 @@ func (rcc *CassandraClusterReconciler) podsSlice(ctx context.Context, cc *api.Ca
 			"operation": title(operationName)}).Info("Operator's name is different, we enable checking routines")
 		podLastOperation.OperatorName = operatorName
 
+		podsSlice := make([]v1.Pod, 0)
 		for _, podName := range podLastOperation.Pods {
 			p, err := rcc.GetPod(ctx, cc.Namespace, podName)
-			if err != nil || p.Status.Phase != v1.PodRunning || p.DeletionTimestamp != nil {
+			if err != nil || !isRunning(p) {
 				continue
 			}
 			podsSlice = append(podsSlice, *p)
 		}
-		checkOnly = true
-		return podsSlice, checkOnly
+		return podsSlice, true
 	}
 	dcName, rackName := cc.GetDCNameAndRackNameFromDCRackName(dcRackName)
-	podsSlice = rcc.initOperation(ctx, cc, status, dcName, rackName, operationName)
-	return podsSlice, checkOnly
+	return rcc.initOperation(ctx, cc, status, dcName, rackName, operationName), false
 }
 
 // Get pods that need an operation to run on
@@ -597,13 +602,11 @@ func (rcc *CassandraClusterReconciler) podsSlice(ctx context.Context, cc *api.Ca
 func (rcc *CassandraClusterReconciler) getPodsToWorkOn(ctx context.Context, cc *api.CassandraCluster, dcName, rackName string,
 	status *api.CassandraClusterStatus, operationName string) ([]v1.Pod, bool) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
-	checkOnly := false
-	podsSlice := make([]v1.Pod, 0)
 
 	operatorName := os.Getenv("POD_NAME")
-	if len(operatorName) == 0 {
+	if operatorName == "" {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName}).Info("POD_NAME is not defined and is mandatory")
-		return podsSlice, checkOnly
+		return []v1.Pod{}, false
 	}
 
 	// Every time we update this variable we have to run updateCassandraStatus
@@ -613,14 +616,13 @@ func (rcc *CassandraClusterReconciler) getPodsToWorkOn(ctx context.Context, cc *
 		"podLastOperation.OperatorName": podLastOperation.OperatorName,
 		"podLastOperation.Pods":         podLastOperation.Pods}).Debug("Display information about pods")
 
-	podsSlice, checkOnly = rcc.podsSlice(ctx, cc, status, *podLastOperation, dcRackName, operationName, operatorName)
+	podsSlice, checkOnly := rcc.podsSlice(ctx, cc, status, *podLastOperation, dcRackName, operationName, operatorName)
 
 	if checkOnly {
 		if len(podsSlice) == 0 {
 			// If previous running pods are done or cannot be found, we update the operator status
 			podLastOperation.Status = api.StatusDone
-			now := metav1.Now()
-			podLastOperation.EndTime = &now
+			podLastOperation.EndTime = new(metav1.Now())
 		}
 		rcc.updateCassandraStatus(ctx, cc, status)
 	}
@@ -702,12 +704,7 @@ func (rcc *CassandraClusterReconciler) monitorOperation(ctx context.Context, hos
 		}
 		time.Sleep(monitorSleepDelay)
 	}
-	postAction := podOperationMap[operationName].PostAction
-	var err error
-	if postAction != nil {
-		err = postAction(rcc, ctx, cc, dcRackName, pod)
-	}
-	chanRunningOp <- finalizedOp{err, dcRackName, pod, operationName}
+	rcc.finishOperation(ctx, cc, dcRackName, pod, operationName)
 }
 
 func (rcc *CassandraClusterReconciler) runUpgradeSSTables(ctx context.Context, hostName string, cc *api.CassandraCluster, dcRackName string,
