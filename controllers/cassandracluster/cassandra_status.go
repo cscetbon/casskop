@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
 	"strconv"
 	"time"
 
@@ -29,6 +30,7 @@ import (
 	"github.com/r3labs/diff"
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -195,45 +197,25 @@ func defaultDelayWait() time.Duration {
 // - a new configmapName in the CRD
 // - or the add or remoove of the configmap in the CRD
 func UpdateStatusIfconfigMapHasChanged(cc *api.CassandraCluster, dcRackName api.DcRackName, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
+	volumes := storedStatefulSet.Spec.Template.Spec.Volumes
+	storedConfigMapName := "-"
+	var updateConfigMap bool
 
-	var updateConfigMap bool = false
-
-	if storedStatefulSet.Spec.Template.Spec.Volumes == nil && cc.Spec.ConfigMapName != "" {
-		logrus.Infof("[%s][%s]: We ask to change ConfigMap New-CRD:%s -> Old-StatefulSet:%s", cc.Name, dcRackName,
-			cc.Spec.ConfigMapName, "-")
-		updateConfigMap = true
-	}
-	if storedStatefulSet.Spec.Template.Spec.Volumes != nil {
-		var found bool = false
-		for _, volume := range storedStatefulSet.Spec.Template.Spec.Volumes {
-			if volume.Name == cassandraConfigMapName {
-				found = true
-				if volume.ConfigMap != nil && volume.ConfigMap.Name != cc.Spec.ConfigMapName {
-					logrus.Infof("[%s][%s]: We ask to change ConfigMap New-CRD:%s -> Old-StatefulSet:%s", cc.Name, dcRackName,
-						cc.Spec.ConfigMapName, volume.ConfigMap.Name)
-					updateConfigMap = true
-				}
-				break // we have found the configmap
-			}
-		}
+	if idx := slices.IndexFunc(volumes, func(v v1.Volume) bool { return v.Name == cassandraConfigMapName }); idx < 0 {
 		//If volume for configmap don't exist and we ask for a configmap
-		if !found && cc.Spec.ConfigMapName != "" {
-			logrus.Infof("[%s][%s]: We ask to change ConfigMap New-CRD:%s -> Old-StatefulSet:%s", cc.Name, dcRackName,
-				cc.Spec.ConfigMapName, "-")
-			updateConfigMap = true
-		}
+		updateConfigMap = cc.Spec.ConfigMapName != ""
+	} else if configMap := volumes[idx].ConfigMap; configMap != nil {
+		storedConfigMapName = configMap.Name
+		updateConfigMap = configMap.Name != cc.Spec.ConfigMapName
 	}
 
-	if updateConfigMap {
-		lastAction := &status.GetCassandraRackStatus(dcRackName).CassandraLastAction
-		lastAction.Status = api.StatusToDo
-		lastAction.Name = api.ActionUpdateConfigMap.Name
-		ClusterActionMetric.set(api.ActionUpdateConfigMap, cc.Name)
-		lastAction.StartTime = nil
-		lastAction.EndTime = nil
-		return true
+	if !updateConfigMap {
+		return false
 	}
-	return false
+	logrus.Infof("[%s][%s]: We ask to change ConfigMap New-CRD:%s -> Old-StatefulSet:%s", cc.Name, dcRackName,
+		cc.Spec.ConfigMapName, storedConfigMapName)
+	setRackLastAction(cc, status, dcRackName, api.ActionUpdateConfigMap, api.StatusToDo)
+	return true
 }
 
 // UpdateStatusIfDockerImageHasChanged updates CassandraCluster Action Status if it detect a changes in the DockerImage:
@@ -241,21 +223,11 @@ func UpdateStatusIfDockerImageHasChanged(cc *api.CassandraCluster, dcRackName ap
 
 	desiredDockerImage := cc.Spec.CassandraImage
 
-	//This needs to be refactor if we load more than 1 container
-	if storedStatefulSet.Spec.Template.Spec.Containers != nil {
-		for _, container := range storedStatefulSet.Spec.Template.Spec.Containers {
-			if container.Name == consts.CassandraContainerName && desiredDockerImage != container.Image {
-				{
-					logrus.Infof("[%s][%s]: We ask to change DockerImage CRD:%s -> StatefulSet:%s", cc.Name, dcRackName, desiredDockerImage, storedStatefulSet.Spec.Template.Spec.Containers[0].Image)
-					lastAction := &status.GetCassandraRackStatus(dcRackName).CassandraLastAction
-					lastAction.Status = api.StatusToDo
-					lastAction.Name = api.ActionUpdateDockerImage.Name
-					ClusterActionMetric.set(api.ActionUpdateDockerImage, cc.Name)
-					lastAction.StartTime = nil
-					lastAction.EndTime = nil
-					return true
-				}
-			}
+	for _, container := range storedStatefulSet.Spec.Template.Spec.Containers {
+		if container.Name == consts.CassandraContainerName && desiredDockerImage != container.Image {
+			logrus.Infof("[%s][%s]: We ask to change DockerImage CRD:%s -> StatefulSet:%s", cc.Name, dcRackName, desiredDockerImage, container.Image)
+			setRackLastAction(cc, status, dcRackName, api.ActionUpdateDockerImage, api.StatusToDo)
+			return true
 		}
 	}
 	return false
@@ -267,12 +239,7 @@ func UpdateStatusIfRollingRestart(cc *api.CassandraCluster, dc,
 	if cc.Spec.Topology.DC[dc].Rack[rack].RollingRestart {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 			"dc-rack": dcRackName}).Info("Scoping RollingRestart of the Rack")
-		lastAction := &status.GetCassandraRackStatus(dcRackName).CassandraLastAction
-		lastAction.Status = api.StatusToDo
-		lastAction.Name = api.ActionRollingRestart.Name
-		ClusterActionMetric.set(api.ActionRollingRestart, cc.Name)
-		lastAction.StartTime = nil
-		lastAction.EndTime = nil
+		setRackLastAction(cc, status, dcRackName, api.ActionRollingRestart, api.StatusToDo)
 		cc.Spec.Topology.DC[dc].Rack[rack].RollingRestart = false
 		return true
 	}
@@ -302,12 +269,7 @@ func UpdateStatusIfSeedListHasChanged(cc *api.CassandraCluster, dcRackName api.D
 	// This is to ensure that we won't do 2 different kind of operations in different racks at the same time (ex:scaling + updateseedlist)
 	if !reflect.DeepEqual(status.SeedList, storedSeedList) {
 		logrus.Infof("[%s][%s]: We ask to Change the Cassandra SeedList", cc.Name, dcRackName)
-		lastAction := &status.GetCassandraRackStatus(dcRackName).CassandraLastAction
-		lastAction.Status = api.StatusConfiguring
-		lastAction.Name = api.ActionUpdateSeedList.Name
-		ClusterActionMetric.set(api.ActionUpdateSeedList, cc.Name)
-		lastAction.StartTime = nil
-		lastAction.EndTime = nil
+		setRackLastAction(cc, status, dcRackName, api.ActionUpdateSeedList, api.StatusConfiguring)
 		return true
 	}
 
@@ -320,24 +282,31 @@ func UpdateStatusIfSeedListHasChanged(cc *api.CassandraCluster, dcRackName api.D
 func UpdateStatusIfScaling(cc *api.CassandraCluster, dcRackName api.DcRackName, storedStatefulSet *appsv1.StatefulSet,
 	status *api.CassandraClusterStatus) bool {
 	nodesPerRacks := cc.GetNodesPerRacksStrongType(dcRackName)
-	if nodesPerRacks != *storedStatefulSet.Spec.Replicas {
-		lastAction := &status.GetCassandraRackStatus(dcRackName).CassandraLastAction
-		lastAction.Status = api.StatusToDo
-		if nodesPerRacks > *storedStatefulSet.Spec.Replicas {
-			lastAction.Name = api.ActionScaleUp.Name
-			ClusterActionMetric.set(api.ActionScaleUp, cc.Name)
-			logrus.Infof("[%s][%s]: Scaling Cluster : Ask %d and have %d --> ScaleUP", cc.Name, dcRackName, nodesPerRacks, *storedStatefulSet.Spec.Replicas)
-		} else {
-			logrus.Infof("[%s][%s]: Scaling Cluster : Ask %d and have %d --> ScaleDown", cc.Name, dcRackName, nodesPerRacks, *storedStatefulSet.Spec.Replicas)
-			ClusterActionMetric.set(api.ActionScaleDown, cc.Name)
-			setDecommissionStatus(status, dcRackName)
-			ClusterPhaseMetric.set(api.ClusterPhasePending, cc.Name)
-		}
-		lastAction.StartTime = nil
-		lastAction.EndTime = nil
+	replicas := *storedStatefulSet.Spec.Replicas
+	if nodesPerRacks == replicas {
+		return false
+	}
+	if nodesPerRacks > replicas {
+		logrus.Infof("[%s][%s]: Scaling Cluster : Ask %d and have %d --> ScaleUP", cc.Name, dcRackName, nodesPerRacks, replicas)
+		setRackLastAction(cc, status, dcRackName, api.ActionScaleUp, api.StatusToDo)
 		return true
 	}
-	return false
+	logrus.Infof("[%s][%s]: Scaling Cluster : Ask %d and have %d --> ScaleDown", cc.Name, dcRackName, nodesPerRacks, replicas)
+	setDecommissionStatus(status, dcRackName)
+	setRackLastAction(cc, status, dcRackName, api.ActionScaleDown, api.StatusToDo)
+	ClusterPhaseMetric.set(api.ClusterPhasePending, cc.Name)
+	return true
+}
+
+// setRackLastAction sets the last action of the rack with the given status, resets its times and records it in metrics
+func setRackLastAction(cc *api.CassandraCluster, status *api.CassandraClusterStatus, dcRackName api.DcRackName,
+	action api.ClusterStateInfo, actionStatus string) {
+	lastAction := &status.GetCassandraRackStatus(dcRackName).CassandraLastAction
+	lastAction.Status = actionStatus
+	lastAction.Name = action.Name
+	lastAction.StartTime = nil
+	lastAction.EndTime = nil
+	ClusterActionMetric.set(action, cc.Name)
 }
 
 // UpdateStatusIfStatefulSetChanged detects if there is a change in the statefulset which was not already caught
