@@ -61,7 +61,7 @@ func existingNotScheduledSnapshot(ctx context.Context, c client.Client, instance
 
 	backupsList := &api.CassandraBackupList{}
 
-	if err := c.List(ctx, backupsList); err != nil {
+	if err := c.List(ctx, backupsList, client.InNamespace(instance.Namespace)); err != nil {
 		return false, err
 	}
 

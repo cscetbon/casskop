@@ -105,8 +105,9 @@ func (r *CassandraBackupReconciler) Reconcile(ctx context.Context, request recon
 	}
 
 	instanceChanged := true
+	previousLastApplied := cassandraBackup.Annotations[annotationLastApplied]
 
-	if lac, _ := cassandraBackup.ComputeLastAppliedAnnotation(); lac == cassandraBackup.Annotations[annotationLastApplied] {
+	if lac, _ := cassandraBackup.ComputeLastAppliedAnnotation(); lac == previousLastApplied {
 		instanceChanged = false
 	} else {
 		if cassandraBackup.Annotations == nil {
@@ -178,11 +179,9 @@ func (r *CassandraBackupReconciler) Reconcile(ctx context.Context, request recon
 
 	// Get CassandraCluster object
 	cc := &api.CassandraCluster{}
-	logrus.WithFields(logrus.Fields{"where": "CYRIL 1"}).Error("NO ERROR YET")
 	if err := r.Client.Get(ctx,
 		types.NamespacedName{Name: cassandraBackup.Spec.CassandraCluster,
 			Namespace: cassandraBackup.Namespace}, cc); err != nil {
-		logrus.WithFields(logrus.Fields{"where": "CYRIL 2", "err": err}).Error("NO ERROR YET")
 		if k8sErrors.IsNotFound(err) {
 			r.Recorder.Event(
 				cassandraBackup,
@@ -205,11 +204,11 @@ func (r *CassandraBackupReconciler) Reconcile(ctx context.Context, request recon
 				fmt.Sprintf("Schedule %s is not valid: %s", cassandraBackup.Spec.Schedule, err.Error()))
 
 			// If schedule is invalid and the object already existed, we reset it to what it was
-			if instanceChanged {
+			if previousLastApplied != "" {
 				logrus.WithFields(logrus.Fields{"backup": request.NamespacedName}).Info(undoScheduleChange)
 				//We retrieved our last-applied-configuration stored in the object
 				var oldCassandraBackup api.CassandraBackup
-				err := json.Unmarshal([]byte(cassandraBackup.Annotations[annotationLastApplied]), &oldCassandraBackup)
+				err := json.Unmarshal([]byte(previousLastApplied), &oldCassandraBackup)
 				if err != nil {
 					logrus.WithFields(logrus.Fields{"backup": request.NamespacedName,
 						"err": err}).Error(retryFailedUndoSchedule)
