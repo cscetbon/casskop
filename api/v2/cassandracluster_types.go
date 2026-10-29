@@ -448,7 +448,7 @@ func (cc *CassandraCluster) GetDataCapacityForDCName(dcName DcName) string {
 
 // GetDataStorageClassForDCName sends back the data storage class of cassandra nodes for the given dcName
 func (cc *CassandraCluster) GetDataStorageClassForDCName(dcName DcName) string {
-	if dc := cc.getDCFromName(dcName.String()); dc != nil && dc.DataCapacity != "" {
+	if dc := cc.getDCFromName(dcName.String()); dc != nil && dc.DataStorageClass != "" {
 		return dc.DataStorageClass
 	}
 	return cc.Spec.DataStorageClass
@@ -485,6 +485,9 @@ func (cc *CassandraCluster) GetDCFromDCRackName(dcRackName string) *DC {
 func (cc *CassandraCluster) GetRackFromDCRackName(dcRackName string) *Rack {
 	_, rackName := cc.GetDCNameAndRackNameFromDCRackName(dcRackName)
 	dc := cc.GetDCFromDCRackName(dcRackName)
+	if dc == nil {
+		return nil
+	}
 	for _, rack := range dc.Rack {
 		if rack.Name == rackName {
 			return &rack

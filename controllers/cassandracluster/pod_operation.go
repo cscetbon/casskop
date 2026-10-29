@@ -297,7 +297,7 @@ func (rcc *CassandraClusterReconciler) ensureOperation(ctx context.Context, cc *
 
 func (rcc *CassandraClusterReconciler) finalizeOperations(ctx context.Context, cc *api.CassandraCluster) {
 	// Finalize all operations here to avoid update conflicts
-	for chanOp := 0; chanOp < len(chanRunningOp); chanOp++ {
+	for range len(chanRunningOp) {
 		op := <-chanRunningOp
 		rcc.finalizeOperation(ctx, op.err, cc, op.dcRackName, op.pod, &rcc.cc.Status,
 			title(op.operationName))
