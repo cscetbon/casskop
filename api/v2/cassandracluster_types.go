@@ -350,41 +350,30 @@ func (cc *CassandraCluster) InitCassandraRackStatus(status *CassandraClusterStat
 // Initialisation of the Cassandra SeedList
 // We want 3 seed nodes for each DC
 func (cc *CassandraCluster) InitSeedList() []string {
-
-	var dcName, rackName string
-	var indice int32
 	var seedList []string
 
 	dcsize := cc.GetDCSize()
 
 	if dcsize < 1 {
-		dcName = DefaultCassandraDC
-		rackName = DefaultCassandraRack
-		for indice = 0; indice < cc.Spec.NodesPerRacks && indice < 3; indice++ {
-			cc.addNewSeed(&seedList, dcName, rackName, indice)
-		}
+		cc.addDefaultRackSeeds(&seedList, DefaultCassandraDC)
 		return seedList
 	}
 	for dc := range dcsize {
-		dcName = cc.GetDCName(dc)
-		var nbSeedInDC int = 0
+		dcName := cc.GetDCName(dc)
+		nbSeedInDC := 0
 		racksize := cc.GetRackSize(dc)
 
 		if racksize < 1 {
-			rackName = DefaultCassandraRack
-			for indice = 0; indice < cc.Spec.NodesPerRacks && indice < 3; indice++ {
-				cc.addNewSeed(&seedList, dcName, rackName, indice)
-			}
+			cc.addDefaultRackSeeds(&seedList, dcName)
 			continue
 		}
 		for rack := range racksize {
-			rackName = cc.GetRackName(dc, rack)
-			dcRackName := cc.GetDCRackName(dcName, rackName)
-			nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
+			rackName := cc.GetRackName(dc, rack)
+			nodesPerRacks := cc.GetNodesPerRacks(cc.GetDCRackName(dcName, rackName))
 
 			switch racksize {
 			case 1, 2:
-				for indice = 0; indice < nodesPerRacks && indice < int32(4-racksize) &&
+				for indice := int32(0); indice < nodesPerRacks && indice < int32(4-racksize) &&
 					nbSeedInDC < 3; indice++ {
 					cc.addNewSeed(&seedList, dcName, rackName, indice)
 					nbSeedInDC++
@@ -401,8 +390,14 @@ func (cc *CassandraCluster) InitSeedList() []string {
 }
 
 func (cc *CassandraCluster) SeedList(seedListTab *[]string) string {
-	seedList := strings.Join(*seedListTab, ",")
-	return seedList
+	return strings.Join(*seedListTab, ",")
+}
+
+// addDefaultRackSeeds adds up to 3 seeds from the default rack of dcName
+func (cc *CassandraCluster) addDefaultRackSeeds(seedList *[]string, dcName string) {
+	for indice := range min(cc.Spec.NodesPerRacks, 3) {
+		cc.addNewSeed(seedList, dcName, DefaultCassandraRack, indice)
+	}
 }
 
 func (cc *CassandraCluster) addNewSeed(seedList *[]string, dcName string, rackName string, indice int32) {
@@ -434,10 +429,7 @@ func (cc *CassandraCluster) FixCassandraRackList(status *CassandraClusterStatus)
 }
 
 func (cc *CassandraCluster) GetRemovedDCName(oldCRD *CassandraCluster) string {
-	//dcsize := cc.GetDCSize()
-	olddcsize := oldCRD.GetDCSize()
-
-	for dc := range olddcsize {
+	for dc := range oldCRD.GetDCSize() {
 		olddcName := oldCRD.GetDCName(dc)
 		dcName := cc.GetDCName(dc)
 		if olddcName != dcName {
@@ -603,9 +595,8 @@ func (cc *CassandraCluster) GetDCNodesPerRacksFromName(dctarget string) (bool, i
 // FindDCWithNodesTo0
 func (cc *CassandraCluster) FindDCWithNodesTo0() (bool, string, int) {
 	for dc := range cc.GetDCSize() {
-		if cc.getDCNodesPerRacksFromIndex(dc) == int32(0) {
-			dcName := cc.GetDCName(dc)
-			return true, dcName, dc
+		if cc.getDCNodesPerRacksFromIndex(dc) == 0 {
+			return true, cc.GetDCName(dc), dc
 		}
 	}
 	return false, "", 0

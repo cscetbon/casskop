@@ -67,23 +67,16 @@ func GetLastOrFirstPodReady(podsList []v1.Pod, last bool) (*v1.Pod, error) {
 
 // GetLastOrFirstPod returns the last or first pod.
 func GetLastOrFirstPodItem(podsList []v1.Pod, last bool) (*v1.Pod, error) {
-	nb := len(podsList)
-
-	if nb < 1 {
+	if len(podsList) == 0 {
 		return nil, fmt.Errorf("there is no pod")
 	}
 
-	items := podsList[:]
+	sortPodsList(podsList)
 
-	sortPodsList(items)
-
-	idx := 0
+	pod := podsList[0]
 	if last {
-		idx = nb - 1
+		pod = podsList[len(podsList)-1]
 	}
-
-	pod := podsList[idx]
-
 	return &pod, nil
 }
 
