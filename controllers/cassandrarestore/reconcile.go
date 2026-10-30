@@ -211,7 +211,12 @@ func (r *CassandraRestoreReconciler) handleRequiredRestore(ctx context.Context, 
 		return errorfactory.New(errorfactory.ResourceNotReady{}, err, "no pods founds for this dc")
 	}
 
-	sr, err := backrest.NewClient(r.Client, cc, k8s.PodByName(pods, restore.Status.CoordinatorMember))
+	coordinator := k8s.PodByName(pods, restore.Status.CoordinatorMember)
+	if coordinator == nil {
+		return errorfactory.New(errorfactory.ResourceNotReady{},
+			fmt.Errorf("coordinator pod %s not found", restore.Status.CoordinatorMember), "coordinator pod not found")
+	}
+	sr, err := backrest.NewClient(r.Client, cc, coordinator)
 	if err != nil {
 		return sidecarError(reqLogger, err)
 	}
@@ -249,7 +254,12 @@ func (r *CassandraRestoreReconciler) checkRestoreOperationState(ctx context.Cont
 	}
 
 	// Check Restore operation status
-	sr, err := backrest.NewClient(r.Client, cc, k8s.PodByName(pods, restore.Status.CoordinatorMember))
+	coordinator := k8s.PodByName(pods, restore.Status.CoordinatorMember)
+	if coordinator == nil {
+		return errorfactory.New(errorfactory.ResourceNotReady{},
+			fmt.Errorf("coordinator pod %s not found", restore.Status.CoordinatorMember), "coordinator pod not found")
+	}
+	sr, err := backrest.NewClient(r.Client, cc, coordinator)
 	if err != nil {
 		reqLogger.Info("cassandra backup sidecar communication error checking running Operation", "OperationId",
 			restoreId)
@@ -258,14 +268,13 @@ func (r *CassandraRestoreReconciler) checkRestoreOperationState(ctx context.Cont
 	}
 
 	status, err := sr.RestoreStatusByID(restoreId)
-	status.CoordinatorMember = restore.Status.CoordinatorMember
-
 	if err != nil {
 		reqLogger.Info("cassandra backup sidecar communication error checking running Operation",
 			"OperationId", restoreId)
 		return errorfactory.New(errorfactory.CassandraBackupSidecarNotReady{}, err,
 			"Icarus sidecar communication error")
 	}
+	status.CoordinatorMember = restore.Status.CoordinatorMember
 
 	if err := UpdateRestoreStatus(r.Client, restore, *status, reqLogger); err != nil {
 		return errors.WrapIfWithDetails(err, "could not update status for restore",

@@ -120,6 +120,9 @@ func (c *Client) PerformBackup(backup *api.CassandraBackup) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if backupOperation == nil {
+		return "", fmt.Errorf("empty response from the backup sidecar on %s", c.CoordinatorMember)
+	}
 
 	return backupOperation.Id, nil
 }
