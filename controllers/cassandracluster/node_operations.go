@@ -17,8 +17,8 @@ package cassandracluster
 import (
 	"errors"
 	"fmt"
-	"regexp"
 	"slices"
+	"strings"
 
 	"context"
 
@@ -348,11 +348,12 @@ func (jolokiaClient *JolokiaClient) hasKeyspaceDataInDC(keyspace, dc string) (bo
 	if err != nil {
 		return false, fmt.Errorf("cannot describe ring using keyspace %s: %v", keyspace, err.Error())
 	}
-	regexDc := regexp.MustCompile(fmt.Sprintf("datacenter:%s", dc))
+	// endpoint details look like "EndpointDetails(host:10.0.0.1, datacenter:dc1, rack:rack1)"
+	dcMarker := fmt.Sprintf("datacenter:%s,", dc)
 	tokenRanges, _ := result.Value.([]any)
 	for _, tokenRange := range tokenRanges {
 		// Returns true as soon as we find one token range that is replicated to the chosen datacenter
-		if regexDc.MatchString(tokenRange.(string)) {
+		if s, _ := tokenRange.(string); strings.Contains(s, dcMarker) {
 			return true, nil
 		}
 	}
