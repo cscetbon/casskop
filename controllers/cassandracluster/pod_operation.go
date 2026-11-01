@@ -520,7 +520,7 @@ func (rcc *CassandraClusterReconciler) ensureDecommissionToDo(ctx context.Contex
 
 	logrus.WithFields(logrusFields).Debug("Decommissioning cassandra node")
 
-	isCassandra4 := cc.Spec.ServerVersion >= "4.0"
+	isCassandra4 := cc.ServerVersionAtLeast(4, 0)
 	go func(fields logrus.Fields) {
 		logrus.WithFields(fields).Debug("Node decommission starts")
 		err := jolokiaClient.NodeDecommission(isCassandra4)

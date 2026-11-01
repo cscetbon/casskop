@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -175,6 +176,40 @@ func (cc *CassandraCluster) SetDefaults() bool {
 	}
 
 	return changed
+}
+
+var regexNumericVersion = regexp.MustCompile(`^\d+(\.\d+)*$`)
+
+// ServerVersion returns spec.serverVersion or, when unset, the version found in the
+// cassandra image tag normalized to x.y.z (cassandra:4.1 -> 4.1.0, cassandra:5.0.1-foo -> 5.0.1)
+func (cc *CassandraCluster) ServerVersion() string {
+	if cc.Spec.ServerVersion != "" {
+		return cc.Spec.ServerVersion
+	}
+	image := cc.Spec.CassandraImage
+	i := strings.LastIndex(image, ":")
+	if i < 0 || strings.Contains(image[i+1:], "/") {
+		return ""
+	}
+	version, _, _ := strings.Cut(image[i+1:], "-")
+	if !regexNumericVersion.MatchString(version) {
+		return version
+	}
+	for strings.Count(version, ".") < 2 {
+		version += ".0"
+	}
+	return version
+}
+
+// ServerVersionAtLeast reports whether ServerVersion is greater than or equal to major.minor
+func (cc *CassandraCluster) ServerVersionAtLeast(major, minor int) bool {
+	parts := strings.SplitN(cc.ServerVersion(), ".", 3)
+	ccMajor, _ := strconv.Atoi(parts[0])
+	ccMinor := 0
+	if len(parts) > 1 {
+		ccMinor, _ = strconv.Atoi(parts[1])
+	}
+	return ccMajor > major || (ccMajor == major && ccMinor >= minor)
 }
 
 func (cc *CassandraCluster) ComputeLastAppliedConfiguration() ([]byte, error) {

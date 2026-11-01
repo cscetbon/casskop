@@ -206,7 +206,8 @@ func TestInitContainerConfiguration(t *testing.T) {
 	initEnvVar := envVars.InitContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
 	bootstrapEnvVar := envVars.BootstrapContainerEnvVar(cc, &cc.Status)
 
-	assert.Equal(6, len(bootstrapEnvVar))
+	assert.Equal(7, len(bootstrapEnvVar))
+	assert.Equal("4.0.1", GetEnvVarByName(bootstrapEnvVar, "CASSANDRA_VERSION").Value)
 	assert.Equal(7, len(initEnvVar))
 
 	configFileData, _ := gabs.ParseJSON([]byte(`{
@@ -691,7 +692,7 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 
 	assert := assert.New(t)
 
-	assert.Equal(6, len(bootstrapContainerEnvVar))
+	assert.Equal(7, len(bootstrapContainerEnvVar))
 	assert.Equal(4, len(containers))
 	assert.Equal(7, len(initContainerEnvVar))
 
@@ -724,6 +725,7 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 		"CONFIG_FILE_DATA":       configFileData.String(),
 		"PRODUCT_NAME":           "cassandra",
 		"PRODUCT_VERSION":        "3.11.7",
+		"CASSANDRA_VERSION":      "3.11.7",
 		"CASSANDRA_SEEDS":        "",
 		"CASSANDRA_DC":           "",
 		"CASSANDRA_RACK":         "",
