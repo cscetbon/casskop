@@ -1,0 +1,19 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  # Write data with Cassandra 4.1 that must survive the upgrade
+  - script: |
+      set -e
+      # the pod is ready once the node joined the ring, CQL may be listening a few seconds later
+      for i in $(seq 1 30); do
+        kubectl exec cassandra-e2e-dc1-rack1-0 -c cassandra -- cqlsh -e "DESCRIBE KEYSPACES" >/dev/null 2>&1 && break
+        sleep 5
+      done
+      kubectl exec cassandra-e2e-dc1-rack1-0 -c cassandra -- cqlsh -e "
+        CREATE KEYSPACE IF NOT EXISTS upgrade WITH replication = {'class': 'NetworkTopologyStrategy', 'dc1': 1};
+        CREATE TABLE IF NOT EXISTS upgrade.data (id int PRIMARY KEY, v text);
+        INSERT INTO upgrade.data (id, v) VALUES (1, 'written-on-4.1');
+        INSERT INTO upgrade.data (id, v) VALUES (2, 'written-on-4.1');"
+      kubectl exec cassandra-e2e-dc1-rack1-0 -c cassandra -- nodetool flush upgrade
+      kubectl exec cassandra-e2e-dc1-rack1-0 -c cassandra -- nodetool version | grep -q 4.1.5
+      kubectl exec cassandra-e2e-dc1-rack1-0 -c cassandra -- grep -q "javaagent:/extra-lib/cassandra-exporter-agent-4.1.jar" /etc/cassandra/cassandra-env.sh
