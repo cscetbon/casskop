@@ -18,6 +18,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/cscetbon/casskop/controllers/cassandracluster/envVars"
 	"github.com/cscetbon/casskop/controllers/cassandracluster/storagestateclient"
 	"github.com/cscetbon/casskop/controllers/cassandracluster/sts"
 	"github.com/go-logr/logr"
@@ -119,6 +120,15 @@ func (rcc *CassandraClusterReconciler) Reconcile(ctx context.Context, request re
 
 	//We Update Status at the end
 	defer rcc.updateCassandraStatus(ctx, cc, status)
+
+	// A config section unknown to the config builder for this Cassandra version would make every init
+	// container fail, nothing is reconciled until the configuration is fixed
+	if err = envVars.ValidateConfig(cc); err != nil {
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Errorf("The Operator refuses the configuration: %v", err)
+		status.LastClusterAction = api.ActionCorrectCRDConfig.Name
+		status.LastClusterActionStatus = api.StatusError
+		return requeue30, nil
+	}
 
 	//If non allowed changes on CRD, we return here
 	if rcc.CheckNonAllowedChanges(ctx, cc, status) {
