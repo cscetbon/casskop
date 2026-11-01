@@ -1,7 +1,4 @@
 version: "2"
-run:
-  # the linter is advisory, issues are reported as annotations and do not fail the build
-  issues-exit-code: 0
 linters:
   settings:
     staticcheck:
