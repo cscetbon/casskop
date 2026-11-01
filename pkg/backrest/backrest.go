@@ -51,7 +51,7 @@ func formatEntities(entities string) string {
 
 func (c *Client) PerformRestore(restore *api.CassandraRestore,
 	backup *api.CassandraBackup) (*api.BackRestStatus, error) {
-	restoreOperationRequest := &icarus.RestoreOperationRequest{
+	restoreOperationRequest := &cassandrabackup.RestoreOperationRequest{RestoreOperationRequest: icarus.RestoreOperationRequest{
 		Type_:              "restore",
 		Dc:                 restore.Spec.Datacenter,
 		StorageLocation:    backup.Spec.StorageLocation,
@@ -71,7 +71,7 @@ func (c *Client) PerformRestore(restore *api.CassandraRestore,
 		SchemaVersion:             restore.Spec.SchemaVersion,
 		RestorationStrategyType:   "HARDLINKS",
 		ResolveHostIdFromTopology: true,
-	}
+	}, DataDirs: cassandrabackup.DataDirs(restore.Spec.CassandraDirectory)}
 
 	if restore.Spec.ConcurrentConnection != nil {
 		restoreOperationRequest.ConcurrentConnections = *restore.Spec.ConcurrentConnection
@@ -102,7 +102,7 @@ func (c *Client) PerformBackup(backup *api.CassandraBackup) (string, error) {
 	bandwidth := strings.Replace(backup.Spec.Bandwidth, " ", "", -1)
 	bandwidthDataRate, _ := dataRateFromBandwidth(bandwidth)
 
-	backupOperationRequest := &icarus.BackupOperationRequest{
+	backupOperationRequest := &cassandrabackup.BackupOperationRequest{BackupOperationRequest: icarus.BackupOperationRequest{
 		Type_:                 "backup",
 		StorageLocation:       backup.Spec.StorageLocation,
 		SnapshotTag:           backup.Spec.SnapshotTag,
@@ -114,7 +114,7 @@ func (c *Client) PerformBackup(backup *api.CassandraBackup) (string, error) {
 		Dc:                    backup.Spec.Datacenter,
 		GlobalRequest:         true,
 		K8sNamespace:          backup.Namespace,
-	}
+	}, DataDirs: cassandrabackup.DataDirs("")}
 
 	backupOperation, err := c.client.PerformBackupOperation(*backupOperationRequest)
 	if err != nil {

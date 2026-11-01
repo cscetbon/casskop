@@ -73,7 +73,7 @@ func NewMockCassandraBackupClientFailOps() *mockCassandraBackupClient {
 	}
 }
 
-func (m *mockCassandraBackupClient) PerformRestoreOperation(restoreOperation icarus.RestoreOperationRequest) (*icarus.RestoreOperationResponse, error) {
+func (m *mockCassandraBackupClient) PerformRestoreOperation(restoreOperation RestoreOperationRequest) (*icarus.RestoreOperationResponse, error) {
 	if m.failOpts {
 		return nil, ErrCassandraSidecarNotReturned201
 	}
