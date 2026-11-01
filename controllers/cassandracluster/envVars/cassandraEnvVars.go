@@ -50,6 +50,7 @@ const (
 
 	cassandraVersionEnvVarName = "CASSANDRA_VERSION"
 
+	cassandraYamlKey    = "cassandra-yaml"
 	jvmOptionsKey       = "jvm-options"
 	jvmServerOptionsKey = "jvm-server-options"
 
@@ -169,7 +170,7 @@ func InitContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 	}
 
 	defaultConfig := NodeConfig{
-		"cassandra-yaml": {
+		cassandraYamlKey: {
 			"read_request_timeout_in_ms":          5000,
 			"write_request_timeout_in_ms":         5000,
 			"counter_write_request_timeout_in_ms": 5000,
@@ -199,6 +200,13 @@ func InitContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 	mergeConfig(cc.Spec.Config, parsedConfig, jvmOptions)
 	mergeConfig(dc.Config, parsedConfig, jvmOptions)
 	mergeConfig(rack.Config, parsedConfig, jvmOptions)
+
+	// Cassandra 4.1 renamed most cassandra.yaml settings, translate legacy keys so they do not clash
+	// with the new style ones rendered by the config builder definitions
+	if cc.ServerVersionAtLeast(4, 1) {
+		translateLegacyCassandraYamlSection(parsedConfig)
+		defaultConfig[cassandraYamlKey] = translateLegacyCassandraYaml(defaultConfig[cassandraYamlKey])
+	}
 
 	defaultConfig[jvmOptions] = map[string]any{
 		"initial_heap_size":       defineJvmMemory(resources).initialHeapSize,

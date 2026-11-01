@@ -786,3 +786,27 @@ func TestDisableBackRest(t *testing.T) {
 func getPos(slice []v1.VolumeMount, value string) int {
 	return slices.IndexFunc(slice, func(v v1.VolumeMount) bool { return v.Name == value })
 }
+
+func TestInitContainerConfigCassandra41(t *testing.T) {
+	// From 4.1 the config builder definitions use the new style keys, legacy ones must be translated
+	assert := assert.New(t)
+	_, cc := helperInitCluster(t, "cassandracluster-1DC.yaml")
+	cc.Spec.CassandraImage = "cassandra:4.1.5"
+	cc.Spec.Config, _ = json.Marshal(map[string]map[string]any{
+		"cassandra-yaml": {"read_request_timeout_in_ms": 10000, "num_tokens": 16},
+		"jvm-options":    {"max_heap_size": "1G"},
+	})
+
+	initEnvVar := envVars.InitContainerEnvVar(cc, &cc.Status, cc.Spec.Resources, "dc1-rack1")
+	assert.Equal("4.1.5", GetEnvVarByName(initEnvVar, "PRODUCT_VERSION").Value)
+	configFileData, _ := gabs.ParseJSON([]byte(GetEnvVarByName(initEnvVar, "CONFIG_FILE_DATA").Value))
+
+	assert.Equal(map[string]any{
+		"read_request_timeout":          "10000ms",
+		"write_request_timeout":         "5000ms",
+		"counter_write_request_timeout": "5000ms",
+		"num_tokens":                    float64(16),
+	}, configFileData.Path("cassandra-yaml").Data())
+	assert.Equal("1G", configFileData.Path("jvm-server-options.max_heap_size").Data())
+	assert.Nil(configFileData.Path("jvm-options").Data())
+}

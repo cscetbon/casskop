@@ -172,3 +172,29 @@ func findAllEnvVarsByName(envVars []v1.EnvVar, name string) []*v1.EnvVar {
 	}
 	return result
 }
+
+func TestTranslateLegacyCassandraYaml(t *testing.T) {
+	section := map[string]any{
+		"read_request_timeout_in_ms":                  float64(5000),
+		"write_request_timeout":                       "3000ms",
+		"write_request_timeout_in_ms":                 float64(2000),
+		"compaction_throughput_mb_per_sec":            float64(64),
+		"stream_throughput_outbound_megabits_per_sec": float64(24),
+		"index_summary_resize_interval_in_minutes":    float64(-1),
+		"enable_user_defined_functions":               true,
+		"commitlog_sync_group_window_in_ms":           15.5,
+		"num_tokens":                                  float64(16),
+		"key_cache_size_in_mb":                        "100MiB",
+	}
+	expected := map[string]any{
+		"read_request_timeout":           "5000ms",
+		"write_request_timeout":          "3000ms",
+		"compaction_throughput":          "64MiB/s",
+		"stream_throughput_outbound":     "3000000B/s",
+		"user_defined_functions_enabled": true,
+		"commitlog_sync_group_window":    "15.5ms",
+		"num_tokens":                     float64(16),
+		"key_cache_size":                 "100MiB",
+	}
+	assert.Equal(t, expected, translateLegacyCassandraYaml(section))
+}
