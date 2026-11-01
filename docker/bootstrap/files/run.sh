@@ -98,12 +98,27 @@ EOF
 
 fi
 
+# The instaclustr exporter agent is compiled against Cassandra internals: the default jar works with 3.x,
+# a dedicated one with 4.1, and no release works with 4.0 (instaclustr/cassandra-exporter#126) or 5.0
+# (instaclustr/cassandra-exporter#127). With an incompatible agent every request to port 9500 hangs,
+# so it is better not to load it at all.
+EXPORTER_AGENT_JAR=cassandra-exporter-agent.jar
+IFS=. read -r CASSANDRA_MAJOR CASSANDRA_MINOR _ <<<"${CASSANDRA_VERSION:-0.0.0}"
+if (( CASSANDRA_MAJOR == 4 && CASSANDRA_MINOR >= 1 ))
+then
+    EXPORTER_AGENT_JAR=cassandra-exporter-agent-4.1.jar
+elif (( CASSANDRA_MAJOR >= 4 ))
+then
+    echo "No cassandra-exporter agent is compatible with Cassandra ${CASSANDRA_VERSION}, metrics on port 9500 are disabled"
+    CASSANDRA_EXPORTER_AGENT=false
+fi
+
 if [[ $CASSANDRA_EXPORTER_AGENT == 'true' ]]
 then
     cat  <<EOF >>$CASSANDRA_CONF/cassandra-env.sh
 
 # Prometheus exporter from Instaclustr
-JVM_OPTS="\$JVM_OPTS -javaagent:/extra-lib/cassandra-exporter-agent.jar=@/etc/cassandra/exporter.conf"
+JVM_OPTS="\$JVM_OPTS -javaagent:/extra-lib/${EXPORTER_AGENT_JAR}=@/etc/cassandra/exporter.conf"
 EOF
 
 fi
