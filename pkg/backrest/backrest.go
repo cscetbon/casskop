@@ -99,7 +99,7 @@ func (c *Client) PerformRestore(restore *api.CassandraRestore,
 }
 
 func (c *Client) PerformBackup(backup *api.CassandraBackup) (string, error) {
-	bandwidth := strings.Replace(backup.Spec.Bandwidth, " ", "", -1)
+	bandwidth := strings.ReplaceAll(backup.Spec.Bandwidth, " ", "")
 	bandwidthDataRate, _ := dataRateFromBandwidth(bandwidth)
 
 	backupOperationRequest := &cassandrabackup.BackupOperationRequest{BackupOperationRequest: icarus.BackupOperationRequest{
@@ -154,7 +154,7 @@ func (c *Client) BackupStatusByID(id string) (api.BackRestStatus, error) {
 var regexBandwidthSupportedFormat = regexp.MustCompile(`(?i)^(?P<Value>\d+)(?P<Unit>[kmg]?)$`)
 
 func dataRateFromBandwidth(value string) (*icarus.DataRate, error) {
-	bandwidth := strings.ToUpper(strings.Replace(value, " ", "", -1))
+	bandwidth := strings.ToUpper(strings.ReplaceAll(value, " ", ""))
 
 	if bandwidth == "" {
 		return nil, nil
@@ -162,7 +162,7 @@ func dataRateFromBandwidth(value string) (*icarus.DataRate, error) {
 
 	matches := regexBandwidthSupportedFormat.FindStringSubmatch(bandwidth)
 	if matches == nil {
-		return nil, fmt.Errorf("Format of %s not supported", value)
+		return nil, fmt.Errorf("format of %s not supported", value)
 	}
 	dataValue, _ := strconv.Atoi(matches[1])
 	return &icarus.DataRate{Value: int32(dataValue), Unit: matches[2] + "BPS"}, nil

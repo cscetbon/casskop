@@ -482,7 +482,10 @@ func (rcc *CassandraClusterReconciler) ReconcileRack(ctx context.Context, cc *ap
 			rcc.UpdateCassandraRackStatusPhase(ctx, cc, completeDcRackName, storedStatefulSet, status)
 
 			//Find if there is an Action to execute/end
-			rcc.getNextCassandraClusterStatus(ctx, cc, completeDcRackName, storedStatefulSet, status)
+			if err := rcc.getNextCassandraClusterStatus(ctx, cc, completeDcRackName, storedStatefulSet, status); err != nil {
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": completeDcRackName.DcRackName}).
+					Errorf("cannot compute the next status: %v", err)
+			}
 
 			//If not Initializing cluster execute pod operations queued
 			if !dcRackStatus.IsInInitialPhase() {
@@ -591,8 +594,8 @@ func (rcc *CassandraClusterReconciler) initiateRackStatusIfNeeded(status *api.Ca
 		ClusterPhaseMetric.set(api.ClusterPhaseInitial, cc.Name)
 		cc.InitCassandraRackStatus(status, completeDcRackName.DcName.String(), completeDcRackName.RackName.String())
 		return true
-	} else if rackStatus.CassandraPhase.IsInitialButNoSubPhase() {
-		rackStatus.CassandraPhase.InitializingSubPhase = new(api.ClusterPhaseInitialSubPhaseFirstPodPerRack)
+	} else if rackStatus.IsInitialButNoSubPhase() {
+		rackStatus.InitializingSubPhase = new(api.ClusterPhaseInitialSubPhaseFirstPodPerRack)
 		return true
 	}
 	return false
@@ -823,8 +826,8 @@ func EnsureSeedListIsUpdatedWhenRequired(cc *api.CassandraCluster, status *api.C
 		for _, rack := range cc.IterateRacks() {
 			dcRackStatus := status.GetCassandraRackStatus(rack.DcRackName)
 
-			if !(dcRackStatus.CassandraLastAction.Name == api.ActionUpdateSeedList.Name &&
-				dcRackStatus.CassandraLastAction.Status == api.StatusConfiguring) {
+			if dcRackStatus.CassandraLastAction.Name != api.ActionUpdateSeedList.Name ||
+				dcRackStatus.CassandraLastAction.Status != api.StatusConfiguring {
 				if dcRackStatus.CassandraLastAction.Name != api.ClusterPhaseInitial.Name {
 					setOperationToDo = false
 				}

@@ -23,7 +23,6 @@ func prepareStatefulSetSnapshot(livingStatefulSet *appsv1.StatefulSet) (string, 
 	statefulSetSnapshot := livingStatefulSet.DeepCopy()
 
 	statefulSetSnapshot.GenerateName = ""
-	statefulSetSnapshot.SelfLink = ""
 	statefulSetSnapshot.UID = ""
 	statefulSetSnapshot.ResourceVersion = ""
 	statefulSetSnapshot.Generation = 0
@@ -189,5 +188,5 @@ func setNewDataCapacity(statefulSet *appsv1.StatefulSet, dataCapacity resource.Q
 			return nil
 		}
 	}
-	return errors.New(fmt.Sprintf("no %s pvc found in statefulSet %s", consts.DataPVCName, statefulSet.Name))
+	return fmt.Errorf("no %s pvc found in statefulSet %s", consts.DataPVCName, statefulSet.Name)
 }

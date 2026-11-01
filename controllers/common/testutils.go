@@ -25,7 +25,9 @@ func HelperLoadBytes(t *testing.T, name string) []byte {
 func HelperGetStatefulset(t *testing.T, dcRackName string) *v12.StatefulSet {
 	var sts v12.StatefulSet
 	name := fmt.Sprintf("cassandracluster-2DC-%s-sts.yaml", dcRackName)
-	yaml.Unmarshal(HelperLoadBytes(t, name), &sts)
+	if err := yaml.Unmarshal(HelperLoadBytes(t, name), &sts); err != nil {
+		t.Fatal(err)
+	}
 	return &sts
 }
 

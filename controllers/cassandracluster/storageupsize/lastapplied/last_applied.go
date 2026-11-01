@@ -13,9 +13,11 @@ import (
 
 func GetOriginalSts(sts *appsv1.StatefulSet) (appsv1.StatefulSet, error) {
 	stsOrig, err := patch.DefaultAnnotator.GetOriginalConfiguration(sts)
-	stsOrigObj := appsv1.StatefulSet{}
-	err = json.ConfigCompatibleWithStandardLibrary.Unmarshal(stsOrig, &stsOrigObj)
 	if err != nil {
+		return appsv1.StatefulSet{}, err
+	}
+	stsOrigObj := appsv1.StatefulSet{}
+	if err = json.ConfigCompatibleWithStandardLibrary.Unmarshal(stsOrig, &stsOrigObj); err != nil {
 		logrus.Debug("cannot deserialize stsOrig")
 	}
 	return stsOrigObj, err

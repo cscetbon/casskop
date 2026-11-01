@@ -222,7 +222,8 @@ func InitContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 		for subkey, subvalue := range value {
 			keyPath := fmt.Sprintf("%s.%s", key, subkey)
 			if parsedConfig.Path(keyPath).Data() == nil {
-				parsedConfig.SetP(subvalue, keyPath)
+				// keyPath is built from constant section and setting names, the call cannot fail
+				_, _ = parsedConfig.SetP(subvalue, keyPath)
 			}
 		}
 	}
@@ -339,7 +340,8 @@ func mergeConfig(config json.RawMessage, currentParsedConfig *gabs.Container, jv
 			_, _ = parsedConfig.SetP(parsedConfig.Path(jvmOptionsKey).Data(), jvmOptions)
 			_ = parsedConfig.DeleteP(jvmOptionsKey)
 		}
-		currentParsedConfig.MergeFn(parsedConfig,
+		// MergeFn only fails when config is not a JSON object, which ValidateConfig refused earlier
+		_ = currentParsedConfig.MergeFn(parsedConfig,
 			func(dest, source any) any { return source })
 	}
 }

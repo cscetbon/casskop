@@ -14,8 +14,8 @@ func UpdateRestoreStatus(c client.Client, restore *api.CassandraRestore, status 
 	restore.Status = status
 
 	if err := c.Patch(context.Background(), restore, patch); err != nil {
-			return errors.WrapIfWithDetails(err, "could not update status for restore",
-				"restore", restore)
+		return errors.WrapIfWithDetails(err, "could not update status for restore",
+			"restore", restore)
 	}
 
 	return nil

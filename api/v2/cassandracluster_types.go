@@ -149,7 +149,7 @@ func (cc *CassandraCluster) SetDefaults() bool {
 		ccs.NodesPerRacks = 1
 		changed = true
 	}
-	if cc.Status.CassandraPhase.IsEmpty() {
+	if cc.Status.IsEmpty() {
 		cc.Status.CassandraPhase = CassandraPhase{
 			Phase:                ClusterPhaseInitial.Name,
 			InitializingSubPhase: new(ClusterPhaseInitialSubPhaseFirstPodPerRack),
@@ -162,8 +162,8 @@ func (cc *CassandraCluster) SetDefaults() bool {
 		}
 		changed = true
 	}
-	if cc.Status.CassandraPhase.IsInitialButNoSubPhase() {
-		cc.Status.CassandraPhase.InitializingSubPhase = new(ClusterPhaseInitialSubPhaseFirstPodPerRack)
+	if cc.Status.IsInitialButNoSubPhase() {
+		cc.Status.InitializingSubPhase = new(ClusterPhaseInitialSubPhaseFirstPodPerRack)
 		changed = true
 	}
 	if ccs.MaxPodUnavailable == 0 {
