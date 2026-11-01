@@ -1,0 +1,15 @@
+(
+  ;; Begin Cassandra 3.11.x transforms.
+  "3.11.6" "cassandra-env-sh-cassandra-3.11.6.edn"
+  ;; End Cassandra 3.11.x transforms.
+
+  ;; Begin Cassandra 4.x transforms.
+   "4.0.0" (transforms
+          (update-template "cassandra-env-sh-cassandra-4.0.0.template"))
+  ;; End Cassandra 4.x transforms.
+
+  ;; Begin Cassandra 5.x transforms: jamm 0.4.0, heap sizing for Java 11/17
+   "5.0.0" (transforms
+          (update-template "cassandra-env-sh-cassandra-5.0.0.template"))
+  ;; End Cassandra 5.x transforms.
+  )
