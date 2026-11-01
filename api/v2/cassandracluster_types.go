@@ -24,8 +24,8 @@ const (
 	DefaultReadinessHealthCheckPeriod   int32 = 10
 
 	defaultCassandraImage     = "cassandra:3.11.10"
-	defaultBootstrapImage     = "ghcr.io/cscetbon/casskop-bootstrap:0.1.21"
-	defaultConfigBuilderImage = "datastax/cass-config-builder:1.0.4"
+	defaultBootstrapImage     = "ghcr.io/cscetbon/casskop-bootstrap:0.1.22"
+	defaultConfigBuilderImage = "ghcr.io/cscetbon/cass-config-builder:1.0.4-1"
 
 	DefaultBackRestImage      = "ghcr.io/cscetbon/instaclustr-icarus:1.1.3"
 	defaultServiceAccountName = "cassandra-cluster-node"
@@ -718,8 +718,8 @@ type CassandraClusterSpec struct {
 	// If this is not empty, operator will uses the cassandra.yaml from the Configmap instead
 	ConfigMapName string `json:"configMapName,omitempty"`
 
-	// Version string for config builder https://github.com/datastax/cass-config-definitions,
-	// used to generate Cassandra server configuration
+	// Cassandra version (x.y.z) used to pick the config builder definitions that generate the
+	// server configuration, defaults to the version found in the tag of cassandraImage
 	ServerVersion string `json:"serverVersion,omitempty"`
 
 	// Server type: "cassandra" or "dse" for config builder, default to cassandra

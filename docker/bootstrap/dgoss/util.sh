@@ -61,7 +61,7 @@ function createInitConfigContainer {
            -e CONFIG_FILE_DATA="$CONFIG_FILE_DATA" \
            -e CONFIG_OUTPUT_DIRECTORY=/bootstrap \
            -e RACK_NAME=$CASSANDRA_RACK \
-           datastax/cass-config-builder:1.0.3
+           ghcr.io/cscetbon/cass-config-builder:1.0.4-1
 
     docker run --rm \
            -v ${BOOTSTRAP_VOLUME}:/bootstrap \
