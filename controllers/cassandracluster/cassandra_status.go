@@ -87,11 +87,9 @@ func (rcc *CassandraClusterReconciler) getNextCassandraClusterStatus(ctx context
 	}
 
 	//If we set up UnlockNextOperation in CRD we allow to see mode change even last operation didn't ended correctly
-	unlockNextOperation := false
-	if cc.Spec.UnlockNextOperation &&
-		rcc.hasUnschedulablePod(ctx, completeDcRackName) {
-		unlockNextOperation = true
-	}
+	unlockNextOperation := cc.Spec.UnlockNextOperation &&
+		rcc.hasUnschedulablePod(ctx, completeDcRackName)
+
 	//Do nothing in Initial phase except if we force it
 	if status.GetCassandraRackStatus(completeDcRackName.DcRackName).IsInInitialPhase() {
 		if !unlockNextOperation {
@@ -527,4 +525,13 @@ func setDecommissionStatus(status *api.CassandraClusterStatus, dcRackName api.Dc
 	rackStatus.PodLastOperation.Pods = []string{}
 	rackStatus.PodLastOperation.PodsOK = []string{}
 	rackStatus.PodLastOperation.PodsKO = []string{}
+}
+
+// logStatusUpdateError updates the status like updateCassandraStatus and logs the error if any, for the
+// callers that cannot return it
+func (rcc *CassandraClusterReconciler) logStatusUpdateError(ctx context.Context, cc *api.CassandraCluster,
+	status *api.CassandraClusterStatus) {
+	if err := rcc.updateCassandraStatus(ctx, cc, status); err != nil {
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Errorf("cannot update the status: %v", err)
+	}
 }

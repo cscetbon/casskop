@@ -201,7 +201,7 @@ func (rcc *CassandraClusterReconciler) initOperation(ctx context.Context, cc *ap
 			podLastOperation.EndTime = &now
 
 			//We want dynamic view of status on CassandraCluster
-			rcc.updateCassandraStatus(ctx, cc, status)
+			rcc.logStatusUpdateError(ctx, cc, status)
 		}
 		return nil
 	}
@@ -218,7 +218,7 @@ func (rcc *CassandraClusterReconciler) initOperation(ctx context.Context, cc *ap
 		podLastOperation.Pods = []string{}
 
 		//We want dynamic view of status on CassandraCluster
-		rcc.updateCassandraStatus(ctx, cc, status)
+		rcc.logStatusUpdateError(ctx, cc, status)
 	}
 
 	return runningPods(podsList.Items)
@@ -259,7 +259,7 @@ func (rcc *CassandraClusterReconciler) startOperation(ctx context.Context, cc *a
 	podLastOperation.PodsOK = k8s.RemoveString(podLastOperation.PodsOK, pod.Name)
 	podLastOperation.PodsKO = k8s.RemoveString(podLastOperation.PodsKO, pod.Name)
 
-	rcc.updateCassandraStatus(ctx, cc, status)
+	rcc.logStatusUpdateError(ctx, cc, status)
 
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 		"pod": pod.Name, "operation": title(operationName),
@@ -626,7 +626,7 @@ func (rcc *CassandraClusterReconciler) getPodsToWorkOn(ctx context.Context, cc *
 			podLastOperation.Status = api.StatusDone
 			podLastOperation.EndTime = new(metav1.Now())
 		}
-		rcc.updateCassandraStatus(ctx, cc, status)
+		rcc.logStatusUpdateError(ctx, cc, status)
 	}
 	return podsSlice, checkOnly
 }
@@ -832,7 +832,7 @@ func (rcc *CassandraClusterReconciler) runRemove(ctx context.Context, hostName s
 }
 
 func (rcc *CassandraClusterReconciler) waitUntilPvcIsDeleted(ctx context.Context, namespace, pvcName string) error {
-	err := wait.Poll(retryInterval(), deletedPvcTimeout, func() (done bool, err error) {
+	err := wait.PollUntilContextTimeout(ctx, retryInterval(), deletedPvcTimeout, false, func(ctx context.Context) (done bool, err error) {
 		_, err = rcc.GetPVC(ctx, namespace, pvcName)
 		if err != nil && apierrors.IsNotFound(err) {
 			logrus.WithFields(logrus.Fields{"namespace": namespace,
