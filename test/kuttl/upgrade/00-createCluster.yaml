@@ -1,0 +1,26 @@
+apiVersion: db.orange.com/v2
+kind: CassandraCluster
+metadata:
+  name: cassandra-e2e
+spec:
+  nodesPerRacks: 1
+  cassandraImage: cassandra:4.1.5
+  imagepullpolicy: IfNotPresent
+  # persistent data is what the upgrade must preserve
+  dataCapacity: 1Gi
+  deletePVC: true
+  autoPilot: true
+  backRestSidecar:
+    enabled: false
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  topology:
+    dc:
+      - name: dc1
+        rack:
+          - name: rack1

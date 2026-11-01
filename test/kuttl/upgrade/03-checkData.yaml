@@ -1,0 +1,14 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  # The node runs 5.0 with a configuration generated for it and still serves the 4.1 data
+  - script: |
+      set -e
+      cassandra() { kubectl exec cassandra-e2e-dc1-rack1-0 -c cassandra -- "$@"; }
+      cassandra nodetool version | grep -q 5.0.1
+      cassandra grep -q "jamm-0.4.0.jar" /etc/cassandra/cassandra-env.sh
+      cassandra grep -q "^storage_compatibility_mode: CASSANDRA_4" /etc/cassandra/cassandra.yaml
+      cassandra grep -q "^read_request_timeout: 5000ms" /etc/cassandra/cassandra.yaml
+      cassandra cqlsh -e "SELECT v FROM upgrade.data WHERE id = 1" | grep -q written-on-4.1
+      cassandra cqlsh -e "INSERT INTO upgrade.data (id, v) VALUES (3, 'written-on-5.0'); SELECT COUNT(*) FROM upgrade.data" | grep -qw 3
+      cassandra nodetool upgradesstables upgrade
