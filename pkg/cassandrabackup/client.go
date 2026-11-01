@@ -1,8 +1,10 @@
 package cassandrabackup
 
 import (
+	"cmp"
 	"fmt"
 	"net/http"
+	"path"
 
 	api "github.com/cscetbon/casskop/api/v2"
 	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
@@ -10,10 +12,35 @@ import (
 	controllerclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// DefaultCassandraDirectory is the directory holding the Cassandra data folder in the pods
+const DefaultCassandraDirectory = "/var/lib/cassandra"
+
+// BackupOperationRequest is the request of the generated Icarus client plus the fields added by
+// Icarus 2.0 that it does not know about
+type BackupOperationRequest struct {
+	icarus.BackupOperationRequest
+	// DataDirs lists the Cassandra data directories, mandatory since Icarus 2.0
+	DataDirs []string `json:"dataDirs,omitempty"`
+}
+
+// RestoreOperationRequest is the request of the generated Icarus client plus the fields added by
+// Icarus 2.0 that it does not know about
+type RestoreOperationRequest struct {
+	icarus.RestoreOperationRequest
+	// DataDirs lists the Cassandra data directories, mandatory since Icarus 2.0
+	DataDirs []string `json:"dataDirs,omitempty"`
+}
+
+// DataDirs returns the data directories of a node from the directory holding its data folder,
+// DefaultCassandraDirectory when empty
+func DataDirs(cassandraDirectory string) []string {
+	return []string{path.Join(cmp.Or(cassandraDirectory, DefaultCassandraDirectory), "data")}
+}
+
 type Client interface {
-	PerformRestoreOperation(restoreOperation icarus.RestoreOperationRequest) (*icarus.RestoreOperationResponse, error)
+	PerformRestoreOperation(restoreOperation RestoreOperationRequest) (*icarus.RestoreOperationResponse, error)
 	RestoreOperationByID(operationId string) (*icarus.RestoreOperationResponse, error)
-	PerformBackupOperation(request icarus.BackupOperationRequest) (*icarus.BackupOperationResponse, error)
+	PerformBackupOperation(request BackupOperationRequest) (*icarus.BackupOperationResponse, error)
 	BackupOperationByID(id string) (response *icarus.BackupOperationResponse, err error)
 	Build() error
 }
