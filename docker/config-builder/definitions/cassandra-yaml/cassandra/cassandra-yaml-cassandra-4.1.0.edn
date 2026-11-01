@@ -1,0 +1,461 @@
+{:display-name "cassandra.yaml",
+ :package-path "/etc/cassandra/cassandra.yaml",
+ :workload-file-group "cassandra",
+ :ui-visibility :editable,
+ :renderer {:renderer-type :yaml},
+ :properties
+ {:concurrent_writes {:type "int", :default_value 32},
+  :hinted_handoff_enabled {:type "boolean", :default_value true},
+  :dynamic_snitch_update_interval {:type "string", :default_value "100ms"},
+  :max_hint_window {:type "string", :default_value "10800000ms"},
+  :internode_timeout {:type "boolean", :default_value false},
+  :unlogged_batch_across_partitions_warn_threshold {:type "int", :default_value 10},
+  :compaction_throughput {:type "string", :default_value "64MiB/s"},
+  :storage_port {:type "int", :default_value 7000, :format false},
+  :start_native_transport {:type "boolean", :readonly true, :default_value true},
+  :snapshot_before_compaction {:type "boolean", :default_value false},
+  :permissions_validity {:type "string", :default_value "2000ms"},
+  :compaction_large_partition_warning_threshold {:type "string", :default_value "100MiB"},
+  :column_index_cache_size {:type "string", :default_value "2KiB"},
+  :max_hints_delivery_threads {:type "int", :default_value 2},
+  :gc_warn_threshold {:type "string", :default_value "1000ms"},
+  :commit_failure_policy
+  {:type "string",
+   :options
+   [{:label "die", :value "die"}
+    {:label "stop", :value "stop"}
+    {:label "stop commit", :value "stop_commit"}
+    {:label "ignore", :value "ignore"}],
+   :default_value "stop"},
+  :truncate_request_timeout {:type "string", :default_value "60000ms"},
+  :request_timeout {:type "string", :default_value "10000ms"},
+  :concurrent_counter_writes {:type "int", :default_value 32},
+  :range_request_timeout {:type "string", :default_value "10000ms"},
+  :trickle_fsync_interval {:type "string", :default_value "10240KiB"},
+  :credentials_validity {:type "string", :default_value "2000ms"},
+  :endpoint_snitch
+  {:type "string",
+   :options
+   [{:label "GossipingPropertyFileSnitch",
+     :value "org.apache.cassandra.locator.GossipingPropertyFileSnitch"}],
+   :default_value "GossipingPropertyFileSnitch",
+   :description
+   "Gossiping Property File Snitch (GPFS) is automatically configured according to the rack setting on each node in the cluster topology. GPFS is the only endpoint_snitch supported by LCM because it is the only snitch that supports all possible topologies and can be configured independently on each node."},
+  :role_manager
+  {:type "string",
+   :options
+   [{:label "CassandraRoleManager",
+     :value "org.apache.cassandra.auth.CassandraRoleManager"}],
+   :default_value "org.apache.cassandra.auth.CassandraRoleManager"},
+  :ssl_storage_port {:type "int", :default_value 7001, :format false},
+  :trace_type_repair_ttl {:type "string", :default_value "604800s"},
+  :hints_flush_period {:type "string", :default_value "10000ms"},
+  :counter_cache_save_period {:type "string", :default_value "7200s"},
+  :batch_size_fail_threshold {:type "string", :default_value "640KiB"},
+  :memtable_flush_writers {:type "int"},
+  :row_cache_size {:type "string", :default_value "0MiB"},
+  :tombstone_warn_threshold {:type "int", :default_value 1000},
+  :concurrent_materialized_view_writes {:type "int", :default_value 32},
+  :incremental_backups {:type "boolean", :default_value false},
+  :commitlog_segment_size {:type "string", :default_value "32MiB"},
+  :trace_type_query_ttl {:type "string", :default_value "86400s"},
+  :key_cache_save_period {:type "string", :default_value "14400s"},
+  :read_request_timeout {:type "string", :default_value "5000ms"},
+  :dynamic_snitch_reset_interval {:type "string", :default_value "600000ms"},
+  :transparent_data_encryption_options
+  {:type "dict",
+   :order [:enabled :chunk_length_kb :cipher :key_alias :key_provider],
+   :fields
+   {:enabled {:type "boolean", :default_value false},
+    :chunk_length_kb {:type "int", :default_value 64},
+    :cipher {:type "string", :default_value "AES/CBC/PKCS5Padding"},
+    :key_alias {:type "string", :default_value "testing:1"},
+    :key_provider
+    {:type "list",
+     :value_type "dict",
+     :order [:class_name :parameters],
+     :fields
+     {:class_name {:type "string"},
+      :parameters
+      {:type "list",
+       :value_type "dict",
+       :order [:keystore :keystore_password :store_type :key_password],
+       :fields
+       {:keystore {:type "string"},
+        :keystore_password {:type "string", :password true, :key_name "Keystore Password"},
+        :store_type {:type "string", :key_name "Store Type"},
+        :key_password {:type "string", :password true, :key_name "Key Password"}}}}}}},
+  :slow_query_log_timeout {:type "string", :default_value "500ms"},
+  :counter_cache_size {:type "string"},
+  :disk_failure_policy
+  {:type "string",
+   :options
+   [{:label "die", :value "die"}
+    {:label "stop_paranoid", :value "stop_paranoid"}
+    {:label "stop", :value "stop"}
+    {:label "best effort", :value "best_effort"}
+    {:label "ignore", :value "ignore"}],
+   :default_value "stop"},
+  :memtable_allocation_type
+  {:type "string",
+   :options
+   [{:label "heap_buffers", :value "heap_buffers"}
+    {:label "offheap_buffers", :value "offheap_buffers"}
+    {:label "offheap_objects", :value "offheap_objects"}],
+   :default_value "heap_buffers"},
+  :tombstone_failure_threshold {:type "int", :default_value 100000},
+  :native_transport_port {:type "int", :default_value 9042, :format false},
+  :index_summary_capacity {:type "string"},
+  :commitlog_sync
+  {:type "string",
+   :options [{:label "periodic", :value "periodic"} {:label "batch", :value "batch"}],
+   :default_value "periodic"},
+  :scripted_user_defined_functions_enabled {:type "boolean", :default_value false},
+  :max_hints_file_size {:type "string", :default_value "128MiB"},
+  :rpc_keepalive {:type "boolean", :default_value true},
+  :trickle_fsync {:type "boolean", :default_value true},
+  :roles_validity {:type "string", :default_value "2000ms"},
+  :prepared_statements_cache_size {:type "string"},
+  :client_encryption_options
+  {:type "dict",
+   :order
+   [:enabled
+    :optional
+    :keystore
+    :keystore_password
+    :require_client_auth
+    :truststore
+    :truststore_password
+    :protocol
+    :store_type
+    :cipher_suites],
+   :fields
+   {:enabled {:type "boolean", :default_value false},
+    :keystore {:type "string", :is_file true, :default_value "conf/.keystore"},
+    :cipher_suites {:type "list", :value_type "string"},
+    :keystore_password
+    {:type "string",
+     :password true,
+     :default_value "cassandra",
+     :validators [{:name :length, :params {:min 6}}]},
+    :store_type {:type "string"},
+    :protocol {:type "string"},
+    :truststore_password
+    {:type "string",
+     :password true,
+     :default_value "password",
+     :validators [{:name :length, :params {:min 6}}]},
+    :require_client_auth {:type "boolean", :default_value false},
+    :optional
+    {:type "boolean",
+     :description
+     "When 'optional' is selected, both encrypted and unencrypted connections over native transport are allowed. That is a necessary transition state to facilitate enabling client to node encryption on live clusters without inducing an outage for existing unencrypted clients. Typically, once existing clients are migrated to encrypted connections, 'optional' is unselected in order to enforce native transport encryption."},
+    :truststore {:type "string", :is_file true, :default_value "conf/.truststore"}}},
+  :key_cache_size {:type "string"},
+  :commitlog_sync_period
+  {:type "string",
+   :default_value "10000ms",
+   :depends :commitlog_sync,
+   :conditional [{:eq "periodic"}]},
+  :batch_size_warn_threshold {:type "string", :default_value "64KiB"},
+  :row_cache_save_period {:type "string", :default_value "0s"},
+  :inter_dc_tcp_nodelay {:type "boolean", :default_value false},
+  :num_tokens {:type "int"},
+  :allocate_tokens_for_local_replication_factor {:type "int", :default_value 3},
+  :partitioner
+  {:type "string",
+   :options
+   [{:label "Murmur3Partitioner", :value "org.apache.cassandra.dht.Murmur3Partitioner"}
+    {:label "RandomPartitioner", :value "org.apache.cassandra.dht.RandomPartitioner"}],
+   :default_value "org.apache.cassandra.dht.Murmur3Partitioner"},
+  :column_index_size {:type "string", :default_value "64KiB"},
+  :sasi_indexes_enabled {:type "boolean", :default_value true},
+  :internode_compression
+  {:type "string",
+   :options
+   [{:label "all", :value "all"}
+    {:label "dc", :value "dc"}
+    {:label "none", :value "none"}],
+   :default_value "dc"},
+  :user_defined_functions_enabled {:type "boolean", :default_value false},
+  :dynamic_snitch_badness_threshold {:type "float", :default_value 0.1},
+  :authorizer
+  {:type "string",
+   :options
+   [{:label "AllowAllAuthorizer", :value "AllowAllAuthorizer"}
+    {:label "CassandraAuthorizer", :value "CassandraAuthorizer"}],
+   :default_value "AllowAllAuthorizer"},
+  :batchlog_replay_throttle {:type "string", :default_value "1024KiB"},
+  :hinted_handoff_throttle {:type "string", :default_value "1024KiB"},
+  :cas_contention_timeout {:type "string", :default_value "1000ms"},
+  :cdc_enabled {:type "boolean", :default_value false},
+  :counter_write_request_timeout {:type "string", :default_value "5000ms"},
+  :windows_timer_interval {:type "int", :unit "ms", :default_value 1},
+  :auto_snapshot {:type "boolean", :default_value true},
+  :write_request_timeout {:type "string", :default_value "2000ms"},
+  :materialized_views_enabled {:type "boolean", :default_value true},
+  :concurrent_reads {:type "int", :default_value 32},
+  :authenticator
+  {:type "string",
+   :options
+   [{:label "AllowAllAuthenticator", :value "AllowAllAuthenticator"}
+    {:label "PasswordAuthenticator", :value "PasswordAuthenticator"}],
+   :default_value "AllowAllAuthenticator"},
+  :concurrent_compactors {:type "int"},
+  :sstable_preemptive_open_interval {:type "string", :default_value "50MiB"},
+  :index_summary_resize_interval {:type "string", :default_value "60m"},
+  :audit_logging_options
+  {:type "dict",
+   :order
+   [:enabled
+    :logger
+    :audit_logs_dir
+    :included_keyspaces
+    :excluded_keyspaces
+    :included_categories
+    :excluded_categories
+    :included_users
+    :excluded_users
+    :roll_cycle
+    :block
+    :max_queue_weight
+    :max_log_size
+    :archive_command
+    :max_archive_retries],
+   :fields
+   {:enabled {:type "boolean", :default_value false},
+    :logger
+    {:type "list", :value_type "dict", :default_value [{:class_name "BinAuditLogger"}]},
+    :audit_logs_dir
+    {:type "string", :is_file true, :depends :enabled, :conditional [{:eq true}]},
+    :included_keyspaces {:type "string", :depends :enabled, :conditional [{:eq true}]},
+    :excluded_keyspaces
+    {:type "string",
+     :depends :enabled,
+     :default_value "system, system_schema, system_virtual_schema",
+     :conditional [{:eq true}]},
+    :included_categories {:type "string", :depends :enabled, :conditional [{:eq true}]},
+    :excluded_categories {:type "string", :depends :enabled, :conditional [{:eq true}]},
+    :included_users {:type "string", :depends :enabled, :conditional [{:eq true}]},
+    :excluded_users {:type "string", :depends :enabled, :conditional [{:eq true}]},
+    :roll_cycle
+    {:type "string",
+     :depends :enabled,
+     :default_value "HOURLY",
+     :conditional [{:eq true}]},
+    :block
+    {:type "boolean", :depends :enabled, :default_value true, :conditional [{:eq true}]},
+    :max_queue_weight
+    {:type "int", :depends :enabled, :default_value 268435456, :conditional [{:eq true}]},
+    :max_log_size
+    {:type "int",
+     :depends :enabled,
+     :default_value 17179869184,
+     :conditional [{:eq true}]},
+    :archive_command {:type "string", :depends :enabled, :conditional [{:eq true}]},
+    :max_archive_retries
+    {:type "int", :depends :enabled, :default_value 10, :conditional [{:eq true}]}}},
+  :full_query_logging_options
+  {:type "dict",
+   :order
+   [:log_dir
+    :roll_cycle
+    :block
+    :max_queue_weight
+    :max_log_size
+    :archive_command
+    :max_archive_retries],
+   :fields
+   {:log_dir {:type "string", :is_directory true},
+    :roll_cycle {:type "string"},
+    :block {:type "boolean"},
+    :max_queue_weight {:type "int"},
+    :max_log_size {:type "int"},
+    :archive_command {:type "string"},
+    :max_archive_retries {:type "int"}}},
+  :server_encryption_options
+  {:type "dict",
+   :order
+   [:internode_encryption
+    :optional
+    :enable_legacy_ssl_storage_port
+    :keystore
+    :keystore_password
+    :truststore
+    :truststore_password
+    :protocol
+    :algorithm
+    :store_type
+    :cipher_suites
+    :require_client_auth
+    :require_endpoint_verification],
+   :fields
+   {:keystore
+    {:type "string",
+     :is_file true,
+     :depends :internode_encryption,
+     :default_value "conf/.keystore",
+     :conditional [{:eq "all"} {:eq "dc"} {:eq "rack"}]},
+    :cipher_suites
+    {:type "list",
+     :value_type "string",
+     :depends :internode_encryption,
+     :conditional [{:eq "all"} {:eq "dc"} {:eq "rack"}]},
+    :keystore_password
+    {:type "string",
+     :password true,
+     :validators [{:name :length, :params {:min 6}}],
+     :default_value "cassandra",
+     :depends :internode_encryption,
+     :conditional [{:eq "all"} {:eq "dc"} {:eq "rack"}]},
+    :store_type
+    {:type "string",
+     :depends :internode_encryption,
+     :conditional [{:eq "all"} {:eq "dc"} {:eq "rack"}]},
+    :algorithm
+    {:type "string",
+     :depends :internode_encryption,
+     :conditional [{:eq "all"} {:eq "dc"} {:eq "rack"}]},
+    :protocol
+    {:type "string",
+     :depends :internode_encryption,
+     :conditional [{:eq "all"} {:eq "dc"} {:eq "rack"}]},
+    :internode_encryption
+    {:type "string",
+     :default_value "none",
+     :options
+     [{:label "none", :value "none"}
+      {:label "all", :value "all"}
+      {:label "dc", :value "dc"}
+      {:label "rack", :value "rack"}]},
+    :optional {:type "boolean"},
+    :enable_legacy_ssl_storage_port {:type "boolean", :default_value false},
+    :truststore_password
+    {:type "string",
+     :password true,
+     :validators [{:name :length, :params {:min 6}}],
+     :depends :internode_encryption,
+     :default_value "cassandra",
+     :conditional [{:eq "all"} {:eq "dc"} {:eq "rack"}]},
+    :require_client_auth
+    {:type "boolean",
+     :default_value false,
+     :depends :internode_encryption,
+     :conditional [{:eq "all"} {:eq "dc"} {:eq "rack"}]},
+    :require_endpoint_verification
+    {:type "boolean",
+     :default_value false,
+     :depends :internode_encryption,
+     :conditional [{:eq "all"} {:eq "dc"} {:eq "rack"}]},
+    :truststore
+    {:type "string",
+     :is_file true,
+     :depends :internode_encryption,
+     :default_value "conf/.truststore",
+     :conditional [{:eq "all"} {:eq "dc"} {:eq "rack"}]}}},
+  :native_transport_max_request_data_in_flight_per_ip {:type "string"},
+  :native_transport_max_request_data_in_flight {:type "string"},
+  :hints_compression
+  {:type "list",
+   :value_type "dict",
+   :order [:class_name :parameters],
+   :fields
+   {:class_name {:type "string"},
+    :parameters {:type "user_defined", :value_type "string"}}}},
+ :groupings
+ [{:name "Security",
+   :list
+   ["authenticator"
+    "authorizer"
+    "role_manager"
+    "permissions_validity"
+    "roles_validity"
+    "credentials_validity"
+    "server_encryption_options"
+    "client_encryption_options"
+    "transparent_data_encryption_options"]}
+  {:name "General", :list ["partitioner" "num_tokens"]}
+  {:name "Ports", :list ["storage_port" "ssl_storage_port" "native_transport_port"]}
+  {:name "Caches",
+   :list
+   ["key_cache_size" "key_cache_save_period" "row_cache_size" "row_cache_save_period"]}
+  {:name "Commit Log",
+   :list ["commitlog_sync" "commitlog_segment_size" "commitlog_sync_period"]}
+  {:name "Garbage Collection", :list ["gc_warn_threshold"]}
+  {:name "Concurrency Control",
+   :list
+   ["concurrent_reads"
+    "concurrent_writes"
+    "concurrent_counter_writes"
+    "concurrent_materialized_view_writes"]}
+  {:name "Memtable Settings", :list ["memtable_allocation_type" "memtable_flush_writers"]}
+  {:name "Native Transport", :list ["start_native_transport"]}
+  {:name "Timeouts",
+   :list
+   ["read_request_timeout"
+    "range_request_timeout"
+    "write_request_timeout"
+    "cas_contention_timeout"
+    "truncate_request_timeout"
+    "request_timeout"
+    "slow_query_log_timeout"
+    "internode_timeout"
+    "counter_write_request_timeout"]}
+  {:name "Counter Caches", :list ["counter_cache_size" "counter_cache_save_period"]}
+  {:name "Tombstones", :list ["tombstone_warn_threshold" "tombstone_failure_threshold"]}
+  {:name "Snapshots",
+   :list ["incremental_backups" "auto_snapshot" "snapshot_before_compaction"]}
+  {:name "Compactions",
+   :list
+   ["compaction_throughput"
+    "concurrent_compactors"
+    "sstable_preemptive_open_interval"
+    "compaction_large_partition_warning_threshold"]}
+  {:name "Cluster Communication",
+   :list
+   ["endpoint_snitch"
+    "dynamic_snitch_update_interval"
+    "dynamic_snitch_reset_interval"
+    "dynamic_snitch_badness_threshold"
+    "internode_compression"
+    "inter_dc_tcp_nodelay"]}
+  {:name "Audit and Query Logging",
+   :list ["audit_logging_options" "full_query_logging_options"]}
+  {:name "Audit and Query Logging",
+   :list ["audit_logging_options" "full_query_logging_options"]}
+  {:name "Hinted Handoff",
+   :list
+   ["hinted_handoff_enabled"
+    "max_hint_window"
+    "hinted_handoff_throttle"
+    "max_hints_delivery_threads"
+    "hints_flush_period"
+    "max_hints_file_size"
+    "hints_compression"]}
+  {:name "Indexes",
+   :list
+   ["column_index_size"
+    "column_index_cache_size"
+    "index_summary_capacity"
+    "index_summary_resize_interval"]}
+  {:name "User Defined Functions",
+   :list ["user_defined_functions_enabled" "scripted_user_defined_functions_enabled"]}
+  {:name "Change Data Capture", :list ["cdc_enabled"]}
+  {:name "Client Backpressure",
+   :list
+   ["native_transport_max_request_data_in_flight_per_ip"
+    "native_transport_max_request_data_in_flight"]}
+  {:name "Miscellaneous",
+   :list
+   ["disk_failure_policy"
+    "commit_failure_policy"
+    "trickle_fsync"
+    "trickle_fsync_interval"
+    "batchlog_replay_throttle"
+    "batch_size_warn_threshold"
+    "batch_size_fail_threshold"
+    "unlogged_batch_across_partitions_warn_threshold"
+    "windows_timer_interval"
+    "trace_type_query_ttl"
+    "trace_type_repair_ttl"
+    "prepared_statements_cache_size"]}]}

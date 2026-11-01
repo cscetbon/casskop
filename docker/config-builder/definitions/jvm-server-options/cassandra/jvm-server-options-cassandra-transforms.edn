@@ -1,0 +1,23 @@
+(
+  ;; Begin Cassandra 4.x transforms.
+  "4.0.0" "jvm-server-options-cassandra-4.0.0.edn"
+  ;; End Cassandra 4.x transforms.
+
+  ;; Begin Cassandra 5.x transforms: biased locking moved to jvm11-server.options (removed from Java 17),
+  ;; chronicle analytics disabled (CASSANDRA-19656) and assertions disabled for net.openhft
+  "5.0.0" (transforms
+           (update-field :use-biased-locking {:default_value false})
+           (add-field :chronicle_analytics_disable
+                      {:type "boolean",
+                       :label "Disable chronicle analytics",
+                       :static_constant "-Dchronicle.analytics.disable=true",
+                       :default_value true}
+                      :group "Startup Parameters")
+           (add-field :disable_openhft_assertions
+                      {:type "boolean",
+                       :label "Disable assertions for net.openhft",
+                       :static_constant "-da:net.openhft...",
+                       :default_value true}
+                      :group "Startup Parameters"))
+  ;; End Cassandra 5.x transforms.
+)

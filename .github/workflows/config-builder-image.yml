@@ -1,0 +1,52 @@
+name: Config builder image
+
+on:
+  # the image published on a merge must match defaultConfigBuilderImage in api/v2/cassandracluster_types.go,
+  # bump the default alias of IMAGE together with it when the overlay changes
+  push:
+    branches: [master]
+    paths:
+      - docker/config-builder/**
+      - .github/workflows/config-builder-image.yml
+  workflow_dispatch:
+    inputs:
+      alias:
+        description: 'Docker image alias (base cass-config-builder version followed by the overlay revision, e.g. 1.0.4-1)'
+        required: true
+
+env:
+  IMAGE: ghcr.io/cscetbon/cass-config-builder:${{ github.event.inputs.alias || '1.0.4-1' }}
+
+jobs:
+
+  build-publish-config-builder-image:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: docker/config-builder
+          tags: ${{ env.IMAGE }}
+
+      - name: Check generated configurations
+        run: ./docker/config-builder/check.sh ${{ env.IMAGE }}
+
+      - name: Push Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: docker/config-builder
+          tags: ${{ env.IMAGE }}
+          push: true
