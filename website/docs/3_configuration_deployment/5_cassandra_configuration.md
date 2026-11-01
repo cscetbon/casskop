@@ -34,6 +34,10 @@ This container is responsible for the following actions :
   CassandraCluster object level (spec, datacenters and racks)
 
 It uses [cass-config-builder](https://github.com/datastax/cass-config-builder) which is a tool developed by Datastax.
+CassKop ships its own build of that image, `ghcr.io/cscetbon/cass-config-builder`, that adds the definitions of the
+Cassandra versions no longer published upstream (4.1 and 5.0), see
+[config-builder](https://github.com/cscetbon/casskop/tree/master/docker/config-builder). It can be changed using
+`Spec.configBuilderImage`.
 
 ### Initcontainer 3 : bootstrap
 
@@ -142,6 +146,41 @@ spec:
             labels:
               location.dfy.orange.com/street : street3
 ```
+
+## Cassandra versions
+
+CassKop is tested with the official `cassandra` images of the 3.11, 4.0, 4.1 and 5.0 lines. The configuration is
+generated for the version found in the tag of `Spec.cassandraImage` (`cassandra:4.1.5` is 4.1.5, `cassandra:5.0`
+is 5.0.0) unless `Spec.serverVersion` is set, which is only needed when the tag does not carry the version.
+
+### Cassandra 4.1 and later
+
+Cassandra 4.1 renamed most of the `cassandra.yaml` settings so that their value carries a unit
+(`read_request_timeout_in_ms: 5000` became `read_request_timeout: 5000ms`). From 4.1 the configuration is generated
+with the new names and the legacy names found in `config` sections are translated, so a configuration written for
+4.0 keeps working. Both styles can be used, the new one wins when a setting is given twice.
+
+### Cassandra 5.0
+
+Cassandra 5.0 nodes are started with `storage_compatibility_mode: CASSANDRA_4`, the mode required to upgrade a
+cluster from 4.x. Once every node runs 5.0 and `nodetool upgradesstables` has been run, the mode can be moved to
+`UPGRADING` and then `NONE` through `config.cassandra-yaml.storage_compatibility_mode` to unlock the new storage
+features, each change being applied by a rolling restart.
+
+### Prometheus metrics
+
+The Prometheus exporter embedded in the Cassandra pods, [cassandra-exporter](https://github.com/instaclustr/cassandra-exporter),
+is compiled against Cassandra internals and only has releases compatible with 3.x (0.9.8) and 4.1 (0.9.14). On 4.0 and
+5.0 nodes the agent is not loaded and port 9500 does not serve metrics
+([cassandra-exporter#126](https://github.com/instaclustr/cassandra-exporter/issues/126),
+[cassandra-exporter#127](https://github.com/instaclustr/cassandra-exporter/issues/127)). Jolokia, used by CassKop and
+by the probes, is not affected.
+
+### Upgrading a cluster
+
+Changing `Spec.cassandraImage` triggers a rolling update of the pods, one rack at a time. Cassandra supports
+upgrading from 3.11 to 4.x and from 4.x to 5.0; the versions must be upgraded one major at a time and
+`nodetool upgradesstables` should be run once every node runs the new version.
 
 ## Configuration override using configMap
 
