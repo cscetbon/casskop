@@ -150,18 +150,19 @@ func TestCreatePodAntiAffinityHard(t *testing.T) {
 
 func TestVolumeMounts(t *testing.T) {
 	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	dcRackName := cc.IterateRacks()[0].DcRackName.String()
 
-	volumeMounts := generateContainerVolumeMount(cc, initContainer)
+	volumeMounts := generateContainerVolumeMount(cc, dcRackName, initContainer)
 	assert.Equal(t, 1, len(volumeMounts))
 	assert.Equal(t, "/bootstrap", volumeMounts[getPos(volumeMounts, "bootstrap")].MountPath)
 
-	volumeMounts = generateContainerVolumeMount(cc, bootstrapContainer)
+	volumeMounts = generateContainerVolumeMount(cc, dcRackName, bootstrapContainer)
 	assert.Equal(t, 3, len(volumeMounts))
 	assert.Equal(t, "/etc/cassandra", volumeMounts[getPos(volumeMounts, "bootstrap")].MountPath)
 	assert.Equal(t, "/extra-lib", volumeMounts[getPos(volumeMounts, "extra-lib")].MountPath)
 	assert.Equal(t, "/opt/bin", volumeMounts[getPos(volumeMounts, "tools")].MountPath)
 
-	volumeMounts = generateContainerVolumeMount(cc, cassandraContainer)
+	volumeMounts = generateContainerVolumeMount(cc, dcRackName, cassandraContainer)
 	assert.Equal(t, 6, len(volumeMounts))
 	assert.Equal(t, "/etc/cassandra", volumeMounts[getPos(volumeMounts, "bootstrap")].MountPath)
 	assert.Equal(t, "/extra-lib", volumeMounts[getPos(volumeMounts, "extra-lib")].MountPath)
@@ -635,16 +636,17 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 		}
 
 		_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+		dcRackName := cc.IterateRacks()[0].DcRackName.String()
 
 		for _, volumeMount := range container.VolumeMounts {
 			switch container.Name {
 			case "cassandra":
-				assert.True(t, slices.Contains(append(generateContainerVolumeMount(cc, cassandraContainer),
+				assert.True(t, slices.Contains(append(generateContainerVolumeMount(cc, dcRackName, cassandraContainer),
 					generateCassandraStorageConfigVolumeMounts()...), volumeMount))
 			case "gc-logs", "cassandra-logs":
 				assert.True(t, slices.Contains([]v1.VolumeMount{{Name: "cassandra-logs", MountPath: "/var/log/cassandra"}}, volumeMount))
 			case "backrest-sidecar":
-				assert.True(t, slices.Contains(generateContainerVolumeMount(cc, backrestContainer), volumeMount))
+				assert.True(t, slices.Contains(generateContainerVolumeMount(cc, dcRackName, backrestContainer), volumeMount))
 			default:
 				t.Errorf("unexpected container: %s.", container.Name)
 			}
@@ -783,4 +785,19 @@ func TestDisableBackRest(t *testing.T) {
 
 func getPos(slice []v1.VolumeMount, value string) int {
 	return slices.IndexFunc(slice, func(v v1.VolumeMount) bool { return v.Name == value })
+}
+
+func TestVolumeMountsDataCapacityOnlyAtDCLevel(t *testing.T) {
+	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	cc.Spec.DataCapacity = ""
+	cc.Spec.Topology.DC[0].DataCapacity = "10Gi"
+	cc.Spec.Topology.DC[1].DataCapacity = ""
+	withData := cc.IterateRacks()[0].DcRackName.String()
+	withoutData := cc.IterateRacks()[len(cc.IterateRacks())-1].DcRackName.String()
+
+	mounts := generateContainerVolumeMount(cc, withData, cassandraContainer)
+	assert.NotEqual(t, -1, getPos(mounts, "data"), "data volume must be mounted when the DC defines a dataCapacity")
+
+	mounts = generateContainerVolumeMount(cc, withoutData, cassandraContainer)
+	assert.Equal(t, -1, getPos(mounts, "data"), "data volume must not be mounted when no dataCapacity applies to the DC")
 }
