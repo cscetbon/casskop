@@ -23,6 +23,8 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/apimachinery/pkg/util/wait"
+
 	api "github.com/cscetbon/casskop/api/v2"
 	"github.com/cscetbon/casskop/controllers/cassandracluster/cassandrapod"
 	"github.com/cscetbon/casskop/controllers/cassandracluster/storageupsize"
@@ -161,7 +163,10 @@ func (rcc *CassandraClusterReconciler) CheckNonAllowedChanges(ctx context.Contex
 				Warningf("The Operator has refused the change on DataCapacity from [%s] to NewValue[%s]",
 					oldCapacity, requestedCapacity)
 			cc.Spec.DataCapacity = oldCRD.Spec.DataCapacity
-			cc.Spec.Topology.DC[dc].DataCapacity = oldCRD.Spec.Topology.DC[dc].DataCapacity
+			cc.Spec.Topology.DC[dc].DataCapacity = ""
+			if oldDC := oldCRD.GetDCIndexFromDCName(dcName.String()); oldDC >= 0 {
+				cc.Spec.Topology.DC[dc].DataCapacity = oldCRD.Spec.Topology.DC[oldDC].DataCapacity
+			}
 			needUpdate = true
 		case storageupsize.CapacitySyntacticChange:
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dcName": dcName}).
@@ -177,7 +182,10 @@ func (rcc *CassandraClusterReconciler) CheckNonAllowedChanges(ctx context.Contex
 				Warningf("The Operator has refused the change on DataStorageClass from [%s] to NewValue[%s]",
 					oldCRD.GetDataStorageClassForDCName(dcName), cc.GetDataStorageClassForDCName(dcName))
 			cc.Spec.DataStorageClass = oldCRD.Spec.DataStorageClass
-			cc.Spec.Topology.DC[dc].DataStorageClass = oldCRD.Spec.Topology.DC[dc].DataStorageClass
+			cc.Spec.Topology.DC[dc].DataStorageClass = ""
+			if oldDC := oldCRD.GetDCIndexFromDCName(dcName.String()); oldDC >= 0 {
+				cc.Spec.Topology.DC[dc].DataStorageClass = oldCRD.Spec.Topology.DC[oldDC].DataStorageClass
+			}
 			needUpdate = true
 		}
 	}
@@ -550,7 +558,7 @@ func (rcc *CassandraClusterReconciler) ReconcileRack(ctx context.Context, cc *ap
 		if breakLoop {
 			if status.LastClusterAction == api.ActionUpdateSeedList.Name &&
 				status.LastClusterActionStatus == api.StatusConfiguring {
-				rcc.waitForStatefulSetToBeUpdated(ctx, cc, completeDcRackName.DcRackName, err)
+				rcc.waitForStatefulSetToBeUpdated(ctx, cc, completeDcRackName.DcRackName)
 			}
 			return nil
 		}
@@ -717,32 +725,29 @@ func overrideReplicasCountForFirstPodPerRackInitPhase(stsSpec appsv1.StatefulSet
 }
 
 func (rcc *CassandraClusterReconciler) waitForStatefulSetToBeUpdated(ctx context.Context, cc *api.CassandraCluster,
-	dcRackName api.DcRackName, err error) {
+	dcRackName api.DcRackName) {
 
 	logrus.WithFields(logrus.Fields{
 		"cluster": cc.Name, "dc-rack": dcRackName,
 	}).Debug("Statefulset is getting updated we break ReconcileRack")
 
-	DisruptionMonitorChannel := make(chan string)
-	go func(ch chan string) {
-		pdbEnvelope := rcc.podDisruptionBudgetEnvelope(cc)
-		for {
-			time.Sleep(time.Millisecond * 500)
-			if rcc.storedPdb, err = rcc.GetPodDisruptionBudget(ctx, pdbEnvelope.Namespace,
-				pdbEnvelope.Name); err == nil && !rcc.hasNoPodDisruption() {
-				ch <- "Stop waiting"
+	pdbEnvelope := rcc.podDisruptionBudgetEnvelope(cc)
+	err := wait.PollUntilContextTimeout(ctx, 500*time.Millisecond, 10*time.Second, false,
+		func(ctx context.Context) (bool, error) {
+			pdb, err := rcc.GetPodDisruptionBudget(ctx, pdbEnvelope.Namespace, pdbEnvelope.Name)
+			if err != nil {
+				return false, nil
 			}
-		}
-	}(DisruptionMonitorChannel)
-
-	select {
-	case <-DisruptionMonitorChannel:
-		logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-			"dc-rack": dcRackName}).Debug("Statefulset is being updated")
-	case <-time.After(time.Second * 10):
+			rcc.storedPdb = pdb
+			return !rcc.hasNoPodDisruption(), nil
+		})
+	if err != nil {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 			"dc-rack": dcRackName}).Debug("Timeout for Statefulset to start being updated expired")
+		return
 	}
+	logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+		"dc-rack": dcRackName}).Debug("Statefulset is being updated")
 }
 
 // UpdateCassandraClusterStatusPhase sets the Cluster Phase according to StatefulSet Status.
@@ -823,11 +828,10 @@ func EnsureSeedListIsUpdatedWhenRequired(cc *api.CassandraCluster, status *api.C
 		for _, rack := range cc.IterateRacks() {
 			dcRackStatus := status.GetCassandraRackStatus(rack.DcRackName)
 
-			if !(dcRackStatus.CassandraLastAction.Name == api.ActionUpdateSeedList.Name &&
-				dcRackStatus.CassandraLastAction.Status == api.StatusConfiguring) {
-				if dcRackStatus.CassandraLastAction.Name != api.ClusterPhaseInitial.Name {
-					setOperationToDo = false
-				}
+			configuringSeedList := dcRackStatus.CassandraLastAction.Name == api.ActionUpdateSeedList.Name &&
+				dcRackStatus.CassandraLastAction.Status == api.StatusConfiguring
+			if !configuringSeedList && dcRackStatus.CassandraLastAction.Name != api.ClusterPhaseInitial.Name {
+				setOperationToDo = false
 				break
 			}
 		}

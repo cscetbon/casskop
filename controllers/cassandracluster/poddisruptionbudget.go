@@ -69,17 +69,19 @@ func (rcc *CassandraClusterReconciler) UpdatePodDisruptionBudget(ctx context.Con
 
 // CreateOrUpdatePodDisruptionBudget Create PodDisruptionBudget if not existing, or update it if existing.
 func (rcc *CassandraClusterReconciler) CreateOrUpdatePodDisruptionBudget(ctx context.Context, pdb *policyv1.PodDisruptionBudget) error {
-	var err error
-	rcc.storedPdb, err = rcc.GetPodDisruptionBudget(ctx, pdb.Namespace, pdb.Name)
+	storedPdb, err := rcc.GetPodDisruptionBudget(ctx, pdb.Namespace, pdb.Name)
 	if err != nil {
 		// If no resource we need to create.
 		if apierrors.IsNotFound(err) {
+			rcc.storedPdb = storedPdb
 			return rcc.CreatePodDisruptionBudget(ctx, pdb)
 		}
+		// Keep the last known PDB: an empty one would wrongly report that no pod is disrupted
 		return err
 	}
+	rcc.storedPdb = storedPdb
 
-	if *rcc.storedPdb.Spec.MaxUnavailable != *pdb.Spec.MaxUnavailable {
+	if *storedPdb.Spec.MaxUnavailable != *pdb.Spec.MaxUnavailable {
 		rcc.DeletePodDisruptionBudget(ctx, pdb)
 		return rcc.CreatePodDisruptionBudget(ctx, pdb)
 	}
