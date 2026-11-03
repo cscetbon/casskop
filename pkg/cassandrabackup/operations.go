@@ -20,7 +20,7 @@ func performResoreOperation(body any, _ *http.Response, err error) (
 	return
 }
 
-func (client *client) PerformRestoreOperation(restoreOperationReq icarus.RestoreOperationRequest) (
+func (client *client) PerformRestoreOperation(restoreOperationReq RestoreOperationRequest) (
 	*icarus.RestoreOperationResponse, error) {
 	podClient := client.podClient
 	if podClient == nil {
@@ -67,7 +67,7 @@ func (client *client) BackupOperationByID(operationId string) (response *icarus.
 	return performBackupOperation(podClient.OperationsApi.OperationsOperationIdGet(context.Background(), operationId))
 }
 
-func (client *client) PerformBackupOperation(request icarus.BackupOperationRequest) (
+func (client *client) PerformBackupOperation(request BackupOperationRequest) (
 	response *icarus.BackupOperationResponse, err error) {
 	podClient := client.podClient
 	if podClient == nil {
