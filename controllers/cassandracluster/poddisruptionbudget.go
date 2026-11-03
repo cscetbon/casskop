@@ -52,16 +52,7 @@ func (rcc *CassandraClusterReconciler) DeletePodDisruptionBudget(ctx context.Con
 	return nil
 }
 
-// UpdatePodDisruptionBudget updates an existing PodDisruptionBudget pdb
-func (rcc *CassandraClusterReconciler) UpdatePodDisruptionBudget(ctx context.Context, pdb *policyv1.PodDisruptionBudget) error {
-	err := rcc.Client.Update(ctx, pdb)
-	if err != nil {
-		return fmt.Errorf("failed to update cassandra PodDisruptionBudget: %w", err)
-	}
-	return nil
-}
-
-// CreateOrUpdatePodDisruptionBudget Create PodDisruptionBudget if not existing, or update it if existing.
+// CreateOrUpdatePodDisruptionBudget creates the PodDisruptionBudget if missing, or recreates it when MaxUnavailable changed.
 func (rcc *CassandraClusterReconciler) CreateOrUpdatePodDisruptionBudget(ctx context.Context, pdb *policyv1.PodDisruptionBudget) error {
 	var err error
 	rcc.storedPdb, err = rcc.GetPodDisruptionBudget(ctx, pdb.Namespace, pdb.Name)
@@ -79,10 +70,4 @@ func (rcc *CassandraClusterReconciler) CreateOrUpdatePodDisruptionBudget(ctx con
 	}
 	//We can't Update PorDisruptionBudget
 	return nil
-	/*
-		// Already exists, need to Update.
-		pdb.ResourceVersion = rcc.storedPdb.ResourceVersion
-
-		return rcc.UpdatePodDisruptionBudget(pdb)
-	*/
 }
