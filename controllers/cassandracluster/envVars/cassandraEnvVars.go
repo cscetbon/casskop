@@ -48,6 +48,12 @@ const (
 
 	jvmOptsEnvVarName = "JVM_OPTS"
 
+	cassandraVersionEnvVarName = "CASSANDRA_VERSION"
+
+	cassandraYamlKey    = "cassandra-yaml"
+	jvmOptionsKey       = "jvm-options"
+	jvmServerOptionsKey = "jvm-server-options"
+
 	defaultJvmMaxHeap  = "2048M"
 	defaultJvmInitHeap = "512M"
 )
@@ -55,8 +61,9 @@ const (
 func BootstrapContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterStatus) []v1.EnvVar {
 	baseBootstrapEnvVars := baseCassandraEnvVars(cc, status)
 	commonBootstrapEnvVars := commonEnvVars(cc)
+	versionEnvVars := []v1.EnvVar{{Name: cassandraVersionEnvVarName, Value: cc.ServerVersion()}}
 	customEnvVars := cc.Spec.BackRestSidecar.EnvVars
-	return deduplicateMerge(baseBootstrapEnvVars, commonBootstrapEnvVars, customEnvVars)
+	return deduplicateMerge(baseBootstrapEnvVars, commonBootstrapEnvVars, versionEnvVars, customEnvVars)
 }
 
 // deduplicateMerge merges multiple slices of EnvVars, removing duplicates. When resolving duplicates the first argument has the lowest priority, the last argument has the highest priority.
@@ -154,29 +161,16 @@ func InitContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 	resources v1.ResourceRequirements, dcRackName string) []v1.EnvVar {
 	seedList := cc.SeedList(&status.SeedList)
 
-	image := strings.Split(cc.Spec.CassandraImage, ":")
-	serverVersion := cc.Spec.ServerVersion
-	if serverVersion == "" {
-		if len(image) >= 2 {
-			version := strings.Split(image[len(image)-1], "-")
-			serverVersion = version[0]
-			if len(version) != 1 {
-				serverVersion += ".0"
-			}
-		}
-	}
-
 	serverType := cc.Spec.ServerType
 	if serverType == "" {
-		if strings.Contains(image[0], "dse") {
+		serverType = "cassandra"
+		if repository, _, _ := strings.Cut(cc.Spec.CassandraImage, ":"); strings.Contains(repository, "dse") {
 			serverType = "dse"
-		} else {
-			serverType = "cassandra"
 		}
 	}
 
 	defaultConfig := NodeConfig{
-		"cassandra-yaml": {
+		cassandraYamlKey: {
 			"read_request_timeout_in_ms":          5000,
 			"write_request_timeout_in_ms":         5000,
 			"counter_write_request_timeout_in_ms": 5000,
@@ -202,11 +196,19 @@ func InitContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 	dc := cc.GetDCFromDCRackName(dcRackName)
 	rack := cc.GetRackFromDCRackName(dcRackName)
 
-	mergeConfig(cc.Spec.Config, parsedConfig, serverVersion)
-	mergeConfig(dc.Config, parsedConfig, serverVersion)
-	mergeConfig(rack.Config, parsedConfig, serverVersion)
+	jvmOptions := jvmOptionName(cc)
+	mergeConfig(cc.Spec.Config, parsedConfig, jvmOptions)
+	mergeConfig(dc.Config, parsedConfig, jvmOptions)
+	mergeConfig(rack.Config, parsedConfig, jvmOptions)
 
-	defaultConfig[jvmOptionName(cc)] = map[string]any{
+	// Cassandra 4.1 renamed most cassandra.yaml settings, translate legacy keys so they do not clash
+	// with the new style ones rendered by the config builder definitions
+	if cc.ServerVersionAtLeast(4, 1) {
+		translateLegacyCassandraYamlSection(parsedConfig)
+		defaultConfig[cassandraYamlKey] = translateLegacyCassandraYaml(defaultConfig[cassandraYamlKey])
+	}
+
+	defaultConfig[jvmOptions] = map[string]any{
 		"initial_heap_size":       defineJvmMemory(resources).initialHeapSize,
 		"max_heap_size":           defineJvmMemory(resources).maxHeapSize,
 		"cassandra_ring_delay_ms": 30000,
@@ -217,7 +219,8 @@ func InitContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 		for subkey, subvalue := range value {
 			keyPath := fmt.Sprintf("%s.%s", key, subkey)
 			if parsedConfig.Path(keyPath).Data() == nil {
-				parsedConfig.SetP(subvalue, keyPath)
+				// keyPath is built from constant section and setting names, the call cannot fail
+				_, _ = parsedConfig.SetP(subvalue, keyPath)
 			}
 		}
 	}
@@ -246,7 +249,7 @@ func InitContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 		},
 		{
 			Name:  "PRODUCT_VERSION",
-			Value: serverVersion,
+			Value: cc.ServerVersion(),
 		},
 		{
 			Name: "POD_IP",
@@ -315,22 +318,27 @@ func commonEnvVars(cc *api.CassandraCluster) []v1.EnvVar {
 	return envVars
 }
 
-func jvmOptionName(cc *api.CassandraCluster) (jvmOption string) {
-	jvmOption = "jvm-options"
-	if strings.HasPrefix(cc.Spec.ServerVersion, "4") {
-		jvmOption = "jvm-server-options"
+// jvmOptionName returns the config builder section holding the JVM options: jvm.options
+// up to Cassandra 3.x, jvm-server.options from Cassandra 4.0
+func jvmOptionName(cc *api.CassandraCluster) string {
+	if cc.ServerVersionAtLeast(4, 0) {
+		return jvmServerOptionsKey
 	}
-	return
+	return jvmOptionsKey
 }
 
-func mergeConfig(config json.RawMessage, currentParsedConfig *gabs.Container, serverVersion string) {
+// mergeConfig merges config into currentParsedConfig, moving a legacy jvm-options section to
+// jvmOptions when it differs so that users do not have to rename it when upgrading
+func mergeConfig(config json.RawMessage, currentParsedConfig *gabs.Container, jvmOptions string) {
 	if config != nil {
 		parsedConfig, _ := gabs.ParseJSON(config)
-		if strings.HasPrefix(serverVersion, "4") && parsedConfig.Path("jvm-options") != nil {
-			parsedConfig.SetP(parsedConfig.Path("jvm-options").Data(), "jvm-server-options")
-			parsedConfig.DeleteP("jvm-options")
+		if jvmOptions != jvmOptionsKey && parsedConfig.Path(jvmOptionsKey) != nil {
+			// both keys are constant top-level paths, these calls cannot fail
+			_, _ = parsedConfig.SetP(parsedConfig.Path(jvmOptionsKey).Data(), jvmOptions)
+			_ = parsedConfig.DeleteP(jvmOptionsKey)
 		}
-		currentParsedConfig.MergeFn(parsedConfig,
+		// MergeFn only fails when config is not a JSON object, which the CRD schema does not accept
+		_ = currentParsedConfig.MergeFn(parsedConfig,
 			func(dest, source any) any { return source })
 	}
 }

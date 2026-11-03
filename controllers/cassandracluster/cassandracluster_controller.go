@@ -94,7 +94,7 @@ func (rcc *CassandraClusterReconciler) Reconcile(ctx context.Context, request re
 	}
 
 	// After first time reconcile, phase will switch to "Initializing".
-	if cc.Status.CassandraPhase.IsEmpty() || cc.Status.CassandraPhase.SubPhaseMigrationNeeded() {
+	if cc.Status.IsEmpty() || cc.Status.SubPhaseMigrationNeeded() {
 		// Simulate initializer.
 		changed := cc.SetDefaults()
 		if changed {
@@ -118,7 +118,7 @@ func (rcc *CassandraClusterReconciler) Reconcile(ctx context.Context, request re
 	status := cc.Status.DeepCopy()
 
 	//We Update Status at the end
-	defer rcc.updateCassandraStatus(ctx, cc, status)
+	defer rcc.logStatusUpdateError(ctx, cc, status)
 
 	//If non allowed changes on CRD, we return here
 	if rcc.CheckNonAllowedChanges(ctx, cc, status) {
@@ -137,7 +137,7 @@ func (rcc *CassandraClusterReconciler) Reconcile(ctx context.Context, request re
 	if rcc.FirstPodPerRackFlowEnabled(cc) {
 		if shouldBreak, err := rcc.ReconcileFirstPodPerRack(ctx, cc, status); err != nil {
 			return requeue5, err
-		} else if shouldBreak == breakResyncLoop {
+		} else if shouldBreak {
 			return requeue5, nil
 		}
 	}

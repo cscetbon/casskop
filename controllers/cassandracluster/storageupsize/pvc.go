@@ -49,10 +49,10 @@ func getAllDataPvcs(ctx context.Context, cc *api.CassandraCluster, rack view.Rac
 	storageStateClient storagestateclient.StorageStateClient) ([]corev1.PersistentVolumeClaim, error) {
 
 	if rack.LivingStatefulSet() == nil {
-		return nil, errors.New(fmt.Sprintf("[%s]: cannot fetch PVC list for storage upsize because"+
+		return nil, fmt.Errorf("[%s]: cannot fetch PVC list for storage upsize because"+
 			"livingStatefulSet is nil for DC-Rack %s "+
 			"(should not see this message, PVC should not be listed before statefulSet is recreated with new capacity)",
-			cc.Name, rack.DcRackName()))
+			cc.Name, rack.DcRackName())
 	}
 	statefulSetName := rack.LivingStatefulSet().Name
 

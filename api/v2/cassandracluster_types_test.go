@@ -534,3 +534,25 @@ func TestGetRackFromDCRackName_UnknownDC(t *testing.T) {
 	assert.Nil(t, cc.GetRackFromDCRackName("unknown-rack1"))
 	assert.Equal(t, "rack1", cc.GetRackFromDCRackName("dc1-rack1").Name)
 }
+
+func TestServerVersion(t *testing.T) {
+	assert := assert.New(t)
+	cases := []struct {
+		image, serverVersion, want string
+		atLeast41                  bool
+	}{
+		{"cassandra:3.11.19", "", "3.11.19", false},
+		{"cassandra:4.0.2", "", "4.0.2", false},
+		{"cassandra:4.1", "", "4.1.0", true},
+		{"cassandra:5.0.1-jammy", "", "5.0.1", true},
+		{"registry:44301/repo/cassandra:4.1.5", "", "4.1.5", true},
+		{"registry:44301/repo/cassandra", "", "", false},
+		{"cassandra:latest", "", "latest", false},
+		{"cassandra:5.0.1", "4.0.0", "4.0.0", false},
+	}
+	for _, c := range cases {
+		cc := CassandraCluster{Spec: CassandraClusterSpec{CassandraImage: c.image, ServerVersion: c.serverVersion}}
+		assert.Equal(c.want, cc.ServerVersion(), c.image)
+		assert.Equal(c.atLeast41, cc.ServerVersionAtLeast(4, 1), c.image)
+	}
+}

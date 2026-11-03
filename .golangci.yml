@@ -1,0 +1,26 @@
+version: "2"
+linters:
+  settings:
+    staticcheck:
+      # the default checks of golangci-lint v2 minus S1023 (redundant return statements)
+      checks:
+        - all
+        - -ST1000
+        - -ST1003
+        - -ST1016
+        - -ST1020
+        - -ST1021
+        - -ST1022
+        - -S1023
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - path: .+_test.go
+        text: 'package sigs.k8s.io/controller-runtime/pkg/client/fake is deprecated: please use pkg/envtest'
+      - path: .+(_test|mock_client).*.go
+        text: is not checked

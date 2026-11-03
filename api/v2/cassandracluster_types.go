@@ -23,8 +23,8 @@ const (
 	DefaultReadinessHealthCheckPeriod   int32 = 10
 
 	defaultCassandraImage     = "cassandra:3.11.10"
-	defaultBootstrapImage     = "ghcr.io/cscetbon/casskop-bootstrap:0.1.21"
-	defaultConfigBuilderImage = "datastax/cass-config-builder:1.0.4"
+	defaultBootstrapImage     = "ghcr.io/cscetbon/casskop-bootstrap:0.1.22"
+	defaultConfigBuilderImage = "ghcr.io/cscetbon/cass-config-builder:1.0.4-1"
 
 	DefaultBackRestImage      = "ghcr.io/cscetbon/instaclustr-icarus:1.1.3"
 	defaultServiceAccountName = "cassandra-cluster-node"
@@ -148,7 +148,7 @@ func (cc *CassandraCluster) SetDefaults() bool {
 		ccs.NodesPerRacks = 1
 		changed = true
 	}
-	if cc.Status.CassandraPhase.IsEmpty() {
+	if cc.Status.IsEmpty() {
 		cc.Status.CassandraPhase = CassandraPhase{
 			Phase:                ClusterPhaseInitial.Name,
 			InitializingSubPhase: new(ClusterPhaseInitialSubPhaseFirstPodPerRack),
@@ -161,8 +161,8 @@ func (cc *CassandraCluster) SetDefaults() bool {
 		}
 		changed = true
 	}
-	if cc.Status.CassandraPhase.IsInitialButNoSubPhase() {
-		cc.Status.CassandraPhase.InitializingSubPhase = new(ClusterPhaseInitialSubPhaseFirstPodPerRack)
+	if cc.Status.IsInitialButNoSubPhase() {
+		cc.Status.InitializingSubPhase = new(ClusterPhaseInitialSubPhaseFirstPodPerRack)
 		changed = true
 	}
 	if ccs.MaxPodUnavailable == 0 {
@@ -175,6 +175,34 @@ func (cc *CassandraCluster) SetDefaults() bool {
 	}
 
 	return changed
+}
+
+var regexNumericVersion = regexp.MustCompile(`^\d+(\.\d+)*$`)
+
+// ServerVersion returns spec.serverVersion or, when unset, the version found in the
+// cassandra image tag normalized to x.y.z (cassandra:4.1 -> 4.1.0, cassandra:5.0.1-foo -> 5.0.1)
+func (cc *CassandraCluster) ServerVersion() string {
+	if cc.Spec.ServerVersion != "" {
+		return cc.Spec.ServerVersion
+	}
+	image := cc.Spec.CassandraImage
+	i := strings.LastIndex(image, ":")
+	if i < 0 || strings.Contains(image[i+1:], "/") {
+		return ""
+	}
+	version, _, _ := strings.Cut(image[i+1:], "-")
+	if !regexNumericVersion.MatchString(version) {
+		return version
+	}
+	return version + strings.Repeat(".0", max(0, 2-strings.Count(version, ".")))
+}
+
+// ServerVersionAtLeast reports whether ServerVersion is greater than or equal to major.minor
+func (cc *CassandraCluster) ServerVersionAtLeast(major, minor int) bool {
+	var ccMajor, ccMinor int
+	// a version without minor or a non numeric one leaves the missing parts at 0
+	_, _ = fmt.Sscanf(cc.ServerVersion(), "%d.%d", &ccMajor, &ccMinor)
+	return ccMajor > major || (ccMajor == major && ccMinor >= minor)
 }
 
 func (cc *CassandraCluster) ComputeLastAppliedConfiguration() ([]byte, error) {
@@ -683,8 +711,8 @@ type CassandraClusterSpec struct {
 	// If this is not empty, operator will uses the cassandra.yaml from the Configmap instead
 	ConfigMapName string `json:"configMapName,omitempty"`
 
-	// Version string for config builder https://github.com/datastax/cass-config-definitions,
-	// used to generate Cassandra server configuration
+	// Cassandra version (x.y.z) used to pick the config builder definitions that generate the
+	// server configuration, defaults to the version found in the tag of cassandraImage
 	ServerVersion string `json:"serverVersion,omitempty"`
 
 	// Server type: "cassandra" or "dse" for config builder, default to cassandra

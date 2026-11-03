@@ -31,7 +31,7 @@ func New(config *Config) Client {
 }
 
 func (cs *client) Build() error {
-	cs.podClient = cs.newClient( cs.cassandraBackupSidecarConfig())
+	cs.podClient = cs.newClient(cs.cassandraBackupSidecarConfig())
 	return nil
 }
 
@@ -60,7 +60,7 @@ func (cs *client) cassandraBackupSidecarConfig() (config *icarus.Configuration) 
 		protocol = "https"
 	}
 
-	config.BasePath = fmt.Sprintf("%s://%s:%d", protocol,cs.config.Host, cs.config.Port)
+	config.BasePath = fmt.Sprintf("%s://%s:%d", protocol, cs.config.Host, cs.config.Port)
 	//config.Host = cs.config.Host
 
 	return config

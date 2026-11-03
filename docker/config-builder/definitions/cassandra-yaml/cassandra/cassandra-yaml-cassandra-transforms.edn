@@ -1,0 +1,13 @@
+(
+  ;; Begin Cassandra 3.11.x transforms.
+  "3.11.6" "cassandra-yaml-cassandra-3.11.6.edn"
+  ;; End Cassandra 3.11.x transforms.
+
+  ;; Begin Cassandra 4.x transforms
+  "4.0.0" "cassandra-yaml-cassandra-4.0.0.edn"
+  ;; 4.1 renamed most settings to carry their unit (read_request_timeout_in_ms -> read_request_timeout: 5000ms)
+  "4.1.0" "cassandra-yaml-cassandra-4.1.0.edn"
+
+  ;; Begin Cassandra 5.x transforms
+  "5.0.0" "cassandra-yaml-cassandra-5.0.0.edn"
+)
