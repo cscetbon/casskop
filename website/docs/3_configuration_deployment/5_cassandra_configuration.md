@@ -160,10 +160,28 @@ Cassandra 4.1 renamed most of the `cassandra.yaml` settings so that their value 
 with the new names and the legacy names found in `config` sections are translated, so a configuration written for
 4.0 keeps working. Both styles can be used, the new one wins when a setting is given twice.
 
+### Config sections per version
+
+The sections accepted in the `config` of the cluster, of a DC or of a rack depend on the Cassandra version:
+
+| Section | Versions |
+|---|---|
+| `cassandra-yaml`, `logback-xml`, `cassandra-env-sh` | all |
+| `jvm-options` | 3.11, moved to `jvm-server-options` on 4.0 and later |
+| `jvm-server-options`, `jvm8-server-options`, `jvm11-server-options` | 4.0 and later |
+| `jvm17-server-options` | 5.0 and later |
+
+A section the version does not support would make every init container fail, so CassKop refuses the whole
+configuration instead: nothing is reconciled, the operator logs the offending section and the cluster status shows
+`lastClusterAction: CorrectCRDConfig` with `lastClusterActionStatus: Error` until the `config` is fixed.
+
 ### Cassandra 5.0
 
 Cassandra 5.0 nodes are started with `storage_compatibility_mode: CASSANDRA_4`, the mode required to upgrade a
-cluster from 4.x. Once every node runs 5.0 and `nodetool upgradesstables` has been run, the mode can be moved to
+cluster from 4.x. The rest of the 5.0 configuration keeps the defaults of the 4.x line rather than the ones of
+`cassandra_latest.yaml`, the file Cassandra 5.0 ships for new clusters: settings such as the trie memtables or the
+new SSTable format can be enabled through `config.cassandra-yaml` once the cluster no longer needs to be compatible
+with 4.x. Once every node runs 5.0 and `nodetool upgradesstables` has been run, the mode can be moved to
 `UPGRADING` and then `NONE` through `config.cassandra-yaml.storage_compatibility_mode` to unlock the new storage
 features, each change being applied by a rolling restart.
 
