@@ -71,16 +71,13 @@ func (rcc *CassandraClusterReconciler) DeleteStatefulSet(ctx context.Context, na
 func (rcc *CassandraClusterReconciler) UpdateStatefulSet(ctx context.Context, statefulSet *appsv1.StatefulSet) error {
 	revision := statefulSet.ResourceVersion
 	if err := rcc.Client.Update(ctx, statefulSet); err != nil {
-		if !apierrors.IsAlreadyExists(err) {
-			return fmt.Errorf("statefulset already exists: %cc", err)
-		}
-		return fmt.Errorf("failed to update cassandra statefulset: %cc", err)
+		return fmt.Errorf("failed to update cassandra statefulset: %w", err)
 	}
 	//Check that the new revision of statefulset has been taken into account
 	err := wait.Poll(retryInterval(), timeout, func() (done bool, err error) {
 		newSts, err := rcc.GetStatefulSet(ctx, statefulSet.Namespace, statefulSet.Name)
 		if err != nil && !apierrors.IsNotFound(err) {
-			return false, fmt.Errorf("failed to get cassandra statefulset: %cc", err)
+			return false, fmt.Errorf("failed to get cassandra statefulset: %w", err)
 		}
 		if revision != newSts.ResourceVersion {
 			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "statefulset": statefulSet.Name}).Info(

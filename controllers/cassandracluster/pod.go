@@ -164,10 +164,7 @@ func (rcc *CassandraClusterReconciler) ListPodsOrderByNameAscending(ctx context.
 func (rcc *CassandraClusterReconciler) CreatePod(ctx context.Context, pod *v1.Pod) error {
 	err := rcc.Client.Create(ctx, pod)
 	if err != nil {
-		if !apierrors.IsAlreadyExists(err) {
-			return fmt.Errorf("pod already exists: %cc", err)
-		}
-		return fmt.Errorf("failed to create cassandra pod: %cc", err)
+		return fmt.Errorf("failed to create cassandra pod: %w", err)
 		//return err
 	}
 	return nil
@@ -176,10 +173,7 @@ func (rcc *CassandraClusterReconciler) CreatePod(ctx context.Context, pod *v1.Po
 func (rcc *CassandraClusterReconciler) UpdatePod(ctx context.Context, pod *v1.Pod) error {
 	err := rcc.Client.Update(ctx, pod)
 	if err != nil {
-		if !apierrors.IsAlreadyExists(err) {
-			return fmt.Errorf("pod already exists: %cc", err)
-		}
-		return fmt.Errorf("failed to update cassandra pod: %cc", err)
+		return fmt.Errorf("failed to update cassandra pod: %w", err)
 		//return err
 	}
 	return nil
@@ -204,7 +198,7 @@ func (rcc *CassandraClusterReconciler) CreateOrUpdatePod(ctx context.Context, na
 func (rcc *CassandraClusterReconciler) DeletePod(ctx context.Context, pod *v1.Pod) error {
 	err := rcc.Client.Delete(ctx, pod)
 	if err != nil {
-		return fmt.Errorf("failed to delete Pod: %cc", err)
+		return fmt.Errorf("failed to delete Pod: %w", err)
 	}
 	return nil
 }
@@ -213,7 +207,7 @@ func (rcc *CassandraClusterReconciler) DeletePod(ctx context.Context, pod *v1.Po
 func (rcc *CassandraClusterReconciler) ForceDeletePod(ctx context.Context, pod *v1.Pod) error {
 	err := rcc.Client.Delete(ctx, pod, client.GracePeriodSeconds(0))
 	if err != nil {
-		return fmt.Errorf("failed to delete Pod: %cc", err)
+		return fmt.Errorf("failed to delete Pod: %w", err)
 	}
 	return nil
 }
