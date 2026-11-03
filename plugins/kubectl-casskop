@@ -106,7 +106,8 @@ def available_pod_in_crd(crd):
         if "pods" in pod_last_op:
             busy_pods.update(set(pod_last_op["pods"]))
     # Let's not keep the default ascii sort
-    shuffle(busy_pods)
+    pods = list(pods)
+    shuffle(pods)
     return next(p for p in pods if p not in busy_pods)
 
 
@@ -199,7 +200,7 @@ For more information you can run {plugin} <command> --help
         args = parser.parse_args(sys.argv[2:])
         crd_content = k("get", "cassandracluster", args.crd, "-o", "json")
         if not crd_content:
-            die(f"crd {crd} not found")
+            die(f"crd {args.crd} not found")
         crd_content = json.loads(crd_content)
         topology = crd_content["spec"]["topology"]["dc"]
 
