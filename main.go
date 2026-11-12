@@ -204,6 +204,7 @@ func main() {
 		StsClient:          sts.NewClient(mgr.GetClient()),
 		Log:                ctrl.Log.WithName("controllers").WithName("CassandraCluster"),
 		Scheme:             mgr.GetScheme(),
+		Recorder:           mgr.GetEventRecorderFor("cassandracluster-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CassandraCluster")
 		os.Exit(1)

@@ -45,9 +45,21 @@ func validateConfigSections(cc *api.CassandraCluster, config json.RawMessage, lo
 	}
 	for _, s := range configSectionMinVersions {
 		if _, found := sections[s.section]; found && !cc.ServerVersionAtLeast(s.major, s.minor) {
-			return fmt.Errorf("%s: section %s needs Cassandra %d.%d or later, the cluster runs %s",
-				location, s.section, s.major, s.minor, cc.ServerVersion())
+			return fmt.Errorf("%s: section %s needs Cassandra %d.%d or later, %s",
+				location, s.section, s.major, s.minor, runningVersion(cc))
 		}
 	}
 	return nil
+}
+
+// runningVersion describes the Cassandra version of the cluster for an error message, pointing at
+// serverVersion when the tag of the image does not carry one
+func runningVersion(cc *api.CassandraCluster) string {
+	version := cc.ServerVersion()
+	var major int
+	if _, err := fmt.Sscanf(version, "%d.", &major); err != nil {
+		return fmt.Sprintf("no version can be read from the tag of cassandraImage %s, set serverVersion",
+			cc.Spec.CassandraImage)
+	}
+	return "the cluster runs " + version
 }

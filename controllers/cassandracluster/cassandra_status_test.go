@@ -16,6 +16,7 @@ package cassandracluster
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -27,6 +28,7 @@ import (
 	"github.com/jarcoal/httpmock"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"reflect"
@@ -603,4 +605,33 @@ func overrideDelayWaitWithNoDelay() {
 func restoreDefaultDelayWait() {
 	delayWait = defaultDelayWait
 	retryInterval = defaultRetryInterval
+}
+
+// A config section the Cassandra version does not support stops the reconciliation and is reported in
+// the status and by an event
+func TestReconcileRefusesUnsupportedConfigSection(t *testing.T) {
+	rcc, cc := helperInitCluster(t, "cassandracluster-1DC.yaml")
+	recorder := record.NewFakeRecorder(1)
+	rcc.Recorder = recorder
+	ctx := context.TODO()
+	req := reconcile.Request{NamespacedName: types.NamespacedName{Name: cc.Name, Namespace: cc.Namespace}}
+
+	// first reconcile sets the defaults
+	_, err := rcc.Reconcile(ctx, req)
+	assert.NoError(t, err)
+
+	assert.NoError(t, rcc.Client.Get(ctx, req.NamespacedName, cc))
+	cc.Spec.CassandraImage = "cassandra:3.11.19"
+	cc.Spec.ServerVersion = ""
+	cc.Spec.Config = json.RawMessage(`{"jvm-server-options": {"max_heap_size": "1G"}}`)
+	assert.NoError(t, rcc.Client.Update(ctx, cc))
+
+	_, err = rcc.Reconcile(ctx, req)
+	assert.NoError(t, err)
+
+	assert.NoError(t, rcc.Client.Get(ctx, req.NamespacedName, cc))
+	assert.Equal(t, api.ActionCorrectCRDConfig.Name, cc.Status.LastClusterAction)
+	assert.Equal(t, api.StatusError, cc.Status.LastClusterActionStatus)
+	assert.Equal(t, "Warning InvalidConfig spec.config: section jvm-server-options needs Cassandra 4.0 or later, "+
+		"the cluster runs 3.11.19", <-recorder.Events)
 }
