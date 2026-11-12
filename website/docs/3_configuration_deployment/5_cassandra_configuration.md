@@ -175,7 +175,8 @@ The sections accepted in the `config` of the cluster, of a DC or of a rack depen
 | `jvm17-server-options` | 5.0 and later |
 
 A section the version does not support would make every init container fail, so CassKop refuses the whole
-configuration instead: nothing is reconciled, the operator logs the offending section and the cluster status shows
+configuration instead: nothing is reconciled, the operator logs the offending section, publishes it as an
+`InvalidConfig` warning event of the `CassandraCluster` and the cluster status shows
 `lastClusterAction: CorrectCRDConfig` with `lastClusterActionStatus: Error` until the `config` is fixed.
 
 ### Cassandra 5.0

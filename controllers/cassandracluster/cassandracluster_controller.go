@@ -29,9 +29,11 @@ import (
 
 	api "github.com/cscetbon/casskop/api/v2"
 	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 	policyv1 "k8s.io/api/policy/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -54,6 +56,8 @@ type CassandraClusterReconciler struct {
 	Client client.Client
 	Scheme *runtime.Scheme
 	Log    logr.Logger
+	// Recorder publishes the events of the CassandraCluster objects, optional
+	Recorder record.EventRecorder
 
 	storedPdb         *policyv1.PodDisruptionBudget
 	storedStatefulSet *appsv1.StatefulSet
@@ -128,6 +132,9 @@ func (rcc *CassandraClusterReconciler) Reconcile(ctx context.Context, request re
 		status.LastClusterAction = api.ActionCorrectCRDConfig.Name
 		status.LastClusterActionStatus = api.StatusError
 		ClusterActionMetric.set(api.ActionCorrectCRDConfig, cc.Name)
+		if rcc.Recorder != nil {
+			rcc.Recorder.Event(cc, v1.EventTypeWarning, "InvalidConfig", err.Error())
+		}
 		return requeue30, nil
 	}
 
