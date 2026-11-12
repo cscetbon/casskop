@@ -60,7 +60,15 @@ RUN mkdir -p $CASSANDRA_DATA  $CASSANDRA_CONF $BOOTSTRAP_CONF $BOOTSTRAP_LIBS $C
     && wget -q -O ${BOOTSTRAP_LIBS}/jolokia-agent.jar https://repo1.maven.org/maven2/org/jolokia/jolokia-jvm/${JOLOKIA_VERSION}/jolokia-jvm-${JOLOKIA_VERSION}.jar \
     # static curl binary used by the readiness/liveness probes from within the cassandra container
     && wget -q -O /tmp/curl.tar.xz https://github.com/stunnel/static-curl/releases/download/${CURL_VERSION}/curl-linux-x86_64-musl-${CURL_VERSION}.tar.xz \
+    # checksums of the downloads above, to update together with the versions
+    && printf '%s  %s\n' \
+        cd39bbd7c709a670ceabc9e594e9f07ca781debe241af0f18fccfcc59e23abb1 ${BOOTSTRAP_LIBS}/cassandra-exporter-agent.jar \
+        7a1711e724cab41b12ee7a1a50abd83978574fa228ce9611f1664fb19a2bbfd5 ${BOOTSTRAP_LIBS}/cassandra-exporter-agent-4.1.jar \
+        65d5645b07f7bdc22c7a1dbf060b5345b564674cc263d14f75ade2dabe80f1f2 ${BOOTSTRAP_LIBS}/jolokia-agent.jar \
+        2e0c54ba696afd0df1e899e4344fa63d53d73107f9ac08173314d9be85bc76fd /tmp/curl.tar.xz \
+        | sha256sum -c - \
     && tar -xJf /tmp/curl.tar.xz -C ${BOOTSTRAP_TOOLS} curl \
+    && rm /tmp/curl.tar.xz \
     && groupadd -r cassandra --gid=999 && useradd -r -g cassandra --uid=999 cassandra \
     && chown -R cassandra:cassandra $CASSANDRA_DATA $CASSANDRA_CONF $BOOTSTRAP_CONF $BOOTSTRAP_LIBS $CASSANDRA_LIBS $BOOTSTRAP_TOOLS $CASSANDRA_TOOLS /tmp \
     && apt-get -y purge \
