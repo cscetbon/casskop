@@ -151,14 +151,17 @@ spec:
 
 CassKop is tested with the official `cassandra` images of the 3.11, 4.0, 4.1 and 5.0 lines. The configuration is
 generated for the version found in the tag of `Spec.cassandraImage` (`cassandra:4.1.5` is 4.1.5, `cassandra:5.0`
-is 5.0.0) unless `Spec.serverVersion` is set, which is only needed when the tag does not carry the version.
+is 5.0.0, a digest after the tag is ignored) unless `Spec.serverVersion` is set, which is only needed when the tag
+does not carry the version.
 
 ### Cassandra 4.1 and later
 
 Cassandra 4.1 renamed most of the `cassandra.yaml` settings so that their value carries a unit
 (`read_request_timeout_in_ms: 5000` became `read_request_timeout: 5000ms`). From 4.1 the configuration is generated
 with the new names and the legacy names found in `config` sections are translated, so a configuration written for
-4.0 keeps working. Both styles can be used, the new one wins when a setting is given twice.
+4.0 keeps working. Both styles can be used: the new one wins when a setting is given twice at the same level, and
+a rack still wins over its DC and the cluster whatever the style. A negative legacy value, which used to disable a
+setting, is translated the way Cassandra does it (`null`, `0` or the setting left out).
 
 ### Cassandra 5.0
 
