@@ -163,7 +163,7 @@ func generateCassandraVolumes(cc *api.CassandraCluster) []v1.Volume {
 //   - /extra-lib for additional jar we want to load
 //   - /opt/bin for additional tools
 //   - /tmp to work with readonly containers
-func generateContainerVolumeMount(cc *api.CassandraCluster, ct containerType) []v1.VolumeMount {
+func generateContainerVolumeMount(cc *api.CassandraCluster, dcRackName string, ct containerType) []v1.VolumeMount {
 	var vm []v1.VolumeMount
 
 	if ct == initContainer {
@@ -184,7 +184,7 @@ func generateContainerVolumeMount(cc *api.CassandraCluster, ct containerType) []
 		return vm
 	}
 
-	if cc.Spec.DataCapacity != "" {
+	if cc.GetDataCapacityForDCName(api.DcName(cc.GetDCNameFromDCRackName(dcRackName))) != "" {
 		vm = append(vm, v1.VolumeMount{Name: "data", MountPath: "/var/lib/cassandra"})
 	}
 
@@ -284,10 +284,6 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 
 	volumes = RemoveDuplicateVolumesAndVolumeMounts(containers, volumeClaimTemplate, volumes)
 
-	for _, pvc := range volumeClaimTemplate {
-		k8s.AddOwnerRefToObject(&pvc, k8s.AsOwner(cc))
-	}
-
 	nodeAffinity := createNodeAffinity(nodeSelector)
 	nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
 	rollingPartition := cc.GetRollingPartitionPerRacks(dcRackName)
@@ -333,9 +329,9 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 						FSGroup:      new(cc.Spec.FSGroup),
 					},
 					InitContainers: []v1.Container{
-						createBaseConfigBuilderContainer(cc),
+						createBaseConfigBuilderContainer(cc, dcRackName),
 						createInitConfigContainer(cc, status, dcRackName),
-						createCassandraBootstrapContainer(cc, status),
+						createCassandraBootstrapContainer(cc, status, dcRackName),
 					},
 					Containers:                    containers,
 					Volumes:                       volumes,
@@ -566,12 +562,12 @@ func createInitConfigContainer(cc *api.CassandraCluster, status *api.CassandraCl
 		Image:           cc.Spec.ConfigBuilderImage,
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
 		Env:             envVars.InitContainerEnvVar(cc, status, cc.Spec.Resources, dcRackName),
-		VolumeMounts:    generateContainerVolumeMount(cc, initContainer),
+		VolumeMounts:    generateContainerVolumeMount(cc, dcRackName, initContainer),
 		Resources:       initContainerResources(),
 	}
 }
 
-func createBaseConfigBuilderContainer(cc *api.CassandraCluster) v1.Container {
+func createBaseConfigBuilderContainer(cc *api.CassandraCluster, dcRackName string) v1.Container {
 
 	return v1.Container{
 		Name:            cassBaseConfigBuilderName,
@@ -579,15 +575,16 @@ func createBaseConfigBuilderContainer(cc *api.CassandraCluster) v1.Container {
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
 		Command:         []string{"/bin/sh"},
 		Args:            []string{"-c", "cp -r /etc/cassandra/* /bootstrap/"},
-		VolumeMounts:    generateContainerVolumeMount(cc, initContainer),
+		VolumeMounts:    generateContainerVolumeMount(cc, dcRackName, initContainer),
 		Resources:       initContainerResources(),
 	}
 }
 
 // createCassandraBootstrapContainer will copy jar from bootstrap image to /extra-lib/ directory.
 // configure /etc/cassandra with Env var and with userConfigMap (if enabled) by running the run.sh script
-func createCassandraBootstrapContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus) v1.Container {
-	volumeMounts := generateContainerVolumeMount(cc, bootstrapContainer)
+func createCassandraBootstrapContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
+	dcRackName string) v1.Container {
+	volumeMounts := generateContainerVolumeMount(cc, dcRackName, bootstrapContainer)
 
 	return v1.Container{
 		Name:            bootstrapContainerName,
@@ -605,7 +602,7 @@ func generateContainers(cc *api.CassandraCluster, status *api.CassandraClusterSt
 	containers = append(containers, cc.Spec.SidecarConfigs...)
 	containers = append(containers, createCassandraContainer(cc, status, dcRackName))
 	if cc.Spec.BackRestSidecar.Enabled == nil || *cc.Spec.BackRestSidecar.Enabled {
-		containers = append(containers, backrestSidecarContainer(cc))
+		containers = append(containers, backrestSidecarContainer(cc, dcRackName))
 	}
 
 	return containers
@@ -625,7 +622,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 		resources = dcResources
 	}
 
-	volumeMounts := append(generateContainerVolumeMount(cc, cassandraContainer),
+	volumeMounts := append(generateContainerVolumeMount(cc, dcRackName, cassandraContainer),
 		generateStorageConfigVolumesMount(cc)...)
 
 	var command []string
@@ -731,7 +728,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 	return cassandraContainer
 }
 
-func backrestSidecarContainer(cc *api.CassandraCluster) v1.Container {
+func backrestSidecarContainer(cc *api.CassandraCluster, dcRackName string) v1.Container {
 
 	resources := generateResourceList(defaultBackRestContainerRequestsCPU, defaultBackRestContainerRequestsMemory)
 
@@ -765,7 +762,7 @@ func backrestSidecarContainer(cc *api.CassandraCluster) v1.Container {
 		container.Resources = *cc.Spec.BackRestSidecar.Resources
 	}
 
-	container.VolumeMounts = append(container.VolumeMounts, generateContainerVolumeMount(cc, backrestContainer)...)
+	container.VolumeMounts = append(container.VolumeMounts, generateContainerVolumeMount(cc, dcRackName, backrestContainer)...)
 
 	return container
 }

@@ -196,17 +196,20 @@ func InitContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 	dc := cc.GetDCFromDCRackName(dcRackName)
 	rack := cc.GetRackFromDCRackName(dcRackName)
 
-	jvmOptions := jvmOptionName(cc)
-	mergeConfig(cc.Spec.Config, parsedConfig, jvmOptions)
-	mergeConfig(dc.Config, parsedConfig, jvmOptions)
-	mergeConfig(rack.Config, parsedConfig, jvmOptions)
-
 	// Cassandra 4.1 renamed most cassandra.yaml settings, translate legacy keys so they do not clash
-	// with the new style ones rendered by the config builder definitions
+	// with the new style ones rendered by the config builder definitions. Each level is translated
+	// before being merged so that a rack setting wins over a DC or cluster one whatever its style.
+	translate := func(*gabs.Container) {}
 	if cc.ServerVersionAtLeast(4, 1) {
-		translateLegacyCassandraYamlSection(parsedConfig)
-		defaultConfig[cassandraYamlKey] = translateLegacyCassandraYaml(defaultConfig[cassandraYamlKey])
+		cassandra5 := cc.ServerVersionAtLeast(5, 0)
+		translate = func(config *gabs.Container) { translateLegacyCassandraYamlSection(config, cassandra5) }
+		defaultConfig[cassandraYamlKey] = translateLegacyCassandraYaml(defaultConfig[cassandraYamlKey], cassandra5)
 	}
+
+	jvmOptions := jvmOptionName(cc)
+	mergeConfig(cc.Spec.Config, parsedConfig, jvmOptions, translate)
+	mergeConfig(dc.Config, parsedConfig, jvmOptions, translate)
+	mergeConfig(rack.Config, parsedConfig, jvmOptions, translate)
 
 	defaultConfig[jvmOptions] = map[string]any{
 		"initial_heap_size":       defineJvmMemory(resources).initialHeapSize,
@@ -327,9 +330,10 @@ func jvmOptionName(cc *api.CassandraCluster) string {
 	return jvmOptionsKey
 }
 
-// mergeConfig merges config into currentParsedConfig, moving a legacy jvm-options section to
-// jvmOptions when it differs so that users do not have to rename it when upgrading
-func mergeConfig(config json.RawMessage, currentParsedConfig *gabs.Container, jvmOptions string) {
+// mergeConfig merges config into currentParsedConfig after applying translate to it, moving a legacy
+// jvm-options section to jvmOptions when it differs so that users do not have to rename it when upgrading
+func mergeConfig(config json.RawMessage, currentParsedConfig *gabs.Container, jvmOptions string,
+	translate func(*gabs.Container)) {
 	if config != nil {
 		parsedConfig, _ := gabs.ParseJSON(config)
 		if jvmOptions != jvmOptionsKey && parsedConfig.Path(jvmOptionsKey) != nil {
@@ -337,6 +341,7 @@ func mergeConfig(config json.RawMessage, currentParsedConfig *gabs.Container, jv
 			_, _ = parsedConfig.SetP(parsedConfig.Path(jvmOptionsKey).Data(), jvmOptions)
 			_ = parsedConfig.DeleteP(jvmOptionsKey)
 		}
+		translate(parsedConfig)
 		// MergeFn only fails when config is not a JSON object, which the CRD schema does not accept
 		_ = currentParsedConfig.MergeFn(parsedConfig,
 			func(dest, source any) any { return source })
