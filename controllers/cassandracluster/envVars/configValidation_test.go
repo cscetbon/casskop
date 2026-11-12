@@ -24,6 +24,8 @@ func TestValidateConfig(t *testing.T) {
 		{"jvm-server-options on 3.11", "cassandra:3.11.19", jvmServer,
 			"spec.config: section jvm-server-options needs Cassandra 4.0 or later, the cluster runs 3.11.19"},
 		{"jvm-server-options on 4.0", "cassandra:4.0.21", jvmServer, ""},
+		{"jvm-server-options without a version in the tag", "cassandra:latest", jvmServer,
+			"no version can be read from the tag of cassandraImage cassandra:latest, set serverVersion"},
 		{"jvm11-server-options on 3.11", "cassandra:3.11.19", json.RawMessage(`{"jvm11-server-options": {}}`),
 			"section jvm11-server-options needs Cassandra 4.0 or later"},
 		{"jvm17-server-options on 4.1", "cassandra:4.1.12", jvm17,
