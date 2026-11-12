@@ -115,7 +115,8 @@ func (c *Client) PerformBackup(backup *api.CassandraBackup) (string, error) {
 		Dc:                    backup.Spec.Datacenter,
 		GlobalRequest:         true,
 		K8sNamespace:          backup.Namespace,
-		DataDirs:              cassandrabackup.DataDirs(""),
+		// a backup has no cassandraDirectory setting, the data volume is always mounted at the default one
+		DataDirs: cassandrabackup.DataDirs(""),
 	}
 
 	backupOperation, err := c.client.PerformBackupOperation(*backupOperationRequest)
