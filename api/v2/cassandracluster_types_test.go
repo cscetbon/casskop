@@ -548,6 +548,8 @@ func TestServerVersion(t *testing.T) {
 		{"registry:44301/repo/cassandra:4.1.5", "", "4.1.5", true},
 		{"registry:44301/repo/cassandra", "", "", false},
 		{"cassandra:latest", "", "latest", false},
+		{"cassandra:4.1.5@sha256:9f2c1a", "", "4.1.5", true},
+		{"cassandra@sha256:9f2c1a", "", "", false},
 		{"cassandra:5.0.1", "4.0.0", "4.0.0", false},
 	}
 	for _, c := range cases {

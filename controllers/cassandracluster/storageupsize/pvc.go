@@ -88,7 +88,7 @@ func ensureAllPVCsHaveNewCapacity(ctx context.Context, cc *api.CassandraCluster,
 	anythingChanged := false
 	var multiError error
 	for _, pvc := range dataPVCs {
-		if pvc.Spec.Resources.Requests["storage"] != requestedCapacity {
+		if currentCapacity := pvc.Spec.Resources.Requests["storage"]; currentCapacity.Cmp(requestedCapacity) != 0 {
 			anythingChanged = true
 			if pvc.Spec.Resources.Requests == nil {
 				pvc.Spec.Resources.Requests = corev1.ResourceList{}
@@ -98,6 +98,7 @@ func ensureAllPVCsHaveNewCapacity(ctx context.Context, cc *api.CassandraCluster,
 			if err != nil {
 				rack.Log().Errorf("Error updating PVC[%s] capacity to %v", pvc.Name, requestedCapacity)
 				multiError = multierr.Append(multiError, err)
+				continue
 			}
 			rack.Log().Infof("Update PVC[%s] capacity to %v successful", pvc.Name, requestedCapacity)
 		}
