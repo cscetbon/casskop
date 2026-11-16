@@ -169,7 +169,7 @@
     {:label "RandomPartitioner", :value "org.apache.cassandra.dht.RandomPartitioner"}],
    :default_value "org.apache.cassandra.dht.Murmur3Partitioner"},
   :column_index_size {:type "string", :default_value "64KiB"},
-  :sasi_indexes_enabled {:type "boolean", :default_value true},
+  :sasi_indexes_enabled {:type "boolean", :default_value false},
   :internode_compression
   {:type "string",
    :options
