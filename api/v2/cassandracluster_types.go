@@ -23,8 +23,8 @@ const (
 	DefaultReadinessHealthCheckPeriod   int32 = 10
 
 	defaultCassandraImage     = "cassandra:3.11.10"
-	defaultBootstrapImage     = "ghcr.io/cscetbon/casskop-bootstrap:0.1.22"
-	defaultConfigBuilderImage = "ghcr.io/cscetbon/cass-config-builder:1.0.4-1"
+	defaultBootstrapImage     = "ghcr.io/cscetbon/casskop-bootstrap:0.1.23"
+	defaultConfigBuilderImage = "ghcr.io/cscetbon/cass-config-builder:1.0.4-2"
 
 	DefaultBackRestImage      = "ghcr.io/cscetbon/instaclustr-icarus:1.1.3"
 	defaultServiceAccountName = "cassandra-cluster-node"
