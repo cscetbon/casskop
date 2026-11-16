@@ -146,7 +146,7 @@ func renamedCassandraYamlKey(key string, cassandra5 bool) (renamedKey, bool) {
 // translateLegacyCassandraYaml rewrites the legacy keys of a cassandra-yaml section into their
 // Cassandra 4.1 names, or 5.0 ones when cassandra5 is set, so that casskop defaults and configurations
 // written for older versions keep working and cannot clash with their new style counterpart. A new
-// style key already present wins.
+// style key already present wins. The cache save periods kept their name and only take a unit.
 func translateLegacyCassandraYaml(section map[string]any, cassandra5 bool) map[string]any {
 	translated := make(map[string]any, len(section))
 	for key, value := range section {
@@ -155,7 +155,7 @@ func translateLegacyCassandraYaml(section map[string]any, cassandra5 bool) map[s
 			translated[key] = value
 			continue
 		}
-		if _, exists := section[renamed.name]; exists {
+		if _, exists := section[renamed.name]; exists && renamed.name != key {
 			continue
 		}
 		if value, ok := legacyValue(value, renamed); ok {

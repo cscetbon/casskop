@@ -558,3 +558,21 @@ func TestServerVersion(t *testing.T) {
 		assert.Equal(c.atLeast41, cc.ServerVersionAtLeast(4, 1), c.image)
 	}
 }
+
+func TestServerType(t *testing.T) {
+	cases := []struct{ image, serverType, want string }{
+		{"cassandra:4.1.5", "", "cassandra"},
+		{"datastax/dse-server:6.8.25", "", "dse"},
+		{"registry:5000/dse-server:6.8.25", "", "dse"},
+		{"registry:5000/dse-server", "", "dse"},
+		{"registry:5000/dse-server@sha256:9f2c1a", "", "dse"},
+		{"registry:5000/repo/cassandra:4.1.5", "", "cassandra"},
+		{"cassandra:4.1.5-dse", "", "cassandra"},
+		{"cassandra:4.1.5", "dse", "dse"},
+		{"datastax/dse-server:6.8.25", "cassandra", "cassandra"},
+	}
+	for _, c := range cases {
+		cc := CassandraCluster{Spec: CassandraClusterSpec{CassandraImage: c.image, ServerType: c.serverType}}
+		assert.Equal(t, c.want, cc.ServerType(), c.image)
+	}
+}

@@ -46,6 +46,7 @@ out=$(render 4.1.5 "$(config '"read_request_timeout":"5000ms"' jvm-server-option
 expect "$out" "jamm-0.3.2.jar"
 expect "$out" "^read_request_timeout: 5000ms"
 expect "$out" "^compaction_throughput: 64MiB/s"
+expect "$out" "^sasi_indexes_enabled: false"
 refuse "$out" "_in_ms:"
 refuse "$out" "^### jvm17-server.options"
 
@@ -56,6 +57,7 @@ expect "$out" "^### jvm17-server.options"
 expect "$out" "^storage_compatibility_mode: CASSANDRA_4"
 expect "$out" "^read_request_timeout: 5000ms"
 expect "$out" "chronicle.analytics.disable=true"
+expect "$out" "^sasi_indexes_enabled: false"
 refuse "$out" "_in_ms:"
 refuse "$out" "scripted_user_defined_functions_enabled"
 
