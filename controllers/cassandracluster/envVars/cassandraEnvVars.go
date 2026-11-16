@@ -161,13 +161,7 @@ func InitContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 	resources v1.ResourceRequirements, dcRackName string) []v1.EnvVar {
 	seedList := cc.SeedList(&status.SeedList)
 
-	serverType := cc.Spec.ServerType
-	if serverType == "" {
-		serverType = "cassandra"
-		if repository, _, _ := strings.Cut(cc.Spec.CassandraImage, ":"); strings.Contains(repository, "dse") {
-			serverType = "dse"
-		}
-	}
+	serverType := cc.ServerType()
 
 	defaultConfig := NodeConfig{
 		cassandraYamlKey: {

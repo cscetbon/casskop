@@ -15,7 +15,7 @@ on:
         required: true
 
 env:
-  IMAGE: ghcr.io/cscetbon/cass-config-builder:${{ inputs.alias || '1.0.4-1' }}
+  IMAGE: ghcr.io/cscetbon/cass-config-builder:${{ inputs.alias || '1.0.4-2' }}
 
 jobs:
 

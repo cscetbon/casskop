@@ -23,8 +23,8 @@ const (
 	DefaultReadinessHealthCheckPeriod   int32 = 10
 
 	defaultCassandraImage     = "cassandra:3.11.10"
-	defaultBootstrapImage     = "ghcr.io/cscetbon/casskop-bootstrap:0.1.22"
-	defaultConfigBuilderImage = "ghcr.io/cscetbon/cass-config-builder:1.0.4-1"
+	defaultBootstrapImage     = "ghcr.io/cscetbon/casskop-bootstrap:0.1.23"
+	defaultConfigBuilderImage = "ghcr.io/cscetbon/cass-config-builder:1.0.4-2"
 
 	DefaultBackRestImage      = "ghcr.io/cscetbon/instaclustr-icarus:1.1.3"
 	defaultServiceAccountName = "cassandra-cluster-node"
@@ -186,16 +186,34 @@ func (cc *CassandraCluster) ServerVersion() string {
 	if cc.Spec.ServerVersion != "" {
 		return cc.Spec.ServerVersion
 	}
-	image, _, _ := strings.Cut(cc.Spec.CassandraImage, "@")
-	i := strings.LastIndex(image, ":")
-	if i < 0 || strings.Contains(image[i+1:], "/") {
-		return ""
-	}
-	version, _, _ := strings.Cut(image[i+1:], "-")
+	_, tag := cc.cassandraImageRepositoryAndTag()
+	version, _, _ := strings.Cut(tag, "-")
 	if !regexNumericVersion.MatchString(version) {
 		return version
 	}
 	return version + strings.Repeat(".0", max(0, 2-strings.Count(version, ".")))
+}
+
+// ServerType returns spec.serverType or, when unset, dse when the repository of the cassandra image
+// names it and cassandra otherwise
+func (cc *CassandraCluster) ServerType() string {
+	if cc.Spec.ServerType != "" {
+		return cc.Spec.ServerType
+	}
+	if repository, _ := cc.cassandraImageRepositoryAndTag(); strings.Contains(repository, "dse") {
+		return "dse"
+	}
+	return "cassandra"
+}
+
+// cassandraImageRepositoryAndTag splits the cassandra image at its tag, ignoring a digest and leaving
+// the port of a registry in the repository
+func (cc *CassandraCluster) cassandraImageRepositoryAndTag() (repository, tag string) {
+	image, _, _ := strings.Cut(cc.Spec.CassandraImage, "@")
+	if i := strings.LastIndex(image, ":"); i >= 0 && !strings.Contains(image[i+1:], "/") {
+		return image[:i], image[i+1:]
+	}
+	return image, ""
 }
 
 // ServerVersionAtLeast reports whether ServerVersion is greater than or equal to major.minor

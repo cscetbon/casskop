@@ -29,6 +29,6 @@ docker build -t cass-config-builder:dev docker/config-builder
 
 `check.sh` renders the configuration of each supported Cassandra line and checks the version specific bits. The
 image is published to `ghcr.io/cscetbon/cass-config-builder` by the *Config builder image* GitHub workflow, tagged
-with the base version followed by the overlay revision (`1.0.4-1`). The workflow runs on every merge touching this
+with the base version followed by the overlay revision (`1.0.4-2`). The workflow runs on every merge touching this
 directory and publishes the alias set as its default, which must match `defaultConfigBuilderImage` in the operator;
 it can also be dispatched by hand with another alias.

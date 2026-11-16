@@ -189,6 +189,9 @@ func TestTranslateLegacyCassandraYaml(t *testing.T) {
 		"commitlog_sync_group_window_in_ms":           15.5,
 		"num_tokens":                                  float64(16),
 		"key_cache_size_in_mb":                        "100MiB",
+		"key_cache_save_period":                       float64(14400),
+		"row_cache_save_period":                       "30m",
+		"counter_cache_save_period":                   float64(0),
 	}
 	expected := map[string]any{
 		"read_request_timeout":       "5000ms",
@@ -203,6 +206,10 @@ func TestTranslateLegacyCassandraYaml(t *testing.T) {
 		"commitlog_sync_group_window":    "15.5ms",
 		"num_tokens":                     float64(16),
 		"key_cache_size":                 "100MiB",
+		// same name in 4.1, only the unit is added
+		"key_cache_save_period":     "14400s",
+		"row_cache_save_period":     "30m",
+		"counter_cache_save_period": "0s",
 	}
 	assert.Equal(t, expected, translateLegacyCassandraYaml(section, false))
 }
