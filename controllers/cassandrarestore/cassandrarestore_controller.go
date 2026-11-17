@@ -43,7 +43,7 @@ func (r *CassandraRestoreReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			reqLogger := logrus.WithFields(logrus.Fields{"Request.Namespace": restore.Namespace,
 				"Request.Name": restore.Name})
 			new := e.ObjectNew.(*api.CassandraRestore)
-			if len(new.Status.CoordinatorMember)<1 {
+			if new.Status.CoordinatorMember == "" {
 				return false
 			}
 			if new.Status.Condition == nil {

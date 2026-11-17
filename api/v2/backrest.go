@@ -13,7 +13,9 @@ func ProgressPercentage(progress float64) string {
 
 func failureCause(errors []icarus.ErrorObject) []FailureCause {
 	var failureCause []FailureCause
-	mapstructure.Decode(errors, &failureCause)
+	if err := mapstructure.Decode(errors, &failureCause); err != nil {
+		return []FailureCause{{Message: fmt.Sprintf("cannot decode the errors reported by the sidecar: %v", err)}}
+	}
 	return failureCause
 }
 
@@ -47,4 +49,3 @@ type FailureCause struct {
 	// message explaining the error
 	Message string `json:"message,omitempty"`
 }
-

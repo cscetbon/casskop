@@ -24,10 +24,10 @@ type Config struct {
 }
 
 func ClusterConfig(client controllerclient.Client, cluster *api.CassandraCluster, pod *corev1.Pod) *Config {
-	conf        := &Config{}
+	conf := &Config{}
 	conf.UseSSL = DefaultCassandraBackupSecure
-	conf.Port   = DefaultCassandraSidecarPort
-	conf.Host   = k8s.PodHostname(*pod)
+	conf.Port = DefaultCassandraSidecarPort
+	conf.Host = k8s.PodHostname(*pod)
 
 	if conf.Timeout == 0 {
 		conf.Timeout = 1 * time.Minute

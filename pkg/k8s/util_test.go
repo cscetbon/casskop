@@ -95,8 +95,8 @@ spec:
 		fmt.Printf("error: %v", err)
 	}
 
-	var dc int = 0
-	var rack int = 0
+	var dc = 0
+	var rack = 0
 
 	labels, nodeSelector := DCRackLabelsAndNodeSelectorForStatefulSet(&cc, dc, rack)
 
@@ -145,8 +145,8 @@ spec:
 		fmt.Printf("error: %v", err)
 	}
 
-	var dc int = 0
-	var rack int = 0
+	var dc = 0
+	var rack = 0
 
 	labels, nodeSelector := DCRackLabelsAndNodeSelectorForStatefulSet(&cc, dc, rack)
 

@@ -6,6 +6,13 @@ sidebar_label: Backup and restore
 
 In order to provide Backup/Restore abilities we use InstaCluster's [cassandra-sidecar project](https://github.com/instaclustr/cassandra-sidecar) and add it to each Cassandra node to spawn. We want to thant Instaclustr for the modifications they made to make it work with CassKop!
 
+The sidecar image is `ghcr.io/cscetbon/instaclustr-icarus:2.0.4` by default and can be changed with
+`spec.backRestSidecar.image`. Icarus 2.0 is required for Cassandra 4.1 and later: the 1.x releases do not
+understand the `_paxos_repair_state` directory those versions keep in the `system` keyspace and every backup fails
+before uploading anything. CassKop passes the data directories (`dataDirs`) Icarus 2.0 needs in every backup and
+restore request, which the 1.x releases ignore, so clusters still running Cassandra 3.11 with a 1.x sidecar keep
+working.
+
 ## Backup
 
 It is possible to backup keyspaces or tables from a cluster managed by Casskop. To start or schedule a backup, you 

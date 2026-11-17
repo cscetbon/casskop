@@ -4,8 +4,8 @@ metadata:
   name: cassandra-e2e
 spec:
   nodesPerRacks: 2
-  cassandraImage: cassandra:3.11.19
-  bootstrapImage: ghcr.io/cscetbon/casskop-bootstrap:0.1.21
+  cassandraImage: cassandra:4.1.12
+  bootstrapImage: ghcr.io/cscetbon/casskop-bootstrap:0.1.23
   dataCapacity: 256Mi
   hardAntiAffinity: false
   deletePVC: true
@@ -22,7 +22,7 @@ spec:
         rack:
           - name: rack1
   backRestSidecar:
-    image: ghcr.io/cscetbon/instaclustr-icarus:1.1.3
+    image: ghcr.io/cscetbon/instaclustr-icarus:2.0.4
     resources:
       limits:
         memory: 512Mi

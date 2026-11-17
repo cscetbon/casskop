@@ -794,8 +794,8 @@ spec:
                     - dse
                 serverVersion:
                   description: |-
-                    Version string for config builder https://github.com/datastax/cass-config-definitions,
-                    used to generate Cassandra server configuration
+                    Cassandra version (x.y.z) used to pick the config builder definitions that generate the
+                    server configuration, defaults to the version found in the tag of cassandraImage
                   type: string
                 service:
                   description: ServicePolicy defines the policy for headless service owned by CassKop operator.

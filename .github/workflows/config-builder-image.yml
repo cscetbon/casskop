@@ -1,0 +1,69 @@
+name: Config builder image
+
+on:
+  # the image published on a merge must match defaultConfigBuilderImage in api/v2/cassandracluster_types.go,
+  # bump the default alias of IMAGE together with it when the overlay changes
+  push:
+    branches: [master]
+    paths:
+      - docker/config-builder/**
+      - .github/workflows/config-builder-image.yml
+  workflow_dispatch:
+    inputs:
+      alias:
+        description: 'Docker image alias (base cass-config-builder version followed by the overlay revision, e.g. 1.0.4-1)'
+        required: true
+
+env:
+  IMAGE: ghcr.io/cscetbon/cass-config-builder:${{ inputs.alias || '1.0.4-2' }}
+
+jobs:
+
+  build-publish-config-builder-image:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: docker/config-builder
+          tags: config-builder:build
+          load: true
+
+      - name: Check generated configurations
+        run: ./docker/config-builder/check.sh config-builder:build
+
+      # clusters pull the image with the same tag again, its definitions must never change once published
+      - name: Compare with the published image
+        id: published
+        run: |
+          definitions() {
+            docker run --rm --entrypoint bash "$1" -c 'cd /definitions && find . -type f | LC_ALL=C sort | xargs sha256sum | sha256sum'
+          }
+          if ! docker manifest inspect $IMAGE >/dev/null 2>&1; then
+            echo "$IMAGE is not published yet"
+          elif [ "$(definitions $IMAGE)" = "$(definitions config-builder:build)" ]; then
+            echo "::notice::$IMAGE is already published with the same definitions, nothing to push"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "::error::$IMAGE is already published with other definitions, bump the overlay revision here and in defaultConfigBuilderImage"
+            exit 1
+          fi
+
+      - name: Push Docker image
+        if: steps.published.outputs.skip != 'true'
+        run: |
+          docker tag config-builder:build $IMAGE
+          docker push $IMAGE

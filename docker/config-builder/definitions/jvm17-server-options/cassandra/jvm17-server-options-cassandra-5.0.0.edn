@@ -1,0 +1,144 @@
+{:display-name "jvm17-server.options",
+ :package-path "/etc/cassandra/jvm17-server.options",
+ :workload-file-group "cassandra",
+ :ui-visibility :editable,
+ :renderer
+ {:renderer-type :template,
+  :template "jvm17-server-options-cassandra-5.0.0.template"},
+ :properties
+ {;;
+  ;; Variables that are not rendered by template_iterables
+  ;;
+
+  ;; Additional Options
+  ;; -Xlog settings should be done in additional options
+
+  :additional-jvm-opts
+  {:type "list",
+   :exclude-from-template-iterables true,
+   :label "Additional JVM_OPTS",
+   :value_type "string",
+   :default_value []},
+
+  :garbage_collector
+  {:type "string",
+   :label "Garbage Collector",
+   :exclude-from-template-iterables true,
+   :options
+   [{:label "G1GC", :value "G1GC"}
+    {:label "ZGC", :value "ZGC"}
+    {:label "Shenandoah", :value "Shenandoah"}],
+   :default_value "G1GC"},
+
+  ;; JPMS Settings
+
+  :jdk_attach_allow_attach_self
+  {:type "boolean",
+   :label "jdk.attach.allowAttachSelf",
+   :exclude-from-template-iterables true,
+   :static_constant "-Djdk.attach.allowAttachSelf=true"
+   :render-without-quotes true,
+   :default_value true}
+  :io_netty_try_reflection_set_accessible
+  {:type "boolean",
+   :label "io.netty.tryReflectionSetAccessible",
+   :exclude-from-template-iterables true,
+   :static_constant "-Dio.netty.tryReflectionSetAccessible=true"
+   :render-without-quotes true,
+   :default_value true}
+
+  ;;
+  ;; Variables that are rendered by template iterables
+  ;;
+
+  ;; Netty Options
+
+  :io_netty_allocator_use_cache_for_all_threads
+  {:type "boolean",
+   :label "io.netty.allocator.useCacheForAllThreads",
+   :static_constant "-Dio.netty.allocator.useCacheForAllThreads=true",
+   :default_value true}
+  :io_netty_allocator_max_order
+  {:type "boolean",
+   :label "io.netty.allocator.maxOrder",
+   :static_constant "-Dio.netty.allocator.maxOrder=11",
+   :default_value true}
+
+  ;; GC Options
+
+  :max_tenuring_threshold
+  {:type "int",
+   :label "Max Tenuring Threshold",
+   :default_value "2",
+   :depends :garbage_collector,
+   :conditional [{:eq "G1GC"}],
+   :constant "-XX:MaxTenuringThreshold"},
+  :g1_heap_region_size
+  {:type "string",
+   :label "G1GC Heap Region Size",
+   :default_value "16m",
+   :render-without-quotes true,
+   :depends :garbage_collector,
+   :conditional [{:eq "G1GC"}],
+   :constant "-XX:G1HeapRegionSize"},
+  :g1_new_size_percent
+  {:type "int",
+   :label "G1GC New Size Percentage",
+   :default_value "50",
+   :depends :garbage_collector,
+   :conditional [{:eq "G1GC"}],
+   :constant "-XX:G1NewSizePercent"},
+  :g1r_set_updating_pause_time_percent
+  {:type "int",
+   :label "G1GC Updating Pause Time Percentage",
+   :default_value "5",
+   :depends :garbage_collector,
+   :conditional [{:eq "G1GC"}],
+   :constant "-XX:G1RSetUpdatingPauseTimePercent"},
+  :max_gc_pause_millis
+  {:type "int",
+   :label "G1GC Max GC Pause Milliseconds",
+   :default_value "300",
+   :depends :garbage_collector,
+   :conditional [{:eq "G1GC"}],
+   :constant "-XX:MaxGCPauseMillis"},
+  :initiating_heap_occupancy_percent
+  {:type "int",
+   :label "Initiating Heap Occupancy Percentage",
+   :default_value "70",
+   :depends :garbage_collector,
+   :conditional [{:eq "G1GC"}],
+   :constant "-XX:InitiatingHeapOccupancyPercent"},
+  :parallel_gc_threads
+  {:type "int",
+   :label "Parallel GC Threads",
+   :depends :garbage_collector,
+   :conditional [{:eq "G1GC"}],
+   :constant "-XX:ParallelGCThreads"},
+  :conc_gc_threads
+  {:type "int",
+   :label "Concurrent GC Threads",
+   :depends :garbage_collector,
+   :conditional [{:eq "G1GC"}],
+   :constant "-XX:ConcGCThreads"}},
+ :groupings
+ [{:name "Garbage Collector Settings",
+   :list
+   ["garbage_collector"
+    "max_tenuring_threshold"
+    "g1_heap_region_size"
+    "g1_new_size_percent"
+    "g1r_set_updating_pause_time_percent"
+    "max_gc_pause_millis"
+    "initiating_heap_occupancy_percent"
+    "parallel_gc_threads"
+    "conc_gc_threads"]}
+  {:name "JPMS Settings",
+   :list
+   ["jdk_attach_allow_attach_self"
+    "io_netty_try_reflection_set_accessible"
+    "io_netty_allocator_use_cache_for_all_threads"
+    "io_netty_allocator_max_order"]}
+  {:name "Advanced",
+   :list
+   ["additional-jvm-opts"]}]}

@@ -49,13 +49,13 @@ func TestGetLastOrFirstPod(t *testing.T) {
 
 	pod, err := GetLastOrFirstPod(podlist, first)
 
-	if err != nil || pod.ObjectMeta.Name != "ns-nm-01" {
+	if err != nil || pod.Name != "ns-nm-01" {
 		t.Errorf("Not first pod returned")
 	}
 
 	pod, err = GetLastOrFirstPod(podlist, last)
 
-	if err != nil || pod.ObjectMeta.Name != "ns-nm-20" {
+	if err != nil || pod.Name != "ns-nm-20" {
 		t.Errorf("Not last pod returned")
 	}
 

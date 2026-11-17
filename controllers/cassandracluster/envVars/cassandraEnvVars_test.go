@@ -1,8 +1,10 @@
 package envVars
 
 import (
+	"encoding/json"
 	"testing"
 
+	"github.com/Jeffail/gabs"
 	api "github.com/cscetbon/casskop/api/v2"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
@@ -171,4 +173,71 @@ func findAllEnvVarsByName(envVars []v1.EnvVar, name string) []*v1.EnvVar {
 		}
 	}
 	return result
+}
+
+func TestTranslateLegacyCassandraYaml(t *testing.T) {
+	section := map[string]any{
+		"read_request_timeout_in_ms":                  float64(5000),
+		"write_request_timeout":                       "3000ms",
+		"write_request_timeout_in_ms":                 float64(2000),
+		"compaction_throughput_mb_per_sec":            float64(64),
+		"stream_throughput_outbound_megabits_per_sec": float64(24),
+		"index_summary_resize_interval_in_minutes":    float64(-1),
+		"cache_load_timeout_seconds":                  float64(-1),
+		"commitlog_total_space_in_mb":                 float64(-1),
+		"enable_user_defined_functions":               true,
+		"commitlog_sync_group_window_in_ms":           15.5,
+		"num_tokens":                                  float64(16),
+		"key_cache_size_in_mb":                        "100MiB",
+		"key_cache_save_period":                       float64(14400),
+		"row_cache_save_period":                       "30m",
+		"counter_cache_save_period":                   float64(0),
+	}
+	expected := map[string]any{
+		"read_request_timeout":       "5000ms",
+		"write_request_timeout":      "3000ms",
+		"compaction_throughput":      "64MiB/s",
+		"stream_throughput_outbound": "3000000B/s",
+		// negative values: null when the setting is enabled by default, 0 when null is not accepted,
+		// left out when the default is already null
+		"index_summary_resize_interval":  nil,
+		"cache_load_timeout":             "0s",
+		"user_defined_functions_enabled": true,
+		"commitlog_sync_group_window":    "15.5ms",
+		"num_tokens":                     float64(16),
+		"key_cache_size":                 "100MiB",
+		// same name in 4.1, only the unit is added
+		"key_cache_save_period":     "14400s",
+		"row_cache_save_period":     "30m",
+		"counter_cache_save_period": "0s",
+	}
+	assert.Equal(t, expected, translateLegacyCassandraYaml(section, false))
+}
+
+// The partition size and tombstone thresholds only got their guardrail names in 5.0, a 4.1 node
+// refuses them
+func TestTranslateLegacyCassandraYaml_renamedIn50(t *testing.T) {
+	section := map[string]any{
+		"compaction_large_partition_warning_threshold_mb": float64(200),
+		"compaction_tombstone_warning_threshold":          float64(50000),
+	}
+	assert.Equal(t, map[string]any{
+		"compaction_large_partition_warning_threshold": "200MiB",
+		"compaction_tombstone_warning_threshold":       float64(50000),
+	}, translateLegacyCassandraYaml(section, false))
+	assert.Equal(t, map[string]any{
+		"partition_size_warn_threshold":       "200MiB",
+		"partition_tombstones_warn_threshold": float64(50000),
+	}, translateLegacyCassandraYaml(section, true))
+	assert.Equal(t, map[string]any{"partition_size_warn_threshold": "300MiB"},
+		translateLegacyCassandraYaml(map[string]any{"compaction_large_partition_warning_threshold": "300MiB"}, true))
+}
+
+// A legacy key set on a rack must win over the new style key set on the cluster
+func TestMergeConfig_translatesEachLevel(t *testing.T) {
+	merged := gabs.New()
+	translate := func(config *gabs.Container) { translateLegacyCassandraYamlSection(config, false) }
+	mergeConfig(json.RawMessage(`{"cassandra-yaml": {"read_request_timeout": "1000ms"}}`), merged, jvmServerOptionsKey, translate)
+	mergeConfig(json.RawMessage(`{"cassandra-yaml": {"read_request_timeout_in_ms": 2000}}`), merged, jvmServerOptionsKey, translate)
+	assert.Equal(t, map[string]any{"read_request_timeout": "2000ms"}, merged.Path(cassandraYamlKey).Data())
 }

@@ -80,7 +80,7 @@ jobs:
       fail-fast: false
       max-parallel: 2
       matrix:
-        test-name: [operations, sidecars, scaling, multi-dcs, backup-restore, nodetool, storage-upsize]
+        test-name: [operations, sidecars, scaling, multi-dcs, backup-restore, nodetool, storage-upsize, upgrade]
     steps:
       - id: lower-repo
         shell: pwsh

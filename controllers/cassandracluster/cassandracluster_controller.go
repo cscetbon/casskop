@@ -18,6 +18,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/cscetbon/casskop/controllers/cassandracluster/envVars"
 	"github.com/cscetbon/casskop/controllers/cassandracluster/storagestateclient"
 	"github.com/cscetbon/casskop/controllers/cassandracluster/sts"
 	"github.com/go-logr/logr"
@@ -28,9 +29,11 @@ import (
 
 	api "github.com/cscetbon/casskop/api/v2"
 	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 	policyv1 "k8s.io/api/policy/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -53,6 +56,8 @@ type CassandraClusterReconciler struct {
 	Client client.Client
 	Scheme *runtime.Scheme
 	Log    logr.Logger
+	// Recorder publishes the events of the CassandraCluster objects, optional
+	Recorder record.EventRecorder
 
 	storedPdb         *policyv1.PodDisruptionBudget
 	storedStatefulSet *appsv1.StatefulSet
@@ -94,7 +99,7 @@ func (rcc *CassandraClusterReconciler) Reconcile(ctx context.Context, request re
 	}
 
 	// After first time reconcile, phase will switch to "Initializing".
-	if cc.Status.CassandraPhase.IsEmpty() || cc.Status.CassandraPhase.SubPhaseMigrationNeeded() {
+	if cc.Status.IsEmpty() || cc.Status.SubPhaseMigrationNeeded() {
 		// Simulate initializer.
 		changed := cc.SetDefaults()
 		if changed {
@@ -118,7 +123,20 @@ func (rcc *CassandraClusterReconciler) Reconcile(ctx context.Context, request re
 	status := cc.Status.DeepCopy()
 
 	//We Update Status at the end
-	defer rcc.updateCassandraStatus(ctx, cc, status)
+	defer rcc.logStatusUpdateError(ctx, cc, status)
+
+	// A config section unknown to the config builder for this Cassandra version would make every init
+	// container fail, nothing is reconciled until the configuration is fixed
+	if err = envVars.ValidateConfig(cc); err != nil {
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Errorf("The Operator refuses the configuration: %v", err)
+		status.LastClusterAction = api.ActionCorrectCRDConfig.Name
+		status.LastClusterActionStatus = api.StatusError
+		ClusterActionMetric.set(api.ActionCorrectCRDConfig, cc.Name)
+		if rcc.Recorder != nil {
+			rcc.Recorder.Event(cc, v1.EventTypeWarning, "InvalidConfig", err.Error())
+		}
+		return requeue30, nil
+	}
 
 	//If non allowed changes on CRD, we return here
 	if rcc.CheckNonAllowedChanges(ctx, cc, status) {
@@ -137,7 +155,7 @@ func (rcc *CassandraClusterReconciler) Reconcile(ctx context.Context, request re
 	if rcc.FirstPodPerRackFlowEnabled(cc) {
 		if shouldBreak, err := rcc.ReconcileFirstPodPerRack(ctx, cc, status); err != nil {
 			return requeue5, err
-		} else if shouldBreak == breakResyncLoop {
+		} else if shouldBreak {
 			return requeue5, nil
 		}
 	}

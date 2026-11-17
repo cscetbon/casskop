@@ -30,18 +30,18 @@ func TestStatefulSetsAreEqual(t *testing.T) {
 	testSetup := make(map[string]liveAndReadinessProbeExpected)
 
 	// Readiness update test
-	testSetup["ReadinessInitialDelaySeconds"]	= liveAndReadinessProbeExpected{areEquals:false, replaceValue: 2000}
-	testSetup["ReadinessHealthCheckTimeout"] 	= liveAndReadinessProbeExpected{areEquals:false, replaceValue: 2000}
-	testSetup["ReadinessHealthCheckPeriod"] 	= liveAndReadinessProbeExpected{areEquals:false, replaceValue: 2000}
-	testSetup["ReadinessFailureThreshold"] 		= liveAndReadinessProbeExpected{areEquals:false, replaceValue: 2000}
-	testSetup["ReadinessSuccessThreshold"] 		= liveAndReadinessProbeExpected{areEquals:false, replaceValue: 2000}
+	testSetup["ReadinessInitialDelaySeconds"] = liveAndReadinessProbeExpected{areEquals: false, replaceValue: 2000}
+	testSetup["ReadinessHealthCheckTimeout"] = liveAndReadinessProbeExpected{areEquals: false, replaceValue: 2000}
+	testSetup["ReadinessHealthCheckPeriod"] = liveAndReadinessProbeExpected{areEquals: false, replaceValue: 2000}
+	testSetup["ReadinessFailureThreshold"] = liveAndReadinessProbeExpected{areEquals: false, replaceValue: 2000}
+	testSetup["ReadinessSuccessThreshold"] = liveAndReadinessProbeExpected{areEquals: false, replaceValue: 2000}
 
 	// Liveness update test
-	testSetup["LivenessInitialDelaySeconds"]	= liveAndReadinessProbeExpected{areEquals:false, replaceValue: 2000}
-	testSetup["LivenessHealthCheckTimeout"] 	= liveAndReadinessProbeExpected{areEquals:false, replaceValue: 2000}
-	testSetup["LivenessHealthCheckPeriod"] 		= liveAndReadinessProbeExpected{areEquals:false, replaceValue: 2000}
-	testSetup["LivenessFailureThreshold"]		= liveAndReadinessProbeExpected{areEquals:false, replaceValue: 2000}
-	testSetup["LivenessSuccessThreshold"]		= liveAndReadinessProbeExpected{areEquals:false, replaceValue: 2000}
+	testSetup["LivenessInitialDelaySeconds"] = liveAndReadinessProbeExpected{areEquals: false, replaceValue: 2000}
+	testSetup["LivenessHealthCheckTimeout"] = liveAndReadinessProbeExpected{areEquals: false, replaceValue: 2000}
+	testSetup["LivenessHealthCheckPeriod"] = liveAndReadinessProbeExpected{areEquals: false, replaceValue: 2000}
+	testSetup["LivenessFailureThreshold"] = liveAndReadinessProbeExpected{areEquals: false, replaceValue: 2000}
+	testSetup["LivenessSuccessThreshold"] = liveAndReadinessProbeExpected{areEquals: false, replaceValue: 2000}
 
 	for field, lvExpected := range testSetup {
 		ccNew := generateNewCC(cc, field, lvExpected.replaceValue)

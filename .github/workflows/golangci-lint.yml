@@ -16,27 +16,8 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: '1.27'
-      - name: Add configuration file
-        run: |
-          cat <<EOF > .golangci.yml
-          run:
-            timeout: 5m
-            issues-exit-code: 0
-          output:
-            uniq-by-line: false
-          linters-settings:
-            gosimple:
-              checks:
-                - all
-                - '-S1023'
-          issues:
-            exclude-rules:
-              - path: .+_test.go
-                text: "package sigs.k8s.io/controller-runtime/pkg/client/fake is deprecated: please use pkg/envtest"
-              - path: .+(_test|mock_client).*.go
-                text: "is not checked"
-          EOF
+      # configuration in .golangci.yml, the linter must be built with the Go version above to type-check the code
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v9
         with:
-          version: v1.54
+          version: v2.15

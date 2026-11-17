@@ -971,7 +971,9 @@ Operation Isolation:
 The CRD `CassandraCluster` is used to define your cluster configuration. Some fields can't be updated in a kubernetes
 clusters. Some fields are taken from the CRD to configure thoses objects, and to be sure we don't update them (to
 prevent kubernetes objects in errors), we have configure CassKop to simply ignore/revert unauthorized changed to the
-CRD.
+CRD. The same action with the status `Error` is reported when a `config` section is not supported by the Cassandra
+version of the cluster (`jvm-server-options` on 3.11 for instance), in that case nothing is reconciled until the
+configuration is fixed.
 
 Example With this CRD deployed :
 

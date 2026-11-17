@@ -114,7 +114,11 @@ func (r *CassandraBackupReconciler) Reconcile(ctx context.Context, request recon
 			cassandraBackup.Annotations = make(map[string]string)
 		}
 		cassandraBackup.Annotations[annotationLastApplied] = lac
-		defer r.Client.Update(ctx, cassandraBackup)
+		defer func() {
+			if err := r.Client.Update(ctx, cassandraBackup); err != nil {
+				reqLogger.Errorf("cannot store the last applied configuration: %v", err)
+			}
+		}()
 	}
 
 	if !cassandraBackup.IsScheduled() && cassandraBackup.Status.Condition != nil {
@@ -225,7 +229,11 @@ func (r *CassandraBackupReconciler) Reconcile(ctx context.Context, request recon
 		}
 
 		if skipped, err := r.Scheduler.AddOrUpdate(
-			cassandraBackup, func() { r.backupData(ctx, cassandraBackup, cc, reqLogger) }, &r.Recorder); err != nil {
+			cassandraBackup, func() {
+				if err := r.backupData(ctx, cassandraBackup, cc, reqLogger); err != nil {
+					reqLogger.Errorf("scheduled backup failed: %v", err)
+				}
+			}, &r.Recorder); err != nil {
 			r.Recorder.Event(cassandraBackup, corev1.EventTypeWarning, "BackupScheduleError",
 				fmt.Sprintf("Wasn't able to schedule job %s: %s", cassandraBackup.Name, err.Error()))
 		} else if skipped {

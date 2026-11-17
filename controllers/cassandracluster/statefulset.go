@@ -74,7 +74,7 @@ func (rcc *CassandraClusterReconciler) UpdateStatefulSet(ctx context.Context, st
 		return fmt.Errorf("failed to update cassandra statefulset: %w", err)
 	}
 	//Check that the new revision of statefulset has been taken into account
-	err := wait.Poll(retryInterval(), timeout, func() (done bool, err error) {
+	err := wait.PollUntilContextTimeout(ctx, retryInterval(), timeout, false, func(ctx context.Context) (done bool, err error) {
 		newSts, err := rcc.GetStatefulSet(ctx, statefulSet.Namespace, statefulSet.Name)
 		if err != nil && !apierrors.IsNotFound(err) {
 			return false, fmt.Errorf("failed to get cassandra statefulset: %w", err)
@@ -174,7 +174,7 @@ func tryJsonPrettyPrint(patchResult []byte) string {
 	var prettyPatch bytes.Buffer
 	err := json.Indent(&prettyPatch, patchResult, "", "  ")
 	if err == nil {
-		patchString = string(prettyPatch.Bytes())
+		patchString = prettyPatch.String()
 	} else { // fallback to non-pretty json
 		patchString = string(patchResult)
 	}

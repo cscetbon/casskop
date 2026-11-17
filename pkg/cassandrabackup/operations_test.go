@@ -42,7 +42,7 @@ func performRestoreMock(codeStatus int) (*icarus.RestoreOperationResponse, error
 
 	sourceDir := "/var/lib/cassandra/downloadedsstables"
 
-	restoreOperationRequest := icarus.RestoreOperationRequest{
+	restoreOperationRequest := RestoreOperationRequest{
 		Type_:              "restore",
 		StorageLocation:    storageLocation,
 		SnapshotTag:        snapshotTag,
@@ -57,6 +57,7 @@ func performRestoreMock(codeStatus int) (*icarus.RestoreOperationResponse, error
 		},
 		K8sSecretName:         k8sSecretName,
 		ConcurrentConnections: concurrentConnections,
+		DataDirs:              DataDirs(""),
 	}
 
 	url := fmt.Sprintf("http://%s:%d/operations", hostnamePodA, DefaultCassandraSidecarPort)

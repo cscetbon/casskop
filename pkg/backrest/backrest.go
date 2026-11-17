@@ -51,7 +51,7 @@ func formatEntities(entities string) string {
 
 func (c *Client) PerformRestore(restore *api.CassandraRestore,
 	backup *api.CassandraBackup) (*api.BackRestStatus, error) {
-	restoreOperationRequest := &icarus.RestoreOperationRequest{
+	restoreOperationRequest := &cassandrabackup.RestoreOperationRequest{
 		Type_:              "restore",
 		Dc:                 restore.Spec.Datacenter,
 		StorageLocation:    backup.Spec.StorageLocation,
@@ -71,6 +71,7 @@ func (c *Client) PerformRestore(restore *api.CassandraRestore,
 		SchemaVersion:             restore.Spec.SchemaVersion,
 		RestorationStrategyType:   "HARDLINKS",
 		ResolveHostIdFromTopology: true,
+		DataDirs:                  cassandrabackup.DataDirs(restore.Spec.CassandraDirectory),
 	}
 
 	if restore.Spec.ConcurrentConnection != nil {
@@ -99,10 +100,10 @@ func (c *Client) PerformRestore(restore *api.CassandraRestore,
 }
 
 func (c *Client) PerformBackup(backup *api.CassandraBackup) (string, error) {
-	bandwidth := strings.Replace(backup.Spec.Bandwidth, " ", "", -1)
+	bandwidth := strings.ReplaceAll(backup.Spec.Bandwidth, " ", "")
 	bandwidthDataRate, _ := dataRateFromBandwidth(bandwidth)
 
-	backupOperationRequest := &icarus.BackupOperationRequest{
+	backupOperationRequest := &cassandrabackup.BackupOperationRequest{
 		Type_:                 "backup",
 		StorageLocation:       backup.Spec.StorageLocation,
 		SnapshotTag:           backup.Spec.SnapshotTag,
@@ -114,6 +115,8 @@ func (c *Client) PerformBackup(backup *api.CassandraBackup) (string, error) {
 		Dc:                    backup.Spec.Datacenter,
 		GlobalRequest:         true,
 		K8sNamespace:          backup.Namespace,
+		// a backup has no cassandraDirectory setting, the data volume is always mounted at the default one
+		DataDirs: cassandrabackup.DataDirs(""),
 	}
 
 	backupOperation, err := c.client.PerformBackupOperation(*backupOperationRequest)
@@ -154,7 +157,7 @@ func (c *Client) BackupStatusByID(id string) (api.BackRestStatus, error) {
 var regexBandwidthSupportedFormat = regexp.MustCompile(`(?i)^(?P<Value>\d+)(?P<Unit>[kmg]?)$`)
 
 func dataRateFromBandwidth(value string) (*icarus.DataRate, error) {
-	bandwidth := strings.ToUpper(strings.Replace(value, " ", "", -1))
+	bandwidth := strings.ToUpper(strings.ReplaceAll(value, " ", ""))
 
 	if bandwidth == "" {
 		return nil, nil
@@ -162,7 +165,7 @@ func dataRateFromBandwidth(value string) (*icarus.DataRate, error) {
 
 	matches := regexBandwidthSupportedFormat.FindStringSubmatch(bandwidth)
 	if matches == nil {
-		return nil, fmt.Errorf("Format of %s not supported", value)
+		return nil, fmt.Errorf("format of %s not supported", value)
 	}
 	dataValue, _ := strconv.Atoi(matches[1])
 	return &icarus.DataRate{Value: int32(dataValue), Unit: matches[2] + "BPS"}, nil

@@ -1,0 +1,4 @@
+(
+  ;; jvm17-server.options only exists from Cassandra 5.0
+  "5.0.0" "jvm17-server-options-cassandra-5.0.0.edn"
+)

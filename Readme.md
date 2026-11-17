@@ -31,7 +31,7 @@ The documentation of the Casskop operator project is available at the [Casskop D
 
 The Casskop image is automatically built and stored on [Github Packages](https://github.com/cscetbon/casskop/pkgs/container/casskop)
 
-Casskop uses standard Cassandra image (tested up to Version 3.11 and 4.0)
+Casskop uses standard Cassandra images (tested with versions 3.11, 4.0, 4.1 and 5.0)
 
 ### Operator SDK
 
